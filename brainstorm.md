@@ -14,6 +14,13 @@
   <li>Website that provides nutrition facts</li>
   <li>Personal finance</li>
   <li>Fitness and health tracker</li>
+    <ul>
+        <li>User profile creation</li>
+        <li>Activity logging</li>
+        <li>Health goal setting</li>
+        <li>Integration with wearables</li>
+        <li>Nutrition tracking</li>
+    </ul>
   <li>Real estate listing platform</li>
     <ul>
         <li>Requires extensive CRUD</li>
