@@ -10,13 +10,13 @@
 1. Website that provides nutrition facts
 1. [Personal finance](./personal_finance.md)
 1. Fitness and health tracker
-  - User profile creation
-  - Activity logging
-  - Health goal setting
-  - Integration with wearables
-  - Nutrition tracking
+    - User profile creation
+    - Activity logging
+    - Health goal setting
+    - Integration with wearables
+    - Nutrition tracking
 1. Real estate listing platform
-  - Requires extensive CRUD
-  - Large database must be maintained
-  - Web scrape for data
+    - Requires extensive CRUD
+    - Large database must be maintained
+    - Web scrape for data
 1. [Watch party](./watch_party.md) on an online platform
