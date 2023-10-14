@@ -46,6 +46,9 @@ jobs:
       - name: Install Python packages.
         run: make dev_env
 
+      - name: Check Flask-RESTful version
+        run: pip show flask-restful
+
       - name: Run Python tests.
         run: make tests
         
