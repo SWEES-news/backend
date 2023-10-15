@@ -41,23 +41,23 @@ These are things we will consider but are out of the scope of our solution...for
 
 ---
 ## resources
+<!-- in details tags, dropdowns need a line between summary and body to render Markdown properly -->
 <details>
 <summary>Web scraping</summary>
-<ul>
-<li><a href="https://realpython.com/python-web-scraping-practical-introduction/">A practical introduction to web scraping in Python</a></li>
-<li><a href="https://www.geeksforgeeks.org/python-web-scraping-tutorial/#">GeeksforGeeks: Web scraping tutorial</a></li>
-<li><a href="https://www.newscatcherapi.com/blog/python-web-scraping-libraries-to-mine-news-data">NewsCatcher: 4 Python web scraping libraries for news data</a></li>
-</ul>
+
++ [A practical introduction to web scraping in Python](https://realpython.com/python-web-scraping-practical-introduction/)
++ [GeeksforGeeks: Web scraping tutorial](https://www.geeksforgeeks.org/python-web-scraping-tutorial/#)
++ [NewsCatcher: 4 Python web scraping libraries for news data](https://www.newscatcherapi.com/blog/python-web-scraping-libraries-to-mine-news-data)
 </details>
 <details>
 <summary>LangChain and vector databases</summary>
 
-> [Langchain tutorials in Python](https://python.langchain.com/docs/additional_resources/tutorials)
-> [DeepLearning.AI Course - LangChain for LLM Application Development](https://learn.deeplearning.ai/langchain/)
-> [DeepLearning.AI Course - LangChain: Chat with your Data](https://learn.deeplearning.ai/langchain-chat-with-your-data/lesson/1/introduction)
++ [Langchain tutorials in Python](https://python.langchain.com/docs/additional_resources/tutorials)
++ [DeepLearning.AI Course - LangChain for LLM Application Development](https://learn.deeplearning.ai/langchain/)
++ [DeepLearning.AI Course - LangChain: Chat with your Data](https://learn.deeplearning.ai/langchain-chat-with-your-data/lesson/1/introduction)
 </details>
 <details markdown="1">
 <summary>Our documentation</summary>
 
-> [Writing Markdown on GitHub](https://docs.github.com/en/contributing)
++ [Writing Markdown on GitHub](https://docs.github.com/en/contributing)
 </details>
