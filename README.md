@@ -57,3 +57,8 @@ These are things we will consider but are out of the scope of our solution...for
 <summary>Our documentation</summary>
 > [Writing Markdown on GitHub](https://docs.github.com/en/contributing)
 </details>
+
+#### trying something out rq
+{% assign w = "work" %}
+
+does this {{ w }}?
