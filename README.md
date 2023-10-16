@@ -24,6 +24,8 @@ People who read news articles, and wish for ease in handling the complexities of
 These are things we will consider but are out of the scope of our solution...for this semester, at least ;)
 - prioritize a user-friendly interface
 - include a search tool to find news articles from our site
+- analyze sentiment of a text
+
 ### potential problems
 - We will be accessing so much data. It's hard to parse it all correctly and find the best way to store it.
 - We may not have enough information on a topic stored - this has the potential of spreading misinformation.
