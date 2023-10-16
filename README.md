@@ -60,7 +60,8 @@ These are things we will consider but are out of the scope of our solution...for
 <summary>Our documentation</summary>
 
 + [Writing Markdown on GitHub](https://docs.github.com/en/contributing)
-
+</details>
+<details>
 <summary>Flask</summary>
 
 + [flask-dev](https://readthedocs.org/projects/flask-dev/downloads/pdf/latest/)
