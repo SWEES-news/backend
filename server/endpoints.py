@@ -9,10 +9,6 @@ from db import db, migrate  # only import db and migrate
 from db.models import User  # import User model
 from db.schemas import UserSchema, ma  # import schemas and ma
 
-# ... [rest of your code]
-
-
-
 
 app = Flask(__name__)
 # Database configuration
@@ -85,6 +81,7 @@ class MainMenu(Resource):
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 
+
 @api.route(f'/{USERS}')
 class Users(Resource):
     """
@@ -106,7 +103,7 @@ class Users(Resource):
             return {"message": "No input data provided"}, 400
         # Validate data
         try:
-            validated_data = user_schema.load(data)
+            validData = user_schema.load(data)
         except Exception as e:
             return {"message": str(e)}, 400
 
@@ -119,12 +116,11 @@ class Users(Resource):
 
         # Create and add new user to db
         new_user = User(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password']  # In a real app, remember to hash this!
+            username=validData['username'],
+            email=validData['email'],
+            password=validData['password']  # hash this
         )
         db.session.add(new_user)
         db.session.commit()
 
         return user_schema.dump(new_user), 201
-
