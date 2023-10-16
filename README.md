@@ -69,6 +69,7 @@ These are things we will consider but are out of the scope of our solution...for
 + [sqlite3](https://flask.palletsprojects.com/en/1.1.x/patterns/sqlite3/)
 + [mysql](https://dev.mysql.com/doc/mysql-tutorial-excerpt/5.7/en/example-auto-increment.html)
 + [flask.make_response](https://tedboy.github.io/flask/generated/flask.make_response.html)
++ [config db](https://flask-sqlalchemy.palletsprojects.com/en/2.x/config/)
 </details>
 
 
@@ -78,3 +79,4 @@ Run make tests.
 Run ./local.sh.
 Run make prod.
 Run the menu: dev.sh.
+
