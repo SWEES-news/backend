@@ -2,3 +2,6 @@
 flake8
 pytest
 pytest-cov
+Flask-SQLAlchemy 
+Flask-Migrate
+Flask-Marshmallow
