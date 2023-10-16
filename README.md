@@ -60,4 +60,20 @@ These are things we will consider but are out of the scope of our solution...for
 <summary>Our documentation</summary>
 
 + [Writing Markdown on GitHub](https://docs.github.com/en/contributing)
+
+<summary>Flask</summary>
+
++ [flask-dev](https://readthedocs.org/projects/flask-dev/downloads/pdf/latest/)
++ [fileuploads](https://flask.palletsprojects.com/en/1.1.x/patterns/fileuploads/)
++ [sqlite3](https://flask.palletsprojects.com/en/1.1.x/patterns/sqlite3/)
++ [mysql](https://dev.mysql.com/doc/mysql-tutorial-excerpt/5.7/en/example-auto-increment.html)
++ [flask.make_response](https://tedboy.github.io/flask/generated/flask.make_response.html)
 </details>
+
+
+## Steps to run
+Run make dev_env.
+Run make tests.
+Run ./local.sh.
+Run make prod.
+Run the menu: dev.sh.
