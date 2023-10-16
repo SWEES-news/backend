@@ -1,3 +1,9 @@
+/.DS_Store
+/uploads
+/.venv
+/*.db
+/security.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
