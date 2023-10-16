@@ -5,3 +5,4 @@ pytest-cov
 Flask-SQLAlchemy 
 Flask-Migrate
 Flask-Marshmallow
+marshmallow-sqlalchemy
