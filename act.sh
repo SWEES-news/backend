@@ -1,2 +1,4 @@
 #/bin/bash
-source demo-repo4-venv/bin/activate
+source .venv/bin/activate
+# to get this venv on your own: 
+# $ python -m venv .venv
