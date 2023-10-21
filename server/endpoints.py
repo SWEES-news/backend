@@ -25,9 +25,11 @@ api = Api(app)
 MAIN_MENU = 'MainMenu'
 MAIN_MENU_NM = "Welcome to our site!"
 USERS = 'users'
+HELLO_STR = 'hello'
+HELLO_SLASH = '/hello'
 
 
-@api.route('/hello')
+@api.route(f'/{HELLO_STR}')
 class HelloWorld(Resource):
     """
     The purpose of the HelloWorld class is to have a simple test to see if the
@@ -38,7 +40,7 @@ class HelloWorld(Resource):
         A trivial endpoint to see if the server is running.
         It just answers with "hello world."
         """
-        return {'hello': 'world'}
+        return {HELLO_STR: 'world'}
 
 
 @api.route('/endpoints')
