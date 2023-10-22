@@ -6,4 +6,4 @@ Flask-SQLAlchemy
 Flask-Migrate
 Flask-Marshmallow
 marshmallow-sqlalchemy
-NewsDataApiClient
+newsdataapi
