@@ -74,11 +74,35 @@ These are things we will consider but are out of the scope of our solution...for
 + [config db](https://flask-sqlalchemy.palletsprojects.com/en/2.x/config/)
 </details>
 
+https://newsdata.io/blog/news-api-python-client/
+
 
 ## Steps to run
-Run make dev_env.
-Run make tests.
-Run ./local.sh.
-Run make prod.
-Run the menu: dev.sh.
+1. Run make dev_env.
+2. Run make tests.
+3. Run ./local.sh.
+4. Run make prod.
+5. Run the menu: dev.sh.
+
+
+## API Setup
+### Set Environment Variable:
+- [Get API Key](https://newsdata.io/api-key)
+- **On macOS or Linux**:
+    1. Open your terminal.
+    2. Run the following command to set an environment variable (replace `YOUR_API_KEY` with the actual API key):
+    ```bash
+    export NEWS_API_KEY="YOUR_API_KEY"
+    ```
+
+- **On Windows**:
+    1. Press `Win + X` and select "System".
+    2. Click on "Advanced system settings" on the left.
+    3. Click on "Environment Variables".
+    4. Under "System variables", click "New" and enter `NEWS_API_KEY` as the variable name and your actual API key as the variable value.
+- It's important to ensure that the environment variable is set every time you run your Python script. You might want to add the export command to your shell's profile script (e.g., ~/.bash_profile or ~/.zshrc on macOS and Linux) to ensure the environment variable is set automatically whenever you open a new terminal window.
+- Future notes/plans
+	- For a more permanent and portable solution, you might want to consider using a configuration file or a more advanced secret management solution, especially in a production environment.
+
+
 
