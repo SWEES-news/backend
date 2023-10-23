@@ -78,8 +78,8 @@ https://newsdata.io/blog/news-api-python-client/
 
 
 ## Steps to run
->[!info]
->If you're running a python environment, ensure you have it activated. Also be sure to have your NewsData.io API key stored in the environment variable `NEWS_API_KEY`. To automate starting these, you can run `source act.sh` if you have an existing virtual environment at the root named `.venv` and your API key is stored in a file named `api_key.txt`. For more information on NewsData.io, see [API Setup](README.md/#api-setup).
+> [!NOTE]
+> If you're running a python environment, ensure you have it activated. Also be sure to have your NewsData.io API key stored in the environment variable `NEWS_API_KEY`. To automate starting these, you can run `source act.sh` if you have an existing virtual environment at the root named `.venv` and your API key is stored in a file named `api_key.txt`. For more information on NewsData.io, see [API Setup](README.md/#api-setup).
 
 
 1. Run `make dev_env`.
