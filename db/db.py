@@ -20,3 +20,4 @@ def fetch_pets():
 def init_app(app):
     db.init_app(app)
     Migrate(app, db)
+    return True

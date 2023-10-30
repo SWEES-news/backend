@@ -78,11 +78,15 @@ https://newsdata.io/blog/news-api-python-client/
 
 
 ## Steps to run
-1. Run make dev_env.
-2. Run make tests.
-3. Run ./local.sh.
-4. Run make prod.
-5. Run the menu: dev.sh.
+> [!NOTE]
+> If you're running a python environment, ensure you have it activated. Also be sure to have your NewsData.io API key stored in the environment variable `NEWS_API_KEY`. To automate starting these, you can run `source act.sh` if you have an existing virtual environment at the root named `.venv` and your API key is stored in a file named `api_key.txt`. For more information on NewsData.io, see [API Setup](#api-setup).
+
+
+1. Run `make dev_env`.
+2. Run `make tests`.
+3. Run `./local.sh`.
+4. Run `make prod`.
+5. Run the menu: `dev.sh`.
 
 
 ## API Setup
