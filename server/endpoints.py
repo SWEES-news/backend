@@ -21,12 +21,13 @@ ma.init_app(app)
 
 api = Api(app)
 
-
+NUM = 0
 MAIN_MENU = 'MainMenu'
 MAIN_MENU_NM = "Welcome to our site!"
 USERS = 'users'
 HELLO_STR = 'hello'
 HELLO_SLASH = '/hello'
+USERS_SLASH = '/users'
 
 
 @api.route(f'/{HELLO_STR}')

@@ -5,15 +5,15 @@ TEST_CLIENT = ep.app.test_client()
 
 # tests if the hello world endpoint, which indicates if server is running at all
 def test_hello():
-    resp = TEST_CLIENT.get('/hello')
+    resp = TEST_CLIENT.get(ep.HELLO_SLASH)
     print(f'{resp=}')
     resp_json = resp.get_json()
     print(f'{resp_json=}')
-    assert 'hello' in resp_json
+    assert ep.HELLO_STR in resp_json
 
 # checks the users
 def test_list_users():
-    resp = TEST_CLIENT.get('/users')
+    resp = TEST_CLIENT.get(ep.HELLO_SLASH)
     resp_json = resp.get_json()
-    # assert isinstance(resp_json, str)
+    assert isinstance(resp_json, dict)
     assert len(resp_json) > 0
