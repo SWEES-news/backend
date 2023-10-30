@@ -1,11 +1,29 @@
 # ML
 
 ### ML Research:
-- four types of machine learning algorithms: supervised, semi-supervised, unsupervised, reinforcement
-- supervised learning = taught by example, labeled data
-- semi-supervised learning = learns from labeled + unlabeled data
-- unsupervised learning = no labels, try to organize/group data based on similarities
-- reinforcement learning = algorithm is provided with a set of actions, parameters, and end values; tries to optimize end result
+- 4 types of machine learning algorithms: Supervised, Semi-supervised, Unsupervised, Reinforcement
+- Supervised learning = taught by example, labeled data
+    - Types of analysis = Classification, Regression, Forecasting
+        - Classification: In classification tasks, the machine learning program must draw a conclusion from observed values and determine to
+    what category new observations belong
+        - Regression: In regression tasks, the machine learning program must estimate – and understand – the relationships among variables. Regression analysis focuses on one dependent variable and a series of other changing variables – making it particularly useful for prediction and forecasting
+        - Forecasting: the process of making predictions about the future based on the past and present data, and is commonly used to analyse trends.
+- Semi-supervised learning = learns from labeled + unlabeled data
+- Unsupervised learning = no labels, try to organize/group data based on similarities
+    - Types of analysis = Clustering, Dimension Reduction
+        - Clustering: Clustering involves grouping sets of similar data (based on defined criteria). It’s useful for segmenting data into several groups and performing analysis on each data set to find patterns.
+        - Dimension reduction: Dimension reduction reduces the number of variables being considered to find the exact information required.
+- Reinforcement learning = algorithm is provided with a set of actions, parameters, and end values; learns by rewarding desired behaviors and punishing undesired ones
+- Popular ML algorithms:
+    - Naïve Bayes Classifier Algorithm (Supervised Learning - Classification)
+    - K Means Clustering Algorithm (Unsupervised Learning - Clustering)
+    - Support Vector Machine Algorithm (Supervised Learning - Classification)
+    - Linear Regression (Supervised Learning/Regression)
+    - Logistic Regression (Supervised learning – Classification)
+    - Artificial Neural Networks (Reinforcement Learning)
+    - Decision Trees (Supervised Learning – Classification/Regression)
+    - Random Forests (Supervised Learning – Classification/Regression)
+    - Nearest Neighbours (Supervised Learning)
 
 
 
