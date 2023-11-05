@@ -5,9 +5,12 @@ The endpoint called `endpoints` will return all available endpoints.
 
 from flask import Flask
 from flask_restx import Resource, Api
+from http import HTTPStatus
+
 from db import db, migrate  # only import db and migrate
 from db.models import User  # import User model
 from db.schemas import UserSchema, ma  # import schemas and ma
+import werkzeug.exceptions as wz        # raising HTTP errors
 
 
 app = Flask(__name__)
