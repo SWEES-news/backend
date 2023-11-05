@@ -5,6 +5,7 @@ The endpoint called `endpoints` will return all available endpoints.
 
 from flask import Flask
 from flask_restx import Resource, Api
+import db.db as data
 # from http import HTTPStatus
 
 
@@ -70,3 +71,18 @@ class MainMenu(Resource):
                           'method': 'get', 'text': 'List Users'},
                     'X': {'text': 'Exit'},
                 }}
+
+
+@api.route(f'{USERS_SLASH}')
+class Users(Resource):
+    """
+    This class supports fetching a list of all users.
+    """
+    def get(self):
+        """
+        This method returns all users.
+        """
+        data
+        return {
+            True
+        }
