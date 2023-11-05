@@ -7,20 +7,8 @@ from flask import Flask
 from flask_restx import Resource, Api
 # from http import HTTPStatus
 
-from db import db, migrate  # only import db and migrate
-from db.models import User  # import User model
-from db.schemas import UserSchema, ma  # import schemas and ma
-import werkzeug.exceptions as wz        # raising HTTP errors
-
 
 app = Flask(__name__)
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db.init_app(app)
-migrate.init_app(app, db)
-ma.init_app(app)
 
 api = Api(app)
 
@@ -82,53 +70,3 @@ class MainMenu(Resource):
                           'method': 'get', 'text': 'List Users'},
                     'X': {'text': 'Exit'},
                 }}
-
-
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)
-
-
-@api.route(f'/{USERS}')
-class Users(Resource):
-    """
-    This class supports fetching a list of all users and adding a new user.
-    """
-    def get(self):
-        """
-        This method returns all users.
-        """
-        users = User.query.all()
-        return users_schema.dump(users)
-
-    def post(self):
-        """
-        This method adds a new user.
-        """
-        data = api.payload
-        if not data:
-            return {"message": "No input data provided"}, 400
-        # Validate data
-        try:
-            validData = user_schema.load(data)
-        except Exception as e:
-            # return {"message": str(e)}, 400
-            raise wz.NotAcceptable(f'{str(e)}')
-
-        # Check for existing user by username or email
-        existing_user = User.query.filter(
-            (User.username == data['username']) | (User.email == data['email'])
-        ).first()
-        if existing_user:
-            # return {"message": "Username or email already exists"}, 400
-            raise wz.NotAcceptable('Username or email already exists')
-
-        # Create and add new user to db
-        new_user = User(
-            username=validData['username'],
-            email=validData['email'],
-            password=validData['password']  # hash this
-        )
-        db.session.add(new_user)
-        db.session.commit()
-
-        return user_schema.dump(new_user), 201
