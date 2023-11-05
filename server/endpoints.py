@@ -5,7 +5,7 @@ The endpoint called `endpoints` will return all available endpoints.
 
 from flask import Flask
 from flask_restx import Resource, Api
-from http import HTTPStatus
+# from http import HTTPStatus
 
 from db import db, migrate  # only import db and migrate
 from db.models import User  # import User model
@@ -111,14 +111,16 @@ class Users(Resource):
         try:
             validData = user_schema.load(data)
         except Exception as e:
-            return {"message": str(e)}, 400
+            # return {"message": str(e)}, 400
+            raise wz.NotAcceptable(f'{str(e)}')
 
         # Check for existing user by username or email
         existing_user = User.query.filter(
             (User.username == data['username']) | (User.email == data['email'])
         ).first()
         if existing_user:
-            return {"message": "Username or email already exists"}, 400
+            # return {"message": "Username or email already exists"}, 400
+            raise wz.NotAcceptable('Username or email already exists')
 
         # Create and add new user to db
         new_user = User(
