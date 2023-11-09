@@ -2,10 +2,14 @@
 This is the file containing all of the endpoints for our flask app.
 The endpoint called `endpoints` will return all available endpoints.
 """
+from http import HTTPStatus
 
-from flask import Flask
-from flask_restx import Resource, Api
-import db.db as data
+from flask import Flask, request
+from flask_restx import Resource, Api, fields
+
+import werkzeug.exceptions as wz
+
+import userdata.db as data
 # from http import HTTPStatus
 
 
@@ -13,13 +17,20 @@ app = Flask(__name__)
 
 api = Api(app)
 
+MENU = 'menu'
 NUM = 0
 MAIN_MENU = 'MainMenu'
+MAIN_MENU_EP = '/MainMenu'
 MAIN_MENU_NM = "Welcome to our site!"
 USERS = 'users'
 HELLO_STR = 'hello'
 HELLO_SLASH = '/hello'
 USERS_SLASH = '/users'
+TYPE = 'Type'
+DATA = 'Data'
+TITLE = 'Title'
+RETURN = 'Return'
+USER_ID = 'UserID'
 
 
 @api.route(f'/{HELLO_STR}')
@@ -73,6 +84,13 @@ class MainMenu(Resource):
                 }}
 
 
+user_model = api.model('NewUser', {
+    data.NAME: fields.String,
+    data.PASSWORD: fields.String,
+    data.PASSWORD: fields.Integer,
+})
+
+
 @api.route(f'{USERS_SLASH}')
 class Users(Resource):
     """
@@ -82,7 +100,28 @@ class Users(Resource):
         """
         This method returns all users.
         """
-        data
         return {
-            True
+            TYPE: DATA,
+            TITLE: 'Current Users',
+            DATA: data.get_users(),
+            RETURN: MAIN_MENU_EP,
         }
+
+    @api.expect(user_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
+    def post(self):
+        """
+        Add a user.
+        """
+        name = request.json[data.NAME]
+        password = request.json[data.EMAIL]
+        email = request.json[data.EMAIL]
+
+        try:
+            new_id = data.add_user(email, name, password)
+            if new_id is None:
+                raise wz.ServiceUnavailable('We have a technical problem.')
+            return {USER_ID: new_id}
+        except ValueError as e:
+            raise wz.NotAcceptable(f'{str(e)}')

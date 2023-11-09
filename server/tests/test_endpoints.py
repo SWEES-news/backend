@@ -13,6 +13,8 @@ import pytest
 
 import server.endpoints as ep
 
+import userdata.db as data
+
 TEST_CLIENT = ep.app.test_client()
 
 # tests if the hello world endpoint, which indicates if server is running at all

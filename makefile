@@ -1,7 +1,7 @@
 include common.mk
 
 API_DIR = server
-DB_DIR = db
+DB_DIR = userdata
 REQ_DIR = .
 
 PKG = $(API_DIR)
