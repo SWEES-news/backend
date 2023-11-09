@@ -32,3 +32,12 @@ def test_list_users():
     resp_json = resp.get_json()
     assert isinstance(resp_json, dict)
     assert len(resp_json) > 0
+
+#tests adding a user
+@patch('userdata.db.add_user', return_value=data.MOCK_ID, autospec=True)
+def test_users_add(mock_add):
+    """
+    Testing we do the right thing with a good return from add_user.
+    """
+    resp = TEST_CLIENT.post(ep.USERS_SLASH, json=data.get_rand_test_user())
+    assert resp.status_code == OK

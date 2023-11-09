@@ -7,6 +7,7 @@ import random
 
 ID_LEN = 24
 BIG_NUM = 100000000000000000000
+MOCK_ID = '0' * ID_LEN
 MAX_EMAIL_LEN = 320
 NAME = 'Username'
 MOCK_NAME = 'test'
@@ -60,11 +61,12 @@ def add_user(email: str, username: str, password: int) -> str:
     return _gen_id()
 
 
-def fetch_pets():
-    """
-    A function to return all pets in the data store.
-    """
-    return {"tigers": 2, "lions": 3, "zebras": 1}
+def get_name(user):
+    return user.get(NAME, '')
+
+
+def exists(name: str) -> bool:
+    return name in get_users()
 
 # future use
 # def init_app(app):
