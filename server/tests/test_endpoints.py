@@ -33,7 +33,7 @@ def test_list_users():
     assert isinstance(resp_json, dict)
     assert len(resp_json) > 0
 
-#tests adding a user
+
 @patch('userdata.db.add_user', return_value=data.MOCK_ID, autospec=True)
 def test_users_add(mock_add):
     """
@@ -41,3 +41,21 @@ def test_users_add(mock_add):
     """
     resp = TEST_CLIENT.post(ep.USERS_SLASH, json=data.get_rand_test_user())
     assert resp.status_code == OK
+
+
+@patch('userdata.db.add_user', side_effect=ValueError(), autospec=True) 
+def test_games_bad_add(mock_add):
+    """
+    Testing we do the right thing with a value error from add_user.
+    """
+    resp = TEST_CLIENT.post(ep.USERS_SLASH, json=data.get_test_user())
+    assert resp.status_code == NOT_ACCEPTABLE
+
+
+@patch('userdata.db.add_user', return_value=None)
+def test_games_add_db_failure(mock_add):
+    """
+    Testing we do the right thing with a null ID return from add_user.
+    """
+    resp = TEST_CLIENT.post(ep.USERS_SLASH, json=data.get_test_user())
+    assert resp.status_code == SERVICE_UNAVAILABLE

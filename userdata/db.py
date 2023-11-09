@@ -30,15 +30,20 @@ def get_test_user():
     return {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD, EMAIL: MOCK_EMAIL}
 
 
-# gets a user with a random gmail address
-def get_rand_test_user():
+# returns a randomly generated mock email
+def _get_random_email():
     rand_part = str(random.randint(0, BIG_NUM))
     if len(rand_part) > MAX_MOCK_LEN:
         rand_str = (rand_part[:MAX_MOCK_LEN])
     else:
         rand_str = rand_part
-    rand_str += EMAIL_TAIL
-    return {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD, EMAIL: rand_str}
+    return rand_str + EMAIL_TAIL
+
+
+# gets a user with a random gmail address
+def get_rand_test_user():
+    rand_part = _get_random_email()
+    return {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD, EMAIL: rand_part}
 
 
 def _gen_id() -> str:
