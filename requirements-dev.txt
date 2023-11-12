@@ -5,3 +5,4 @@ pytest-cov
 Flask-Migrate
 Flask-Marshmallow
 newsdataapi
+pymongo
