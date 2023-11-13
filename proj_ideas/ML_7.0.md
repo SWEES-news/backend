@@ -46,3 +46,5 @@ We can use existing datasets with labeled data for the purposes of bias detectio
 
 
 ### Unsupervised:
+Since finding training data that exactly fits our purpose is difficult, we may also choose to take an unsupervised AI approach: 
+https://www.datacamp.com/blog/introduction-to-unsupervised-learning
