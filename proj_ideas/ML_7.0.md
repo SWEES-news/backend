@@ -34,3 +34,15 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 ```
+
+## Supervised vs Unsupervised
+### Supervised:
+creating neural network resource: https://realpython.com/python-ai-neural-network/ 
+
+We can use existing datasets with labeled data for the purposes of bias detection: 
+- https://datasetsearch.research.google.com/search?query=Bias%20Detection&docid=L2cvMTFqc2RkY2M0aA%3D%3D
+- https://www.kaggle.com/datasets/timospinde/babe-media-bias-annotations-by-experts
+- https://zenodo.org/records/4625151
+
+
+### Unsupervised:
