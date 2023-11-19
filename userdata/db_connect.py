@@ -26,20 +26,14 @@ def connect_db():
     if client is None:  # not connected yet!
         print("Setting client because it is None.")
         if os.environ.get("CLOUD_MONGO", LOCAL) == CLOUD:
-            password = os.environ.get("GAME_MONGO_PW")
+            password = os.environ.get("USER_MONGO_PW")
             if not password:
                 raise ValueError('You must set your password '
                                  + 'to use Mongo in the cloud.')
             print("Connecting to Mongo in the cloud.")
-            client = pm.MongoClient(f'mongodb+srv://gcallah:{password}'
+            client = pm.MongoClient(f'mongodb+srv://{USER_NAME}:{password}'
                                     + '@cluster0.eqxbbqd.mongodb.net/'
                                     + '?retryWrites=true&w=majority')
-            # PA recommends these settings:
-            # + 'connectTimeoutMS=30000&'
-            # + 'socketTimeoutMS=None
-            # + '&connect=false'
-            # + 'maxPoolsize=1')
-            # but they don't seem necessary
         else:
             print("Connecting to Mongo locally.")
             client = pm.MongoClient()
