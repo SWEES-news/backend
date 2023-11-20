@@ -117,3 +117,14 @@ def exists(name: str) -> bool:
 #     db.init_app(app)
 #     Migrate(app, db)
 #     return True
+
+
+def get_user_by_id(user_id: str):
+    """
+    Fetches a user from the database by their ID.
+    """
+    global client
+    db = client.your_database_name
+    users_collection = db.users
+    user = users_collection.find_one({'_id': user_id})
+    return user
