@@ -109,4 +109,47 @@ https://newsdata.io/blog/news-api-python-client/
 	- For a more permanent and portable solution, you might want to consider using a configuration file or a more advanced secret management solution, especially in a production environment.
 
 
+## Setting up MongoDB on MacOS
 
+This section guides you through the process of installing MongoDB on MacOS using Homebrew and connecting to your MongoDB instance.
+
+### Prerequisites
+
+- MacOS with Homebrew installed.
+- Terminal access.
+
+### Installation Steps
+
+1. **Add MongoDB Repository to Homebrew**:
+   MongoDB provides a custom Homebrew tap. Adding this tap allows you to install MongoDB directly through Homebrew. Run the following command to add the MongoDB tap:
+   ```
+   brew tap mongodb/brew
+   ```
+
+2. **Install MongoDB Community Edition**:
+   Once you have tapped the MongoDB repository, you can install MongoDB Community Edition using the following command:
+   ```
+   brew install mongodb-community
+   ```
+
+3. **Start the MongoDB Service**:
+   After installation, you can start the MongoDB service. This will initiate the MongoDB server and make it ready for connections:
+   ```
+   brew services start mongodb-community
+   ```
+
+4. **Connecting to MongoDB**:
+   - **Using `mongosh` (Recommended)**: Newer MongoDB installations come with `mongosh`, the MongoDB Shell, as the default CLI tool for interaction. You can connect to your local MongoDB instance by simply typing:
+     ```
+     mongosh
+     ```
+   - **Using `mongo` (Legacy)**: In older versions or if you have `mongo` installed separately, you can connect using:
+     ```
+     mongo
+     ```
+
+### Verifying the Installation
+
+To verify that MongoDB is running correctly, use the `mongosh` or `mongo` command to connect to your MongoDB instance. If you encounter any issues, ensure that MongoDB is correctly started and that there are no network or firewall configurations blocking the connection.
+
+For detailed documentation and advanced configuration, refer to the [official MongoDB documentation](https://docs.mongodb.com/manual/).
