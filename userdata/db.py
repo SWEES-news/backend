@@ -7,6 +7,7 @@ import random
 import os
 
 import pymongo as pm
+# import userdata.db_connect as dbc
 
 LOCAL = "0"
 CLOUD = "1"
@@ -24,6 +25,7 @@ MOCK_EMAIL = '1@gmail.com'
 EMAIL_TAIL = '@gmail.com'
 EMAIL_TAIL_LEN = 10
 MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
+USER_COLLECT = 'users'
 
 # storage of users, email: tuple(username, password)
 users = {

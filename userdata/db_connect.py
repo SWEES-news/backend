@@ -13,6 +13,10 @@ client = None
 
 MONGO_ID = '_id'
 
+URI_FRONT = 'mongodb+srv://WilliamYuxinXu:'
+URI_BACK = '@swees.mumkgcx.mongodb.net/?retryWrites=true&w=majority'
+URI = URI_FRONT + URI_BACK
+
 
 def connect_db():
     """
@@ -26,14 +30,12 @@ def connect_db():
     if client is None:  # not connected yet!
         print("Setting client because it is None.")
         if os.environ.get("CLOUD_MONGO", LOCAL) == CLOUD:
-            password = os.environ.get("USER_MONGO_PW")
+            password = os.environ.get("MONGODB_PASSWORD")
             if not password:
                 raise ValueError('You must set your password '
                                  + 'to use Mongo in the cloud.')
             print("Connecting to Mongo in the cloud.")
-            client = pm.MongoClient(f'mongodb+srv://{USER_NAME}:{password}'
-                                    + '@cluster0.eqxbbqd.mongodb.net/'
-                                    + '?retryWrites=true&w=majority')
+            client = pm.MongoClient(f'{URI_FRONT + {password} + URI_BACK}')
         else:
             print("Connecting to Mongo locally.")
             client = pm.MongoClient()
