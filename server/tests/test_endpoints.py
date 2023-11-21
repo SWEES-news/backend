@@ -59,3 +59,25 @@ def test_games_add_db_failure(mock_add):
     """
     resp = TEST_CLIENT.post(ep.USERS_SLASH, json=data.get_test_user())
     assert resp.status_code == SERVICE_UNAVAILABLE
+
+
+@patch('userdata.db.get_user_by_id')
+def test_user_detail_success(mock_get_user):
+    mock_user = {
+        'name': 'John Doe',
+        'email': 'john@example.com',
+        # ... other user fields ...
+    }
+    mock_get_user.return_value = mock_user
+    user_id = 1  # Assuming 1 is a valid user ID for the test
+    resp = TEST_CLIENT.get(f'/user/{user_id}')
+    assert resp.status_code == OK
+    resp_json = resp.get_json()
+    assert 'name' in resp_json  # Replace 'name' with the actual fields you expect
+
+@patch('userdata.db.get_user_by_id', return_value=None)
+def test_user_detail_not_found(mock_get_user):
+    user_id = 999  # Assuming 999 is an invalid user ID for the test
+    resp = TEST_CLIENT.get(f'/user/{user_id}')
+    assert resp.status_code == NOT_FOUND
+

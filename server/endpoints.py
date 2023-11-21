@@ -125,3 +125,19 @@ class Users(Resource):
             return {USER_ID: new_id}
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
+
+
+@api.route('/user/<int:user_id>')
+class UserDetail(Resource):
+    """
+    This class supports fetching details of a specific user.
+    """
+    def get(self, user_id):
+        """
+        This method returns details of a specific user.
+        """
+        user = data.get_user_by_id(user_id)
+        if user:
+            return user
+        else:
+            api.abort(HTTPStatus.NOT_FOUND, f'User {user_id} not found')
