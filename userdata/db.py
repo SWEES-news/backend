@@ -37,33 +37,25 @@ MONGO_ID = '_id'
 
 def connect_db():
     """
-    This provides a uniform way to connect to the DB across all uses.
-    Returns a mongo client object... maybe we shouldn't?
-    Also set global client variable.
-    We should probably either return a client OR set a
-    client global.
+    Uniform connection method for the database.
+    Returns a mongo client object and sets a global client variable.
     """
     global client
-    if client is None:  # not connected yet!
-        print("Setting client because it is None.")
-        if os.environ.get("CLOUD_MONGO", LOCAL) == CLOUD:
+    if client is None:
+        print("Initializing MongoDB client.")
+        cloud_env = os.environ.get("CLOUD_MONGO", LOCAL)
+        if cloud_env == CLOUD:
             password = os.environ.get("GAME_MONGO_PW")
             if not password:
-                raise ValueError('You must set your password '
-                                 + 'to use Mongo in the cloud.')
-            print("Connecting to Mongo in the cloud.")
-            client = pm.MongoClient(f'mongodb+srv://gcallah:{password}'
-                                    + '@cluster0.eqxbbqd.mongodb.net/'
-                                    + '?retryWrites=true&w=majority')
-            # PA recommends these settings:
-            # + 'connectTimeoutMS=30000&'
-            # + 'socketTimeoutMS=None
-            # + '&connect=false'
-            # + 'maxPoolsize=1')
-            # but they don't seem necessary
+                raise ValueError('Set password for cloud Mongo usage.')
+            conn_str = (f'mongodb+srv://gcallah:{password}'
+                        '@cluster0.mongodb.net/?retryWrites=true&w=majority')
+            client = pm.MongoClient(conn_str)
+            print("Connected to Mongo in the cloud.")
         else:
-            print("Connecting to Mongo locally.")
             client = pm.MongoClient()
+            print("Connected to Mongo locally.")
+    return client
 
 
 # returns json of mock user
