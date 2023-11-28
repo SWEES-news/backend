@@ -10,6 +10,7 @@ from flask_restx import Resource, Api, fields
 import werkzeug.exceptions as wz
 
 import userdata.db as data
+import userdata.newsdb as news
 # from http import HTTPStatus
 
 
@@ -31,6 +32,9 @@ DATA = 'Data'
 TITLE = 'Title'
 RETURN = 'Return'
 USER_ID = 'UserID'
+NEWS_LINK = 'NewsPage'
+NEWS_LINK_SLASH = '/news'
+NEWS_ID = 'NewsID'
 
 
 @api.route(f'/{HELLO_STR}')
@@ -86,7 +90,7 @@ class MainMenu(Resource):
 
 user_model = api.model('NewUser', {
     data.NAME: fields.String,
-    data.PASSWORD: fields.String,
+    data.EMAIL: fields.String,
     data.PASSWORD: fields.Integer,
 })
 
@@ -141,3 +145,44 @@ class UserDetail(Resource):
             return user
         else:
             api.abort(HTTPStatus.NOT_FOUND, f'User {user_id} not found')
+
+
+news_model = api.model('NewArticle', {
+    news.NAME: fields.String,
+    news.LINK: fields.Integer,
+})
+
+
+@api.route(f'{NEWS_LINK_SLASH}')
+class News(Resource):
+    """
+    This class supports fetching links to an article
+    """
+    def get(self):
+        """
+        This method returns all news article links and name.
+        """
+        return {
+            TYPE: DATA,
+            TITLE: 'Stored Articles',
+            DATA: news.get_articles(),
+            RETURN: MAIN_MENU_EP,
+        }
+
+    @api.expect(news_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
+    def post(self):
+        """
+        Add a news link.
+        """
+        name = request.json[news.NAME]
+        link = request.json[news.LINK]
+
+        try:
+            new_id = news.add_user(name, link)
+            if new_id is None:
+                raise wz.ServiceUnavailable('We have a technical problem.')
+            return {NEWS_ID: new_id}
+        except ValueError as e:
+            raise wz.NotAcceptable(f'{str(e)}')

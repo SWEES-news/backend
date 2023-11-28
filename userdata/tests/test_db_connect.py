@@ -6,8 +6,8 @@ TEST_DB = dbc.USER_DB
 TEST_COLLECT = 'test_collect'
 # can be used for field and value:
 TEST_NAME = 'test'
-TEST_EMAIL = 'test@gmail.com'
-TEST_PASSWORD = 'testword@gmail.'
+TEST_EMAIL = 'test@gmailcom'
+TEST_PASSWORD = 'testword@gmail.com'
 
 
 @pytest.fixture(scope='function')
