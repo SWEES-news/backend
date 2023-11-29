@@ -4,10 +4,7 @@ At first, it will just contain stubs that return fake data.
 Gradually, we will fill in actual calls to our datastore.
 """
 import random
-import os
-
-import pymongo as pm
-# import userdata.db_connect as dbc
+import userdata.db_connect as dbc
 
 LOCAL = "0"
 CLOUD = "1"
@@ -33,29 +30,6 @@ users = {
 }
 
 MONGO_ID = '_id'
-
-
-def connect_db():
-    """
-    Uniform connection method for the database.
-    Returns a mongo client object and sets a global client variable.
-    """
-    global client
-    if client is None:
-        print("Initializing MongoDB client.")
-        cloud_env = os.environ.get("CLOUD_MONGO", LOCAL)
-        if cloud_env == CLOUD:
-            password = os.environ.get("GAME_MONGO_PW")
-            if not password:
-                raise ValueError('Set password for cloud Mongo usage.')
-            conn_str = (f'mongodb+srv://gcallah:{password}'
-                        '@cluster0.mongodb.net/?retryWrites=true&w=majority')
-            client = pm.MongoClient(conn_str)
-            print("Connected to Mongo in the cloud.")
-        else:
-            client = pm.MongoClient()
-            print("Connected to Mongo locally.")
-    return client
 
 
 # returns json of mock user
@@ -87,24 +61,40 @@ def _gen_id() -> str:
 
 
 def get_users() -> dict:
-    return users
+    dbc.connect_db()
+    return dbc.fetch_all_as_dict(EMAIL, USER_COLLECT)
 
 
 def add_user(email: str, username: str, password: int) -> str:
-    if email in users:
+    if exists(email):
         raise ValueError(f'Duplicate Email: {email=}')
     if not email:
         raise ValueError('Email may not be blank')
-    users[email] = {NAME: username, PASSWORD: password}
-    return _gen_id()
+    user = {}
+    user[EMAIL] = email
+    user[NAME] = username
+    user[PASSWORD] = password
+    dbc.connect_db()
+    _id = dbc.insert_one(USER_COLLECT, user)
+    return _id is not None
+
+
+def del_user(email: str):
+    if email in users:
+        del users[email]
+    if exists(email):
+        dbc.del_one(USER_COLLECT, {EMAIL: email})
+    else:
+        raise ValueError(f'Delete failure: {email} not in database.')
 
 
 def get_name(user):
     return user.get(NAME, '')
 
 
-def exists(name: str) -> bool:
-    return name in get_users()
+def exists(email: str) -> bool:
+    dbc.connect_db()
+    return dbc.fetch_one(USER_COLLECT, {EMAIL: email})
 
 # future use
 # def init_app(app):

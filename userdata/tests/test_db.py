@@ -27,14 +27,15 @@ def test_get_test_user():
     assert isinstance(data.get_rand_test_user(), dict)
 
 
-def test_get_users():
+def test_get_users(temp_user):
     users = data.get_users()
     assert isinstance(users, dict)
-    assert len(users) > 0
+    # assert len(users) > 0
     for user in users:
         assert isinstance(user, str)
         assert isinstance(users[user], dict)
-    assert data.MOCK_EMAIL in users
+    assert temp_user in users
+    data.del_user(temp_user)
 
 
 def test_add_user_dup_email(temp_user):
@@ -44,6 +45,7 @@ def test_add_user_dup_email(temp_user):
     dup_name = temp_user
     with pytest.raises(ValueError):
         data.add_user(dup_name, data.MOCK_NAME, data.MOCK_PASSWORD)
+    data.del_user(temp_user)
 
 
 def test_add_user_blank_email():
@@ -58,6 +60,19 @@ ADD_EMAIL = 'newuser@gmail.com'
 
 
 def test_add_user():
-    ret = data.add_user(ADD_EMAIL, data.MOCK_NAME, data.MOCK_PASSWORD)
-    assert data.exists(ADD_EMAIL)
-    assert isinstance(ret, str)
+    new_user = data._get_random_email()
+    ret = data.add_user(new_user, data.MOCK_NAME, data.MOCK_PASSWORD)
+    assert data.exists(new_user)
+    assert isinstance(ret, bool)
+    data.del_user(new_user)
+
+def test_del_user(temp_user):
+    email = temp_user
+    data.del_user(email)
+    assert not data.exists(email)
+
+
+def test_del_user_not_there():
+    name = data._get_random_email()
+    with pytest.raises(ValueError):
+        data.del_user(name)

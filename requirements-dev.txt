@@ -6,3 +6,4 @@ Flask-Migrate
 Flask-Marshmallow
 newsdataapi
 pymongo
+scrapy

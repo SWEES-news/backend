@@ -71,12 +71,6 @@ def get_name(article):
 def exists(name: str) -> bool:
     return name in get_articles()
 
-# future use
-# def init_app(app):
-#     db.init_app(app)
-#     Migrate(app, db)
-#     return True
-
 
 def get_article_by_id(article_id: str):
     """
