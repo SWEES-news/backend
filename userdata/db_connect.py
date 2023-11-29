@@ -35,12 +35,12 @@ def connect_db():
                 raise ValueError('You must set your password '
                                  + 'to use Mongo in the cloud.')
             print("Connecting to Mongo in the cloud.")
-            client = pm.MongoClient(f'{URI_FRONT + {password} + URI_BACK}')
+            client = pm.MongoClient(URI_FRONT + password + URI_BACK)
         else:
             print("Connecting to Mongo locally.")
             client = pm.MongoClient()
-    else:
-        print("Already Connected")
+            # password = os.environ.get("MONGODB_PASSWORD")
+            # client = pm.MongoClient(URI_FRONT + password + URI_BACK)
 
 
 def insert_one(collection, doc, db=USER_DB):

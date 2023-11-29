@@ -15,14 +15,10 @@ github: FORCE
 	- git commit -a
 	git push origin master
 
-tests: lint unit
+tests: 
+	cd $(API_DIR); make tests
+	cd $(DB_DIR); make tests
 
-unit: FORCE
-	cd $(API_DIR); pytest $(PYTESTFLAGS) --cov=$(PKG)
-
-lint: FORCE
-	$(LINTER) $(API_DIR)/*.py
-	$(LINTER) $(DB_DIR)/*.py
 
 dev_env: FORCE
 	pip3 install -r $(REQ_DIR)/requirements-dev.txt

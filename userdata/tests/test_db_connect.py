@@ -12,7 +12,7 @@ TEST_PASSWORD = 'testword@gmail.com'
 
 @pytest.fixture(scope='function')
 def temp_rec():
-    dbc.connect_db()
+    temp = dbc.connect_db()
     dbc.client[TEST_DB][TEST_COLLECT].insert_one({TEST_NAME: TEST_NAME})
     # yield to our test function
     yield
@@ -21,7 +21,6 @@ def temp_rec():
 # this fails when fetching string with '.' character in
 def test_fetch_one(temp_rec):
     ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: TEST_NAME})
-    print('\n\n\n\n\n\n\n', ret)
     assert ret is not None
 
 
