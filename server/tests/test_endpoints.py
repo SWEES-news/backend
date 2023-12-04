@@ -15,6 +15,9 @@ import server.endpoints as ep
 
 import userdata.db as data
 
+import unittest
+from endpoints import app
+
 TEST_CLIENT = ep.app.test_client()
 
 # tests if the hello world endpoint, which indicates if server is running at all

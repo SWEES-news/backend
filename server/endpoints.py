@@ -187,6 +187,11 @@ class News(Resource):
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
+submit_article_model = api.model('SubmitArticle', {
+    'article_link': fields.String(required=True, description='The URL link to the article'),
+    'submitter_id': fields.String(required=True, description='The ID of the user submitting the article')
+})
+
 @api.route('/submit-article')
 class SubmitArticle(Resource):
     @api.expect(submit_article_model)
@@ -209,8 +214,3 @@ class SubmitArticle(Resource):
         submission_id = store_article_submission(article_link, submitter_id)
 
         return {"message": "Article submitted successfully", "submission_id": submission_id}, HTTPStatus.OK
-
-submit_article_model = api.model('SubmitArticle', {
-    'article_link': fields.String(required=True, description='The URL link to the article'),
-    'submitter_id': fields.String(required=True, description='The ID of the user submitting the article')
-})
