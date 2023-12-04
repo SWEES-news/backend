@@ -81,3 +81,20 @@ def test_user_detail_not_found(mock_get_user):
     resp = TEST_CLIENT.get(f'/user/{user_id}')
     assert resp.status_code == NOT_FOUND
 
+class TestSubmitArticleEndpoint(unittest.TestCase):
+
+    def setUp(self):
+        self.app = app.test_client()
+        self.app.testing = True
+
+    @patch('endpoints.store_article_submission')
+    def test_successful_submission(self, mock_store):
+        # Mocking the database call
+        mock_store.return_value = True
+
+        response = self.app.post('/submitarticle', json={
+            'article_link': 'http://example.com/article',
+            'submitter_id': 123
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('success', response.json['status'])
