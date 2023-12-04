@@ -231,4 +231,3 @@ class SubmitArticle(Resource):
             },
             HTTPStatus.OK
         )
-        
