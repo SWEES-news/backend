@@ -89,9 +89,9 @@ class MainMenu(Resource):
 
 
 user_model = api.model('NewUser', {
-    data.NAME: fields.String,
     data.EMAIL: fields.String,
-    data.PASSWORD: fields.Integer,
+    data.NAME: fields.String,
+    data.PASSWORD: fields.String,
 })
 
 
