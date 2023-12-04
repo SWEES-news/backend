@@ -15,6 +15,9 @@ import server.endpoints as ep
 
 import userdata.db as data
 
+import unittest
+from endpoints import app
+
 TEST_CLIENT = ep.app.test_client()
 
 # tests if the hello world endpoint, which indicates if server is running at all
@@ -81,3 +84,45 @@ def test_user_detail_not_found(mock_get_user):
     resp = TEST_CLIENT.get(f'/user/{user_id}')
     assert resp.status_code == NOT_FOUND
 
+class TestSubmitArticleEndpoint(unittest.TestCase):
+
+    def setUp(self):
+        self.app = app.test_client()
+        self.app.testing = True
+
+    @patch('endpoints.store_article_submission')
+    def test_successful_submission(self, mock_store):
+        # Mocking the database call
+        mock_store.return_value = True
+
+        response = self.app.post('/submitarticle', json={
+            'article_link': 'http://example.com/article',
+            'submitter_id': 123
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('success', response.json['status'])
+
+    @patch('endpoints.store_article_submission')
+    def test_invalid_data_submission(self, mock_store):
+        # Mocking the database call
+        mock_store.return_value = True
+
+        # Testing with invalid data
+        response = self.app.post('/submitarticle', json={
+            'article_link': 'http://example.com/article',
+            'submitter_id': 123
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json['status'])
+
+    @patch('endpoints.store_article_submission')
+    def test_server_error_condition(self, mock_store):
+        # Mocking the database call to simulate a server error
+        mock_store.side_effect = Exception('Database error')
+
+        response = self.app.post('/submitarticle', json={
+            'article_link': 'http://example.com/article',
+            'submitter_id': 123
+        })
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('error', response.json['status'])

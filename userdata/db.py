@@ -112,3 +112,27 @@ def get_user_by_id(user_id: str):
     users_collection = db.users
     user = users_collection.find_one({'_id': user_id})
     return user
+
+
+def store_article_submission(article_link: str, submitter_id: str) -> str:
+    """
+    Store the submitted article for review.
+
+    :param article_link: The URL of the article being submitted.
+    :param submitter_id: The ID of the user submitting the article.
+    :return: A unique ID for the article submission.
+    """
+    # Connect to the database
+    dbc.connect_db()
+
+    # Create a new article submission record
+    submission_record = {
+        "article_link": article_link,
+        "submitter_id": submitter_id,
+        # Add any other relevant fields, such as submission timestamp
+    }
+
+    # Insert the record into the database and retrieve the submission ID
+    submission_id = dbc.insert_one('articles', submission_record)
+
+    return submission_id
