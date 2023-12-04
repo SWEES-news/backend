@@ -24,7 +24,7 @@ EMAIL_TAIL_LEN = 10
 MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
 USER_COLLECT = 'users'
 
-# storage of users, email: tuple(username, password)
+# storage of users, 
 users = {
     MOCK_EMAIL: {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD}
 }
@@ -34,7 +34,7 @@ MONGO_ID = '_id'
 
 # returns json of mock user
 def get_test_user():
-    return {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD, EMAIL: MOCK_EMAIL}
+    return {EMAIL: MOCK_EMAIL, NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD}
 
 
 # returns a randomly generated mock email
@@ -50,7 +50,7 @@ def _get_random_email():
 # gets a user with a random gmail address
 def get_rand_test_user():
     rand_part = _get_random_email()
-    return {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD, EMAIL: rand_part}
+    return {EMAIL: rand_part, NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD}
 
 
 def _gen_id() -> str:
@@ -65,7 +65,7 @@ def get_users() -> dict:
     return dbc.fetch_all_as_dict(EMAIL, USER_COLLECT)
 
 
-def add_user(email: str, username: str, password: int) -> str:
+def add_user(email: str, username: str, password: str) -> str:
     if exists(email):
         raise ValueError(f'Duplicate Email: {email=}')
     if not email:

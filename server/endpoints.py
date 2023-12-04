@@ -119,7 +119,7 @@ class Users(Resource):
         Add a user.
         """
         name = request.json[data.NAME]
-        password = request.json[data.EMAIL]
+        password = request.json[data.PASSWORD]
         email = request.json[data.EMAIL]
 
         try:
@@ -180,7 +180,7 @@ class News(Resource):
         link = request.json[news.LINK]
 
         try:
-            new_id = news.add_user(name, link)
+            new_id = news.add_article(name, link)
             if new_id is None:
                 raise wz.ServiceUnavailable('We have a technical problem.')
             return {NEWS_ID: new_id}
