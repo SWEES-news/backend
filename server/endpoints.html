@@ -246,3 +246,34 @@ Data and other attributes inherited from <a href="flask.views.html#View">flask.v
 <td width="100%"><strong>api</strong> = &lt;flask_restx.api.Api object&gt;<br>
 <strong>app</strong> = &lt;Flask 'endpoints'&gt;</td></tr></table>
 </body></html>
+
+<!-- Begin of SubmitArticle Endpoint Documentation -->
+<h2>SubmitArticle Endpoint</h2>
+<p>This endpoint is used for submitting articles for bias analysis. It accepts POST requests with the following parameters.</p>
+
+<h3>Request Format</h3>
+<pre>
+POST /submitarticle
+Content-Type: application/json
+
+{
+    "article_link": "string (URL of the article)",
+    "submitter_id": "integer (ID of the submitter)"
+}
+</pre>
+
+<h3>Required Parameters</h3>
+<ul>
+    <li><strong>article_link:</strong> URL of the article to be analyzed.</li>
+    <li><strong>submitter_id:</strong> ID of the user submitting the article.</li>
+</ul>
+
+<h3>Response</h3>
+<p>The response will include a status message indicating the success or failure of the submission.</p>
+<pre>
+{
+    "status": "success or error message",
+    "data": "any additional data or null"
+}
+</pre>
+<!-- End of SubmitArticle Endpoint Documentation -->
