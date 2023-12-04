@@ -11,12 +11,13 @@ from unittest.mock import patch
 
 import pytest
 
+from server.endpoints import app
+
 import server.endpoints as ep
 
 import userdata.db as data
 
 import unittest
-from endpoints import app
 
 TEST_CLIENT = ep.app.test_client()
 
@@ -90,7 +91,7 @@ class TestSubmitArticleEndpoint(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
 
-    @patch('endpoints.store_article_submission')
+    @patch('server.endpoints.store_article_submission')
     def test_successful_submission(self, mock_store):
         # Mocking the database call
         mock_store.return_value = True
@@ -102,20 +103,20 @@ class TestSubmitArticleEndpoint(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('success', response.json['status'])
 
-    @patch('endpoints.store_article_submission')
+    @patch('server.endpoints.store_article_submission')
     def test_invalid_data_submission(self, mock_store):
         # Mocking the database call
         mock_store.return_value = True
 
         # Testing with invalid data
         response = self.app.post('/submitarticle', json={
-            'article_link': 'http://example.com/article',
+            'article_link': '',
             'submitter_id': 123
         })
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.json['status'])
 
-    @patch('endpoints.store_article_submission')
+    @patch('server.endpoints.store_article_submission')
     def test_server_error_condition(self, mock_store):
         # Mocking the database call to simulate a server error
         mock_store.side_effect = Exception('Database error')
