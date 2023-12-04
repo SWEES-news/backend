@@ -187,10 +187,18 @@ class News(Resource):
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
+
 submit_article_model = api.model('SubmitArticle', {
-    'article_link': fields.String(required=True, description='The URL link to the article'),
-    'submitter_id': fields.String(required=True, description='The ID of the user submitting the article')
+    'article_link': 
+        fields.String(
+            required=True, 
+            description='The URL link to the article'),
+    'submitter_id': 
+        fields.String(
+            required=True, 
+            description='The ID of the user submitting the article')
 })
+
 
 @api.route('/submit-article')
 class SubmitArticle(Resource):
@@ -204,13 +212,22 @@ class SubmitArticle(Resource):
         data = request.json
         article_link = data['article_link']
         submitter_id = data['submitter_id']
-        
+
         # Validate the input data
         if not article_link or not submitter_id:
-            api.abort(HTTPStatus.BAD_REQUEST, "Invalid data: 'article_link' and 'submitter_id' are required.")
+            api.abort(
+                HTTPStatus.BAD_REQUEST, 
+                "Invalid data: 'article_link' and 'submitter_id' are required."
+            )
 
         # Implement logic to store the article submission for review.
         # For example, you might save it to a database.
         submission_id = store_article_submission(article_link, submitter_id)
 
-        return {"message": "Article submitted successfully", "submission_id": submission_id}, HTTPStatus.OK
+        return (
+            {
+                "message": "Article submitted successfully", 
+                "submission_id": submission_id
+            }, 
+            HTTPStatus.OK
+        )
