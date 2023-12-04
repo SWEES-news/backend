@@ -98,3 +98,28 @@ class TestSubmitArticleEndpoint(unittest.TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertIn('success', response.json['status'])
+
+    @patch('endpoints.store_article_submission')
+    def test_invalid_data_submission(self, mock_store):
+        # Mocking the database call
+        mock_store.return_value = True
+
+        # Testing with invalid data
+        response = self.app.post('/submitarticle', json={
+            'article_link': '',
+            'submitter_id': 123
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json['status'])
+
+    @patch('endpoints.store_article_submission')
+    def test_server_error_condition(self, mock_store):
+        # Mocking the database call to simulate a server error
+        mock_store.side_effect = Exception('Database error')
+
+        response = self.app.post('/submitarticle', json={
+            'article_link': 'http://example.com/article',
+            'submitter_id': 123
+        })
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('error', response.json['status'])
