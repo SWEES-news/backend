@@ -106,7 +106,7 @@ class TestSubmitArticleEndpoint(unittest.TestCase):
 
         # Testing with invalid data
         response = self.app.post('/submitarticle', json={
-            'article_link': '',
+            'article_link': 'http://example.com/article',
             'submitter_id': 123
         })
         self.assertEqual(response.status_code, 400)
