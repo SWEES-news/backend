@@ -24,6 +24,7 @@ __pycache__/
 
 # virtual env
 demo-repo4-venv
+swees_venv/
 
 # vim files
 *~
