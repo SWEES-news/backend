@@ -189,13 +189,13 @@ class News(Resource):
 
 
 submit_article_model = api.model('SubmitArticle', {
-    'article_link': 
+    'article_link':
         fields.String(
-            required=True, 
+            required=True,
             description='The URL link to the article'),
-    'submitter_id': 
+    'submitter_id':
         fields.String(
-            required=True, 
+            required=True,
             description='The ID of the user submitting the article')
 })
 
@@ -216,7 +216,7 @@ class SubmitArticle(Resource):
         # Validate the input data
         if not article_link or not submitter_id:
             api.abort(
-                HTTPStatus.BAD_REQUEST, 
+                HTTPStatus.BAD_REQUEST,
                 "Invalid data: 'article_link' and 'submitter_id' are required."
             )
 
@@ -226,8 +226,9 @@ class SubmitArticle(Resource):
 
         return (
             {
-                "message": "Article submitted successfully", 
+                "message": "Article submitted successfully",
                 "submission_id": submission_id
-            }, 
+            },
             HTTPStatus.OK
         )
+        
