@@ -42,6 +42,7 @@ def connect_db():
             # password = os.environ.get("MONGODB_PASSWORD")
             # client = pm.MongoClient(URI_FRONT + password + URI_BACK)
 
+
 def insert_one(collection, doc, db=USER_DB):
     """
     Insert a single doc into collection.
@@ -50,8 +51,9 @@ def insert_one(collection, doc, db=USER_DB):
         result = client[db][collection].insert_one(doc)
         return result.inserted_id  # Return the ID of the inserted document
     except pm.PyMongoError as e:
-        pm.logging.error(f"Error inserting document into {db}.{collection}: {e}")
+        pm.logging.error(f"Error inserting doc into {db}.{collection}: {e}")
         return None
+
 
 def fetch_one(collection, filt, db=USER_DB):
     """

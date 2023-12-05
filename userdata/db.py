@@ -24,7 +24,7 @@ EMAIL_TAIL_LEN = 10
 MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
 USER_COLLECT = 'users'
 
-# storage of users, 
+# storage of users
 users = {
     MOCK_EMAIL: {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD}
 }
