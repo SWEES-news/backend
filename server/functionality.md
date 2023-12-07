@@ -39,6 +39,31 @@ project, and inform what endpoints to define for our server. This list is subjec
 15. Content Validation
     - Implementing a system to validate user-contributed articles to prevent the spread of misinformation or misuse. If articles are very trustworthy (according to user feedback and other fact checking mechanisms), that can be noted in database and used to help influence bias detection in other articles. 
 
+---------
+
+**(13) Planned Endpoint To Implement:**
+
+(Note: anything in parentheses isn't an endpoint)
+
+* User creates new account
+* User logs in to existing account
+* User can modify/update account info
+* User can delete entire account
+* User submits link (for AI analysis)
+* User submits article text snippet (basically a portion of the content of the article)
+    * (let's automatically save any submitted article snippets or links to the user's account history)
+* User fetches from account...
+    * All the article links they have submitted in the past (since we track article history)
+    * All the article snippets they have submitted in the past
+* User can delete from account...
+    * Specific snippet 
+        * (how to implement this? Either through some kind of snippet ID, or by having user re-submit the entire snippet so
+        that we can match it to an existing snippet in the DB)
+    * Specific article link
+    * Clear all article history
+    * Clear all snippet history
+* User can check today’s news from the newsapi, get a list of (5?) article links they can read and get analyized 
+    * (makes our tool useful for users who want a quick analysis on the most up to date news articles without waiting for human analyses)
 
 
 
