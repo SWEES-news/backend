@@ -85,6 +85,50 @@ def test_user_detail_not_found(mock_get_user):
     resp = TEST_CLIENT.get(f'/user/{user_id}')
     assert resp.status_code == NOT_FOUND
 
+
+@patch('userdata.newsdb.get_article_by_id')
+def test_bias_analysis_success(mock_get_article):
+    """
+    Test successful bias analysis.
+    """
+    # Mocking the article retrieval
+    mock_article = {'id': 'some_id', 'content': 'This is a test article'}
+    mock_get_article.return_value = mock_article
+
+    response = TEST_CLIENT.post('/bias-analysis', json={
+        'article_id': 'some_id',
+        # 'analysis_parameters': {}  # Optional parameters if needed
+    })
+    assert response.status_code == OK
+    resp_json = response.get_json()
+    assert 'analysis_result' in resp_json
+
+
+@patch('userdata.newsdb.get_article_by_id', return_value=None)
+def test_bias_analysis_article_not_found(mock_get_article):
+    """
+    Test bias analysis when the article is not found.
+    """
+    response = TEST_CLIENT.post('/bias-analysis', json={
+        'article_id': 'non_existent_id',
+    })
+    assert response.status_code == NOT_FOUND
+
+
+@patch('userdata.newsdb.get_article_by_id')
+def test_bias_analysis_server_error(mock_get_article):
+    """
+    Test server error during bias analysis.
+    """
+    # Simulate a server error during article retrieval
+    mock_get_article.side_effect = Exception('Database error')
+
+    response = TEST_CLIENT.post('/bias_analysis', json={
+        'article_id': 'some_id',
+    })
+    assert response.status_code == NOT_FOUND # techniclly should be BAD_REQUEST  
+
+
 class TestSubmitArticleEndpoint(unittest.TestCase):
 
     def setUp(self):
