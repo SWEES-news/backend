@@ -14,8 +14,8 @@ then
     DATA_DIR=/mnt/c/Users/xuwil/SWEES_fall2023
 fi
 BKUP_DIR=$DATA_DIR/bkup
-EXP=/usr/local/bin/mongoexport
-IMP=/usr/local/bin/mongoimport
+EXP=mongoexport
+IMP=mongoimport
 
 if [ -z $MONGODB_PASSWORD ]
 then
