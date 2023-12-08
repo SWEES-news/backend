@@ -153,6 +153,15 @@ news_model = api.model('NewArticle', {
 })
 
 
+"""
+The /news endpoint serves as a means for users to add to or to
+view the list of stored news article links.
+When a user selects an article from this list for bias analysis,
+they would use a different endpoint,
+the /analyze-bias endpoint to submit their request for analysis.
+"""
+
+
 @api.route(f'{NEWS_LINK_SLASH}')
 class News(Resource):
     """
@@ -231,3 +240,52 @@ class SubmitArticle(Resource):
             },
             HTTPStatus.OK
         )
+
+
+# Define the request model for bias analysis
+analyze_bias_model = api.model('AnalyzeBias', {
+    'article_id':
+    fields.String(required=True, description='ID of the article to analyze'),
+    'analysis_parameters':
+    fields.Raw(required=False, description='Optional parameters for analysis')
+})
+
+
+@api.route('/bias-analysis')
+class AnalyzeBias(Resource):
+    @api.expect(analyze_bias_model)
+    @api.response(HTTPStatus.OK, 'Bias analysis completed')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Invalid request data')
+    @api.response(HTTPStatus.NOT_FOUND, 'Article not found')
+    def post(self):
+        """
+        Analyze the bias in a submitted news article.
+        """
+        data = request.json
+        article_id = data.get('article_id')
+        # analysis_parameters = data.get('analysis_parameters', {})
+
+        # Use the provided function to retrieve the article by its ID
+        article = news.get_article_by_id(article_id)
+        if not article:
+            api.abort(HTTPStatus.NOT_FOUND,
+                      f'Article with ID {article_id} not found')
+
+        # Perform bias analysis (pseudo-code)
+        # analysis_result = analyze_article_bias(article, analysis_parameters)
+
+        # For demonstration, we'll return a dummy response
+        analysis_result = {
+            'bias_level': 'moderate',
+            'bias_type': ['political', 'emotional'],
+            'detailed_analysis': '...'
+        }
+
+        # return jsonify({
+        #     'article_id': article_id,
+        #     'analysis_result': analysis_result
+        # }), HTTPStatus.OK
+        return {
+            'article_id': article_id,
+            'analysis_result': analysis_result
+        }, HTTPStatus.OK
