@@ -1,7 +1,14 @@
 import pytest
 
-import userdata.newsdb as news
+import os
+import sys
+import inspect
 
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+
+import newsdb as news
 
 @pytest.fixture(scope='function')
 def temp_article():

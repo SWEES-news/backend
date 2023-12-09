@@ -1,7 +1,14 @@
 import pytest
 
-import userdata.db as data
+import os
+import sys
+import inspect
 
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+import db as data
+# import userdata.db_connect as dbc
 
 @pytest.fixture(scope='function')
 def temp_user():

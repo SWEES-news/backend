@@ -1,5 +1,21 @@
 import pytest
-import userdata.user_text_data_db as text_data
+# import sys
+ 
+# # setting path
+# sys.path.append('.../userdata') # /userdata
+ 
+# # importing
+# import userdata.user_text_data_db as text_data
+
+import os
+import sys
+import inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+
+import user_text_data_db as text_data
 
 @pytest.fixture(scope='function')
 def mock_text_upload():

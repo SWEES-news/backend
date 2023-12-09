@@ -4,7 +4,8 @@ At first, it will just contain stubs that return fake data.
 Gradually, we will fill in actual calls to our datastore.
 """
 import random
-import userdata.db_connect as dbc
+import userdata.db_connect as dbc # userdata.
+import bcrypt
 
 LOCAL = "0"
 CLOUD = "1"

@@ -9,6 +9,14 @@ from flask_restx import Resource, Api, fields
 
 import werkzeug.exceptions as wz
 
+import os
+import sys
+import inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+
 import userdata.db as data
 import userdata.newsdb as news
 from userdata.db import store_article_submission
