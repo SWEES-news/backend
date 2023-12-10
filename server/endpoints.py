@@ -14,7 +14,9 @@ import os
 import sys
 import inspect
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+# Modifying sys.path to include parent directory for local imports
+currentdir = os.path.dirname(os.path.abspath(
+    inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
@@ -145,16 +147,16 @@ class Users(Resource):
 @api.route('/login')
 class UserLogin(Resource):
     def post(self):
-        data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
+        response = request.get_json()
+        email = response.get('email')
+        password = response.get('password')
 
-        if data.verify_user(email, password):
+        if data.verify_user(email, password):  # Call verify_user function with email and password
             access_token = create_access_token(identity=email)
             return {'access_token': access_token}, HTTPStatus.OK
         else:
             return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED
-        
+
 
 @api.route('/user/<int:user_id>')
 class UserDetail(Resource):
@@ -251,7 +253,7 @@ class SubmitArticle(Resource):
         if not article_link or not submitter_id:
             api.abort(
                 HTTPStatus.BAD_REQUEST,
-                "Invalid data: 'article_link' and 'submitter_id' are required."
+                "Invalid data: 'article_link' and 'submitter_id' are required"
             )
 
         # Implement logic to store the article submission for review.

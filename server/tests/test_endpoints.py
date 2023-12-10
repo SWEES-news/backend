@@ -6,6 +6,7 @@ from http.client import (
     OK,
     SERVICE_UNAVAILABLE,
 )
+from http import HTTPStatus
 
 from unittest.mock import patch
 
@@ -21,6 +22,11 @@ sys.path.insert(0, parentdir)
 from endpoints import app
 
 import endpoints as ep # server.
+
+from endpoints import UserLogin
+
+from flask import Flask
+from flask_restx import Api
 
 import userdata.db as data
 
@@ -178,3 +184,40 @@ class TestSubmitArticleEndpoint(unittest.TestCase):
     #     })
     #     self.assertEqual(response.status_code, 500)
     #     self.assertIn('error', response.json['status'])
+
+
+class TestUserLogin(unittest.TestCase):
+
+    def setUp(self):
+        self.app = Flask(__name__)
+        self.api = Api(self.app)
+        self.api.add_resource(UserLogin, '/login')
+        self.client = self.app.test_client()
+
+    @patch('userdata.db.verify_user')  # Mocking the verify_user function
+    def test_valid_credentials(self, mock_verify):
+        # Simulating a scenario where the credentials are valid
+        mock_verify.return_value = True
+
+        response = self.client.post('/login', json={
+            'email': 'test@example.com',
+            'password': 'password123'
+        })
+        data = response.get_json()
+
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertIn('access_token', data)
+
+    @patch('userdata.db.verify_user')  # Mocking the verify_user function
+    def test_invalid_credentials(self, mock_verify):
+        # Simulating a scenario where the credentials are invalid
+        mock_verify.return_value = False
+
+        response = self.client.post('/login', json={
+            'email': 'wrong@example.com',
+            'password': 'wrongpassword'
+        })
+        data = response.get_json()
+
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertEqual(data['message'], 'Invalid credentials')
