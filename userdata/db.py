@@ -24,6 +24,7 @@ EMAIL_TAIL_LEN = 10
 MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
 USER_COLLECT = 'users'
 
+
 # storage of users
 users = {
     MOCK_EMAIL: {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD}
@@ -77,6 +78,15 @@ def add_user(email: str, username: str, password: str) -> str:
     dbc.connect_db()
     _id = dbc.insert_one(USER_COLLECT, user)
     return _id is not None
+
+
+def verify_user(email: str, password: str) -> bool:
+    dbc.connect_db()
+    # Retrieve user from database using the fetch_one function
+    user = dbc.fetch_one(USER_COLLECT, {EMAIL: email})
+    if user and password == user[PASSWORD]:
+        return True
+    return False
 
 
 def del_user(email: str):

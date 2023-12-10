@@ -6,6 +6,7 @@ from http import HTTPStatus
 
 from flask import Flask, request
 from flask_restx import Resource, Api, fields
+from flask_jwt_extended import JWTManager, create_access_token
 
 import werkzeug.exceptions as wz
 
@@ -24,6 +25,9 @@ from userdata.db import store_article_submission
 app = Flask(__name__)
 
 api = Api(app)
+
+app.config['JWT_SECRET_KEY'] = '123456'
+jwt = JWTManager(app)
 
 MENU = 'menu'
 NUM = 0
@@ -137,6 +141,20 @@ class Users(Resource):
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
+
+@api.route('/login')
+class UserLogin(Resource):
+    def post(self):
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+
+        if data.verify_user(email, password):
+            access_token = create_access_token(identity=email)
+            return {'access_token': access_token}, HTTPStatus.OK
+        else:
+            return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED
+        
 
 @api.route('/user/<int:user_id>')
 class UserDetail(Resource):
