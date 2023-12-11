@@ -13,16 +13,15 @@ import werkzeug.exceptions as wz
 import os
 import sys
 import inspect
+import userdata.db as data
+import userdata.newsdb as news
+from userdata.db import store_article_submission
 
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
-
-import userdata.db as data
-import userdata.newsdb as news
-from userdata.db import store_article_submission
 
 app = Flask(__name__)
 
@@ -144,6 +143,11 @@ class Users(Resource):
             raise wz.NotAcceptable(f'{str(e)}')
 
 
+def create_token(email):
+    print('in create token')
+    return create_access_token(identity=email)
+
+
 @api.route('/login')
 class UserLogin(Resource):
     def post(self):
@@ -151,8 +155,8 @@ class UserLogin(Resource):
         email = response.get('email')
         password = response.get('password')
 
-        if data.verify_user(email, password):  # Call verify_user function with email and password
-            access_token = create_access_token(identity=email)
+        if data.verify_user(email, password):
+            access_token = create_token(email)
             return {'access_token': access_token}, HTTPStatus.OK
         else:
             return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED

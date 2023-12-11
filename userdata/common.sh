@@ -7,11 +7,11 @@ DB=usersDB
 USER=WilliamYuxinXu
 URI_FRONT='mongodb+srv://WilliamYuxinXu:'
 URI_BACK='@swees.mumkgcx.mongodb.net/?retryWrites=true&w=majority'
-URI=URI_FRONT+URI_BACK
-CONNECT_STR="mongodb+srv://koukoumongo1.yud9b.mongodb.net/"
+URI="${URI_FRONT}${MONGODB_PASSWORD}${URI_BACK}"
+CONNECT_STR="mongodb+srv://swees.mumkgcx.mongodb.net/"
 if [ -z $DATA_DIR ]
 then
-    DATA_DIR=/mnt/c/Users/xuwil/SWEES_fall2023
+    DATA_DIR=/Users/ez/Desktop/Git/SWEES_fall2023
 fi
 BKUP_DIR=$DATA_DIR/bkup
 EXP=mongoexport

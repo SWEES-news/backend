@@ -15,6 +15,7 @@ import pytest
 import os
 import sys
 import inspect
+from flask_jwt_extended import JWTManager
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -193,7 +194,10 @@ class TestUserLogin(unittest.TestCase):
         self.api = Api(self.app)
         self.api.add_resource(UserLogin, '/login')
         self.client = self.app.test_client()
+        self.app.config['JWT_SECRET_KEY'] = '123456'
+        JWTManager(self.app)
 
+    # @patch('server.endpoints.create_token', return_value='fake_token')
     @patch('userdata.db.verify_user')  # Mocking the verify_user function
     def test_valid_credentials(self, mock_verify):
         # Simulating a scenario where the credentials are valid
