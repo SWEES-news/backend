@@ -70,7 +70,7 @@ def test_add_user():
     new_user = data._get_random_email()
     ret = data.add_user(new_user, data.MOCK_NAME, data.MOCK_PASSWORD)
     assert data.exists(new_user)
-    assert isinstance(ret, bool)
+    assert ret is not None
     data.del_user(new_user)
 
 def test_del_user(temp_user):

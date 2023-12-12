@@ -77,7 +77,7 @@ def add_user(email: str, username: str, password: str) -> str:
     user[PASSWORD] = password
     dbc.connect_db()
     _id = dbc.insert_one(USER_COLLECT, user)
-    return _id is not None
+    return str(_id) if _id else "False"
 
 
 def verify_user(email: str, password: str) -> bool:
@@ -117,11 +117,8 @@ def get_user_by_id(user_id: str):
     """
     Fetches a user from the database by their ID.
     """
-    global client
-    db = client.your_database_name
-    users_collection = db.users
-    user = users_collection.find_one({'_id': user_id})
-    return user
+    dbc.connect_db()
+    return dbc.fetch_one(USER_COLLECT, {MONGO_ID: user_id})
 
 
 def store_article_submission(article_link: str, submitter_id: str) -> str:

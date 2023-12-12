@@ -162,7 +162,7 @@ class UserLogin(Resource):
             return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED
 
 
-@api.route('/user/<int:user_id>')
+@api.route('/user/<string:user_id>')
 class UserDetail(Resource):
     """
     This class supports fetching details of a specific user.
@@ -175,7 +175,7 @@ class UserDetail(Resource):
         if user:
             return user
         else:
-            api.abort(HTTPStatus.NOT_FOUND, f'User {user_id} not found')
+            api.abort(HTTPStatus.NOT_FOUND, f'User w/ id {user_id} not found')
 
 
 news_model = api.model('NewArticle', {
