@@ -63,6 +63,33 @@ class HelloWorld(Resource):
         return {HELLO_STR: 'world'}
 
 
+@api.route('/whoami')
+class whoami(Resource):
+    """
+    The purpose of the whoami endpoint is to get one's public ip address
+    """
+    def get(self):
+        """
+        A trivial endpoint to see if the server is running.
+        It just answers with ip addr
+        """
+        return {'ip': request.remote_addr}
+
+
+@api.route('/countNumberOfEndpoints')
+class countNumberOfEndpoints(Resource):
+    """
+    The purpose of the whoami endpoint is to get one's public ip address
+    """
+    def get(self):
+        """
+        A trivial endpoint to see if the server is running.
+        It just answers with ip addr
+        """
+        numPoints = len([rule.rule for rule in api.app.url_map.iter_rules()])
+        return {'countNumberOfEndpoints': numPoints}
+
+
 @api.route('/endpoints')
 class Endpoints(Resource):
     """
@@ -303,7 +330,14 @@ class AnalyzeBias(Resource):
                       f'Article with ID {article_id} not found')
 
         # Perform bias analysis (pseudo-code)
-        # analysis_result = analyze_article_bias(article, analysis_parameters)
+        try:
+            # analysis_result = analyze_article_bias(article,
+            # analysis_parameters)
+            pass
+        except Exception as e:
+            api.abort(HTTPStatus.BAD_REQUEST,
+                      f'Article with ID {article_id} could not be analyzed'
+                      f' due to error: {e}')
 
         # For demonstration, we'll return a dummy response
         analysis_result = {
