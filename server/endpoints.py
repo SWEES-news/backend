@@ -63,6 +63,19 @@ class HelloWorld(Resource):
         return {HELLO_STR: 'world'}
 
 
+@api.route('/whoami')
+class whoami(Resource):
+    """
+    The purpose of the whoami endpoint is to get one's public ip address
+    """
+    def get(self):
+        """
+        A trivial endpoint to see if the server is running.
+        It just answers with ip addr
+        """
+        return {'ip': request.remote_addr}
+
+
 @api.route('/endpoints')
 class Endpoints(Resource):
     """
