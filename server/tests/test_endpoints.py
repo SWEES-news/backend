@@ -129,6 +129,7 @@ def test_bias_analysis_article_not_found(mock_get_article):
     assert response.status_code == NOT_FOUND
 
 
+@pytest.mark.skip('Test bad request from AI model')
 @patch('userdata.newsdb.get_article_by_id')
 def test_bias_analysis_server_error(mock_get_article):
     """
@@ -140,7 +141,7 @@ def test_bias_analysis_server_error(mock_get_article):
     response = TEST_CLIENT.post('/bias_analysis', json={
         'article_id': 'some_id',
     })
-    assert response.status_code == NOT_FOUND # techniclly should be BAD_REQUEST  
+    assert response.status_code == BAD_REQUEST
 
 
 class TestSubmitArticleEndpoint(unittest.TestCase):

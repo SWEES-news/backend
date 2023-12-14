@@ -303,7 +303,14 @@ class AnalyzeBias(Resource):
                       f'Article with ID {article_id} not found')
 
         # Perform bias analysis (pseudo-code)
-        # analysis_result = analyze_article_bias(article, analysis_parameters)
+        try:
+            # analysis_result = analyze_article_bias(article,
+            # analysis_parameters)
+            pass
+        except Exception as e:
+            api.abort(HTTPStatus.BAD_REQUEST,
+                      f'Article with ID {article_id} could not be analyzed'
+                      f' due to error: {e}')
 
         # For demonstration, we'll return a dummy response
         analysis_result = {
