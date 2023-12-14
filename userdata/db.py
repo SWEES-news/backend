@@ -25,33 +25,20 @@ MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
 USER_COLLECT = 'users'
 
 
-# storage of users
-users = {
-    MOCK_EMAIL: {NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD}
-}
-
-MONGO_ID = '_id'
-
-
 # returns json of mock user
 def get_test_user():
-    return {EMAIL: MOCK_EMAIL, NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD}
+    return {NAME: MOCK_NAME, EMAIL: MOCK_EMAIL, PASSWORD: MOCK_PASSWORD}
 
 
 # returns a randomly generated mock email
-def _get_random_email():
-    rand_part = str(random.randint(0, BIG_NUM))
-    if len(rand_part) > MAX_MOCK_LEN:
-        rand_str = (rand_part[:MAX_MOCK_LEN])
-    else:
-        rand_str = rand_part
-    return rand_str + EMAIL_TAIL
+def _get_random_name():
+    return str(random.randint(0, BIG_NUM))
 
 
 # gets a user with a random gmail address
 def get_rand_test_user():
-    rand_part = _get_random_email()
-    return {EMAIL: rand_part, NAME: MOCK_NAME, PASSWORD: MOCK_PASSWORD}
+    rand_part = _get_random_name()
+    return {NAME: rand_part, EMAIL: MOCK_EMAIL, PASSWORD: MOCK_PASSWORD}
 
 
 def _gen_id() -> str:
@@ -63,71 +50,55 @@ def _gen_id() -> str:
 
 def get_users() -> dict:
     dbc.connect_db()
-    return dbc.fetch_all_as_dict(EMAIL, USER_COLLECT)
+    return dbc.fetch_all_as_dict(NAME, USER_COLLECT)
 
 
-def add_user(email: str, username: str, password: str) -> str:
-    if exists(email):
-        raise ValueError(f'Duplicate Email: {email=}')
-    if not email:
-        raise ValueError('Email may not be blank')
+def add_user(username: str, email: str, password: str) -> str:
+    if exists(username):
+        raise ValueError(f'Duplicate Username: {username=}')
+    if not username:
+        raise ValueError('username may not be blank')
     user = {}
-    user[EMAIL] = email
     user[NAME] = username
+    user[EMAIL] = email
     user[PASSWORD] = password
     dbc.connect_db()
     _id = dbc.insert_one(USER_COLLECT, user)
     return str(_id) if _id else "False"
 
 
-def verify_user(email: str, password: str) -> bool:
+def verify_user(username: str, password: str) -> bool:
     dbc.connect_db()
     # Retrieve user from database using the fetch_one function
-    user = dbc.fetch_one(USER_COLLECT, {EMAIL: email})
+    user = dbc.fetch_one(USER_COLLECT, {NAME: username})
     if user and password == user[PASSWORD]:
         return True
     return False
 
 
-def del_user(email: str):
-    if email in users:
-        del users[email]
-    if exists(email):
-        dbc.del_one(USER_COLLECT, {EMAIL: email})
+def del_user(username: str):
+    if exists(username):
+        dbc.del_one(USER_COLLECT, {NAME: username})
     else:
-        raise ValueError(f'Delete failure: {email} not in database.')
+        raise ValueError(f'Delete failure: {username} not in database.')
 
 
-def get_name(user):
-    return user.get(NAME, '')
+def exists(name: str) -> bool:
+    dbc.connect_db()
+    return dbc.fetch_one(USER_COLLECT, {NAME: name})
 
 
-def exists(email: str) -> bool:
+def get_user_by_email(email: str):
+    """
+    Fetches a user from the database by their name.
+    """
     dbc.connect_db()
     return dbc.fetch_one(USER_COLLECT, {EMAIL: email})
-
-# future use
-# def init_app(app):
-#     db.init_app(app)
-#     Migrate(app, db)
-#     return True
-
-
-def get_user_by_id(user_id: str):
-    """
-    Fetches a user from the database by their ID.
-    """
-    dbc.connect_db()
-    return dbc.fetch_one(USER_COLLECT, {MONGO_ID: user_id})
 
 
 def store_article_submission(article_link: str, submitter_id: str) -> str:
     """
     Store the submitted article for review.
-
-    :param article_link: The URL of the article being submitted.
-    :param submitter_id: The ID of the user submitting the article.
-    :return: A unique ID for the article submission.
     """
     # Connect to the database
     dbc.connect_db()

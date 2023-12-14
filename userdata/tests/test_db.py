@@ -12,14 +12,16 @@ import db as data
 
 @pytest.fixture(scope='function')
 def temp_user():
-    email = data._get_random_email()
-    ret = data.add_user(email, data.MOCK_NAME, data.MOCK_PASSWORD)
-    return email
+    name = data._get_random_name()
+    data.add_user(name, data.MOCK_EMAIL, data.MOCK_PASSWORD)
+    yield name
+    if data.exists(name):
+        data.del_user(name)
     # delete the user!
 
 
-def test_get_test_email():
-    name = data._get_random_email()
+def test_get_test_name():
+    name = data._get_random_name()
     assert isinstance(name, str)
     assert len(name) > 0
 
@@ -45,9 +47,9 @@ def test_get_users(temp_user):
     data.del_user(temp_user)
 
 
-def test_add_user_dup_email(temp_user):
+def test_add_user_dup_name(temp_user):
     """
-    Make sure a duplicate user email raises a ValueError.
+    Make sure a duplicate user name raises a ValueError.
     """
     dup_name = temp_user
     with pytest.raises(ValueError):
@@ -55,31 +57,31 @@ def test_add_user_dup_email(temp_user):
     data.del_user(temp_user)
 
 
-def test_add_user_blank_email():
+def test_add_user_blank_name():
     """
     Make sure a blank game name raises a ValueError.
     """
     with pytest.raises(ValueError):
-        data.add_user('', data.MOCK_NAME, data.MOCK_PASSWORD)
+        data.add_user('', data.MOCK_EMAIL, data.MOCK_PASSWORD)
 
 
-ADD_EMAIL = 'newuser@gmail.com'
+ADD_NAME = 'newuser'
 
 
 def test_add_user():
-    new_user = data._get_random_email()
-    ret = data.add_user(new_user, data.MOCK_NAME, data.MOCK_PASSWORD)
+    new_user = data._get_random_name()
+    ret = data.add_user(new_user, data.MOCK_EMAIL, data.MOCK_PASSWORD)
     assert data.exists(new_user)
     assert ret is not None
     data.del_user(new_user)
 
 def test_del_user(temp_user):
-    email = temp_user
-    data.del_user(email)
-    assert not data.exists(email)
+    name = temp_user
+    data.del_user(name)
+    assert not data.exists(name)
 
 
 def test_del_user_not_there():
-    name = data._get_random_email()
+    name = data._get_random_name()
     with pytest.raises(ValueError):
         data.del_user(name)

@@ -101,8 +101,8 @@ class MainMenu(Resource):
 
 
 user_model = api.model('NewUser', {
-    data.EMAIL: fields.String,
     data.NAME: fields.String,
+    data.EMAIL: fields.String,
     data.PASSWORD: fields.String,
 })
 
@@ -131,11 +131,11 @@ class Users(Resource):
         Add a user.
         """
         name = request.json[data.NAME]
-        password = request.json[data.PASSWORD]
         email = request.json[data.EMAIL]
+        password = request.json[data.PASSWORD]
 
         try:
-            new_id = data.add_user(email, name, password)
+            new_id = data.add_user(name, email, password)
             if new_id is None:
                 raise wz.ServiceUnavailable('We have a technical problem.')
             return {USER_ID: new_id}
