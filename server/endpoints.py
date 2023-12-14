@@ -76,6 +76,20 @@ class whoami(Resource):
         return {'ip': request.remote_addr}
 
 
+@api.route('/countNumberOfEndpoints')
+class countNumberOfEndpoints(Resource):
+    """
+    The purpose of the whoami endpoint is to get one's public ip address
+    """
+    def get(self):
+        """
+        A trivial endpoint to see if the server is running.
+        It just answers with ip addr
+        """
+        numPoints = len([rule.rule for rule in api.app.url_map.iter_rules()])
+        return {'countNumberOfEndpoints': numPoints}
+
+
 @api.route('/endpoints')
 class Endpoints(Resource):
     """
