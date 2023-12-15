@@ -134,7 +134,7 @@ user_model = api.model('NewUser', {
 })
 
 update_user_model = api.model('UpdateUser', {
-    data.USERNAME: fields.String(required=True, description='Current username'),
+    data.NAME: fields.String(required=True, description='Current username'),
     data.EMAIL: fields.String(required=True, description='Current email'),
     data.PASSWORD: fields.String(required=True, description='Current password'),
     data.NEW_NAME: fields.String(description='New name for the user'),
