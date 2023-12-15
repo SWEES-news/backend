@@ -6,7 +6,7 @@ from http import HTTPStatus
 
 from flask import Flask, request
 from flask_restx import Resource, Api, fields
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 import werkzeug.exceptions as wz
 
@@ -133,6 +133,14 @@ user_model = api.model('NewUser', {
     data.PASSWORD: fields.String,
 })
 
+update_user_model = api.model('UpdateUser', {
+    data.USERNAME: fields.String(required=True, description='Current username'),
+    data.EMAIL: fields.String(required=True, description='Current email'),
+    data.PASSWORD: fields.String(required=True, description='Current password'),
+    data.NEW_NAME: fields.String(description='New name for the user'),
+    data.NEW_EMAIL: fields.String(description='New email for the user'),
+    data.NEW_PASSWORD: fields.String(description='New password for the user'),
+})
 
 @api.route(f'{USERS_SLASH}')
 class Users(Resource):
@@ -169,10 +177,65 @@ class Users(Resource):
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
+    @api.expect(update_user_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
+    def put(self):
+        """
+        Update user account information.
+        """
+        # current_user = get_jwt_identity()
+
+        username = request.json.get(data.USERNAME)
+        email = request.json.get(data.EMAIL)
+        password = request.json.get(data.PASSWORD)
+
+        new_name = request.json.get(data.NEW_NAME)
+        new_email = request.json.get(data.NEW_EMAIL)
+        new_password = request.json.get(data.NEW_PASSWORD)
+
+        try:
+            updated = data.update_user_info(username, email, password, 
+                new_name, new_email, new_password) # need to add this in db.py
+            if not updated:
+                raise wz.NotFound('User not found.')
+            return {'message': 'User information updated successfully.'}
+        except UnauthorizedError:
+            raise wz.Unauthorized('Unauthorized: Incorrect password.')
+
 
 def create_token(email):
     print('in create token')
     return create_access_token(identity=email)
+
+
+@api.expect(user_model)     # remove_user_model
+@api.response(HTTPStatus.OK, 'Success')
+@api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
+@api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
+class RemoveUser(Resource):
+    @jwt_required()  # This decorator ensures valid JWT is present in request headers
+    def post(self):
+        """
+        Remove/delete a user.
+        """
+        current_user = get_jwt_identity()  # Get the identity of the current user from the JWT
+
+        username = request.json.get(data.USERNAME)
+        email = request.json.get(data.EMAIL)
+        password = request.json.get(data.PASSWORD)
+
+        if current_user != username:
+            raise wz.Unauthorized(
+                'Unauthorized: You are not authorized to remove this user.')
+
+        try:
+            data.del_user(username)
+        except ValueError:
+            raise wz.NotFound('User not found.')
+        
+        return {'message': 'User removed successfully.'}
 
 
 @api.route('/login')
