@@ -16,6 +16,7 @@ LINK = 'LINK'
 MOCK_LINK_FRONT = 'https://www.vice.com/en/article/jg877g/brazilian-'
 MOCK_LINK_BACK = 'prosecutor-accused-of-spreading-nazi-propaganda-facebook'
 MOCK_LINK = MOCK_LINK_FRONT + MOCK_LINK_BACK
+USER_ID = 'USER_ID'
 
 # storage of articles, NAME: tuple(articlename, password)
 articles = {
@@ -25,7 +26,7 @@ articles = {
 
 # returns json of mock article
 def get_test_article():
-    return {NAME: MOCK_NAME, LINK: MOCK_LINK}
+    return {NAME: MOCK_NAME, LINK: MOCK_LINK, USER_ID: MOCK_ID}
 
 
 # returns a randomly generated mock NAME
@@ -52,6 +53,8 @@ def _gen_id() -> str:
 
 
 def get_articles() -> dict:
+    articles = {'article1':get_test_article(), 
+                'article2':get_test_article()}
     return articles
 
 
