@@ -467,13 +467,19 @@ class Articles(Resource):
         }
 
 
-@api.route('/change-username/<string:old_username> \
-           /<string:new_username>/<string:password>')
+change_username_model = api.model('ChangeUsername', {
+    'old_username': fields.String(required=True, description='The current username'),
+    'new_username': fields.String(required=True, description='The new username'),
+    'password': fields.String(required=True, description='Confirmation of the  password')
+})
+
+@api.route('/change-username')
 class ChangeName(Resource):
     """
     Endpoint to change the username of a user.
     """
 
+    @api.expect(change_username_model)
     def post(self):
         """
         Change the username of a user.
@@ -484,7 +490,7 @@ class ChangeName(Resource):
         password = response.get('password')
 
         try:
-            data.update_user_profile(old_username, new_username, password)
+            data.update_user_name(old_username, new_username, password)
             return {'message': 'Username changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
