@@ -366,7 +366,7 @@ class SubmitArticle(Resource):
         return (
             {
                 "message": "Article submitted successfully",
-                "submission_id": submission_id
+                "submission_id": '' # submission_id causes a Internal Server Error
             },
             HTTPStatus.OK
         )
@@ -426,3 +426,42 @@ class AnalyzeBias(Resource):
             'article_id': article_id,
             'analysis_result': analysis_result
         }, HTTPStatus.OK
+
+
+@api.route('/user/<string:username>/articles')
+class UserArticles(Resource):
+    """
+    Endpoint to retrieve articles submitted by a specific user.
+    """
+
+    def get(self, username):
+        """
+        Return a list of articles submitted by the given user.
+        """
+        try:
+            articles = data.get_articles_by_username(username)
+
+            return {
+                'username': username,
+                'articles': articles
+            }, HTTPStatus.OK
+
+        except Exception as e:
+            return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+        
+
+@api.route('/get-articles')
+class News(Resource):
+    """
+    Gets all articles that have been submitted to the site by all users
+    """
+    def get(self):
+        """
+        This method returns all news article links and name.
+        """
+        return {
+            TYPE: DATA,
+            TITLE: 'Stored Articles',
+            DATA: data.fetch_all_with_filter(),
+            RETURN: MAIN_MENU_EP,
+        }
