@@ -185,9 +185,9 @@ class Users(Resource):
             raise wz.NotAcceptable(f'{str(e)}')
 
 
-def create_token(email):
+def create_token(username):
     print('in create token')
-    return create_access_token(identity=email)
+    return create_access_token(identity=username)
 
 
 @api.route(f'{REMOVE_EP}')
@@ -222,11 +222,11 @@ class RemoveUser(Resource):
 class UserLogin(Resource):
     def post(self):
         response = request.get_json()
-        email = response.get('email')
+        username = response.get('username')
         password = response.get('password')
 
-        if data.verify_user(email, password):
-            access_token = create_token(email)
+        if data.verify_user(username, password):
+            access_token = create_token(username)
             return {'access_token': access_token}, HTTPStatus.OK
         else:
             return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED
