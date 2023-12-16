@@ -80,6 +80,18 @@ def update_doc(collection, filters, update_dict, db=USER_DB):
 def fetch_all(collection, db=USER_DB):
     ret = []
     for doc in client[db][collection].find():
+        if '_id' in doc:
+            doc['_id'] = str(doc['_id'])
+        ret.append(doc)
+    return ret
+
+
+def fetch_all_with_filt(collection, filt={}, db=USER_DB):
+    ret = []
+    for doc in client[db][collection].find(filter=filt):
+        # Convert ObjectId fields to string
+        if '_id' in doc:
+            doc['_id'] = str(doc['_id'])
         ret.append(doc)
     return ret
 
