@@ -497,7 +497,7 @@ class ChangePassword(Resource):
     """
 
     @api.expect(change_password_model)
-    def post(self):
+    def put(self):
         """
         Change the password of a user.
         """
@@ -515,6 +515,38 @@ class ChangePassword(Resource):
             data.update_user_profile(username, old_password,
                                      {PASSWORD: new_password})
             return {'message': 'Password changed successfully.'}, \
+                HTTPStatus.OK
+        except Exception as e:
+            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
+
+
+change_email_model = api.model('ChangePassword', {
+    'username': fields.String(required=True, description='The username'),
+    'password': fields.String(required=True, description='current password'),
+    'new_email': fields.String(required=True, description='new email')
+})
+
+
+@api.route('/change-email')
+class ChangeEmail(Resource):
+    """
+    Endpoint to change the email of a user.
+    """
+
+    @api.expect(change_email_model)
+    def put(self):
+        """
+        Change the email of a user.
+        """
+        response = request.json
+        username = response.get('username')
+        password = response.get('password')
+        new_email = response.get('new_email')
+
+        try:
+            data.update_user_profile(username, password,
+                                     {EMAIL: new_email})
+            return {'message': 'EMAIL changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
             return {'message': str(e)}, HTTPStatus.BAD_REQUEST
