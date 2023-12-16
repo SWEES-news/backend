@@ -366,7 +366,7 @@ class SubmitArticle(Resource):
         return (
             {
                 "message": "Article submitted successfully",
-                "submission_id": '' # submission_id causes a Internal Server Error
+                "submission_id": str(submission_id)  # causes a 500
             },
             HTTPStatus.OK
         )
@@ -448,10 +448,10 @@ class UserArticles(Resource):
 
         except Exception as e:
             return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
-        
+
 
 @api.route('/get-articles')
-class News(Resource):
+class Articles(Resource):
     """
     Gets all articles that have been submitted to the site by all users
     """

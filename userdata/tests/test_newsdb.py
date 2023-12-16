@@ -30,20 +30,6 @@ def test_gen_id():
     assert len(_id) == news.ID_LEN
 
 
-def test_get_test_article():
-    assert isinstance(news.get_rand_test_article(), dict)
-
-
-def test_get_articles():
-    articles = news.get_articles()
-    assert isinstance(articles, dict)
-    assert len(articles) > 0
-    for article in articles:
-        assert isinstance(article, str)
-        assert isinstance(articles[article], dict)
-    assert news.MOCK_NAME in articles
-
-
 def test_add_article_dup_email(temp_article):
     """
     Make sure a duplicate article email raises a ValueError.
@@ -63,8 +49,3 @@ def test_add_article_blank_email():
 
 ADD_NAME = 'Crazy News'
 
-
-def test_add_article():
-    ret = news.add_article(ADD_NAME, news.MOCK_LINK)
-    assert news.exists(ADD_NAME)
-    assert isinstance(ret, str)

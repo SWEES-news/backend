@@ -53,8 +53,8 @@ def _gen_id() -> str:
 
 
 def get_articles() -> dict:
-    articles = {'article1':get_test_article(), 
-                'article2':get_test_article()}
+    articles = {'article1': get_test_article(),
+                'article2': get_test_article()}
     return articles
 
 
