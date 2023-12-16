@@ -199,9 +199,6 @@ def update_user_profile(username: str, password: str, update_dict: dict):
     if not verify_user(username, password):
         raise ValueError('Incorrect password.')
 
-    # EB: Update the user profile, username is unique, right?
-    # EB: If username is not unique, we need to use _id
-    # EB: If username is in update_dict, we need to check if it is unique
     return dbc.update_doc(USER_COLLECT,
                           {NAME: username},
                           update_dict)

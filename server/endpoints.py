@@ -249,38 +249,6 @@ class UserDetail(Resource):            # here instead?
             api.abort(HTTPStatus.NOT_FOUND, f'User w/ name \'{name}\''
                       ' not found')
 
-    @api.expect(user_model)
-    @api.response(HTTPStatus.OK, 'Success')
-    @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
-    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
-    @api.response(HTTPStatus.BAD_REQUEST, 'Missing data')
-    def put(self, name):
-        """
-        Update user account information.
-        """
-        # current_user = get_jwt_identity()  # TODO: implement if needed
-
-        # if current_user != name:
-        #     raise wz.Unauthorized('Unauthorized: You are not authorized to '
-        #                           'update this user.')
-
-        update_dict = {}
-        # add updated info into update_dict
-        info = [data.NAME, data.EMAIL, data.PASSWORD]
-        for field in info:
-            new_field = request.json.get(field)
-            if new_field:
-                update_dict[field] = new_field
-
-        if len(update_dict) == 0:
-            raise wz.BadRequest('Must include at least one of the following: '
-                                'new username, new email, new password')
-
-        updated = data.update_user(name, update_dict)
-        if not updated:
-            raise wz.NotFound('User not found.')
-        return {'message': 'User information updated successfully.'}
-
 
 news_model = api.model('NewArticle', {
     news.NAME: fields.String,
@@ -489,7 +457,7 @@ class ChangeName(Resource):
     """
 
     @api.expect(change_username_model)
-    def post(self):
+    def put(self):
         """
         Change the username of a user.
         """
@@ -499,12 +467,15 @@ class ChangeName(Resource):
         password = response.get('password')
 
         try:
+            if data.get_user_by_name(new_username):
+                return {'message': 'Username already exists.'}, \
+                    HTTPStatus.BAD_REQUEST
             data.update_user_profile(old_username, password,
                                      {NAME: new_username})
             return {'message': 'Username changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
-            return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
 
 
 change_password_model = api.model('ChangePassword', {
@@ -546,4 +517,4 @@ class ChangePassword(Resource):
             return {'message': 'Password changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
-            return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
