@@ -37,7 +37,7 @@ TEST_CLIENT = ep.app.test_client()
 
 # tests if the hello world endpoint, which indicates if server is running at all
 def test_hello():
-    resp = TEST_CLIENT.get(ep.HELLO_SLASH)
+    resp = TEST_CLIENT.get(ep.HELLO_EP)
     print(f'{resp=}')
     resp_json = resp.get_json()
     print(f'{resp_json=}')
@@ -57,27 +57,39 @@ def test_users_add(mock_add):
     """
     Testing we do the right thing with a good return from add_user.
     """
-    resp = TEST_CLIENT.post(ep.USERS_SLASH, json=data.get_rand_test_user())
+    resp = TEST_CLIENT.post(ep.USERS_EP, json=data.get_rand_test_user())
     assert resp.status_code == OK
 
 
 @patch('userdata.db.add_user', side_effect=ValueError(), autospec=True) 
-def test_games_bad_add(mock_add):
+def test_users_bad_add(mock_add):
     """
     Testing we do the right thing with a value error from add_user.
     """
-    resp = TEST_CLIENT.post(ep.USERS_SLASH, json=data.get_test_user())
+    resp = TEST_CLIENT.post(ep.USERS_EP, json=data.get_test_user())
     assert resp.status_code == NOT_ACCEPTABLE
 
 
 @patch('userdata.db.add_user', return_value=None)
-def test_games_add_db_failure(mock_add):
+def test_users_add_db_failure(mock_add):
     """
     Testing we do the right thing with a null ID return from add_user.
     """
-    resp = TEST_CLIENT.post(ep.USERS_SLASH, json=data.get_test_user())
+    resp = TEST_CLIENT.post(ep.USERS_EP, json=data.get_test_user())
     assert resp.status_code == SERVICE_UNAVAILABLE
 
+
+# Testing update user endpoint
+# might need some help with figuring this out
+# @patch('userdata.db.update_user', return_value=...)
+# def test_update_user_success(mock_user):
+#     resp = TEST_CLIENT.put(ep.USERS_EP, json=data.update_test_user())
+#     pass
+
+
+# @patch('userdata.db.update_user')
+# def test_update_user_failure(mock_user):
+#     pass
 
 
 @patch('userdata.newsdb.get_article_by_id')
