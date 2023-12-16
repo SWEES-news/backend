@@ -8,7 +8,8 @@ import userdata.db_connect as dbc  # userdata.
 
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
-
+ARTICLE_COLLECTION = 'articles'
+USER_ID_FIELD = 'submitter_id'  # field name for user ID in the articles collection
 
 # ------ DB fields ------ #
 NAME = 'Username'
@@ -136,10 +137,43 @@ def store_article_submission(article_link: str, submitter_id: str) -> str:
     submission_record = {
         "article_link": article_link,
         "submitter_id": submitter_id,
-        # Add any other relevant fields, such as submission timestamp
     }
 
     # Insert the record into the database and retrieve the submission ID
-    submission_id = dbc.insert_one('articles', submission_record)
+    submission_id = dbc.insert_one(ARTICLE_COLLECTION, submission_record)
 
     return submission_id
+
+
+
+def get_articles_by_username(username):
+    """
+    Fetch all articles submitted by a specific user identified by username.
+
+    :param username: The username of the user.
+    :return: A list of articles submitted by the user.
+    """
+    # Connect to the database (if not already connected)
+    dbc.connect_db()
+
+    # Fetch the user by username to get the user's ID
+    user = dbc.fetch_one(USER_COLLECT, {'username': username})
+    if not user:
+        return None  # User not found
+
+    user_id = user['_id']
+
+    # Fetch all articles submitted by this user
+    articles = dbc.fetch_all_with_filter(ARTICLE_COLLECTION, {USER_ID_FIELD: user_id})
+
+    return articles
+
+def fetch_all_with_filter(collection=ARTICLE_COLLECTION, filt={}):
+    """
+    Find with a filter and return all matching docs.
+    """
+    # Connect to the database (if not already connected)
+    dbc.connect_db()
+    # articles = dbc.fetch_all_with_filt(collection, filt)
+    articles = dbc.fetch_all(collection)
+    return articles
