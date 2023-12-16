@@ -29,7 +29,7 @@ from endpoints import UserLogin
 from flask import Flask
 from flask_restx import Api
 
-import userdata.db as data
+import userdata.users as usrs
 
 import unittest
 
@@ -52,42 +52,42 @@ def test_list_users():
     assert len(resp_json) > 0
 
 
-@patch('userdata.db.add_user', return_value=data.MOCK_ID, autospec=True)
+@patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
 def test_users_add(mock_add):
     """
     Testing we do the right thing with a good return from add_user.
     """
-    resp = TEST_CLIENT.post(ep.USERS_EP, json=data.get_rand_test_user())
+    resp = TEST_CLIENT.post(ep.USERS_EP, json=usrs.get_rand_test_user())
     assert resp.status_code == OK
 
 
-@patch('userdata.db.add_user', side_effect=ValueError(), autospec=True) 
+@patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
 def test_users_bad_add(mock_add):
     """
     Testing we do the right thing with a value error from add_user.
     """
-    resp = TEST_CLIENT.post(ep.USERS_EP, json=data.get_test_user())
+    resp = TEST_CLIENT.post(ep.USERS_EP, json=usrs.get_test_user())
     assert resp.status_code == NOT_ACCEPTABLE
 
 
-@patch('userdata.db.add_user', return_value=None)
+@patch('userdata.users.add_user', return_value=None)
 def test_users_add_db_failure(mock_add):
     """
     Testing we do the right thing with a null ID return from add_user.
     """
-    resp = TEST_CLIENT.post(ep.USERS_EP, json=data.get_test_user())
+    resp = TEST_CLIENT.post(ep.USERS_EP, json=usrs.get_test_user())
     assert resp.status_code == SERVICE_UNAVAILABLE
 
 
 # Testing update user endpoint
 # might need some help with figuring this out
-# @patch('userdata.db.update_user', return_value=...)
+# @patch('userdata.users.update_user', return_value=...)
 # def test_update_user_success(mock_user):
 #     resp = TEST_CLIENT.put(ep.USERS_EP, json=data.update_test_user())
 #     pass
 
 
-# @patch('userdata.db.update_user')
+# @patch('userdata.users.update_user')
 # def test_update_user_failure(mock_user):
 #     pass
 
@@ -191,7 +191,7 @@ class TestUserLogin(unittest.TestCase):
         JWTManager(self.app)
 
     # @patch('server.endpoints.create_token', return_value='fake_token')
-    @patch('userdata.db.verify_user')  # Mocking the verify_user function
+    @patch('userdata.users.verify_user')  # Mocking the verify_user function
     def test_valid_credentials(self, mock_verify):
         # Simulating a scenario where the credentials are valid
         mock_verify.return_value = True
@@ -205,7 +205,7 @@ class TestUserLogin(unittest.TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn('access_token', data)
 
-    @patch('userdata.db.verify_user')  # Mocking the verify_user function
+    @patch('userdata.users.verify_user')  # Mocking the verify_user function
     def test_invalid_credentials(self, mock_verify):
         # Simulating a scenario where the credentials are invalid
         mock_verify.return_value = False

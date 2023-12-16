@@ -14,9 +14,9 @@ import werkzeug.exceptions as wz
 import os
 import sys
 import inspect
-import userdata.db as data
+import userdata.users as usrs
 import userdata.newsdb as news
-from userdata.db import store_article_submission
+from userdata.users import store_article_submission
 
 # ------ DB fields ------ # For endpoints that change user data
 NAME = 'Username'
@@ -140,9 +140,9 @@ class MainMenu(Resource):
 
 
 user_model = api.model('NewUser', {
-    data.NAME: fields.String,
-    data.EMAIL: fields.String,
-    data.PASSWORD: fields.String,
+    usrs.NAME: fields.String,
+    usrs.EMAIL: fields.String,
+    usrs.PASSWORD: fields.String,
 })
 
 
@@ -159,7 +159,7 @@ class Users(Resource):
         return {
             TYPE: DATA,
             TITLE: 'Current Users',
-            DATA: data.get_users(),
+            DATA: usrs.get_users(),
             RETURN: MAIN_MENU_EP,
         }
 
@@ -170,12 +170,12 @@ class Users(Resource):
         """
         Add a user.
         """
-        name = request.json[data.NAME]
-        email = request.json[data.EMAIL]
-        password = request.json[data.PASSWORD]
+        name = request.json[usrs.NAME]
+        email = request.json[usrs.EMAIL]
+        password = request.json[usrs.PASSWORD]
 
         try:
-            new_id = data.add_user(name, email, password)
+            new_id = usrs.add_user(name, email, password)
             if new_id is None:
                 raise wz.ServiceUnavailable('We have a technical problem.')
 
@@ -204,14 +204,14 @@ class RemoveUser(Resource):
 
         # Get the identity of current user from JWT
         current_user = get_jwt_identity()
-        username = request.json.get(data.NAME)
+        username = request.json.get(usrs.NAME)
 
         if current_user != username:
             raise wz.Unauthorized(
                 'Unauthorized: You are not authorized to remove this user.')
 
         try:
-            data.del_user(username)
+            usrs.del_user(username)
         except ValueError:
             raise wz.NotFound('User not found.')
 
@@ -225,7 +225,7 @@ class UserLogin(Resource):
         username = response.get('username')
         password = response.get('password')
 
-        if data.verify_user(username, password):
+        if usrs.verify_user(username, password):
             access_token = create_token(username)
             return {'access_token': access_token}, HTTPStatus.OK
         else:
@@ -242,7 +242,7 @@ class UserDetail(Resource):            # here instead?
         """
         This method returns details of a specific user.
         """
-        user = data.get_user_by_name(name)
+        user = usrs.get_user_by_name(name)
         if user:
             return user
         else:
@@ -412,7 +412,7 @@ class UserArticles(Resource):
         Return a list of articles submitted by the given user.
         """
         try:
-            articles = data.get_articles_by_username(username)
+            articles = usrs.get_articles_by_username(username)
 
             return {
                 'username': username,
@@ -435,18 +435,18 @@ class Articles(Resource):
         return {
             TYPE: DATA,
             TITLE: 'Stored Articles',
-            DATA: data.fetch_all_with_filter(),
+            DATA: usrs.fetch_all_with_filter(),
             RETURN: MAIN_MENU_EP,
         }
 
 
 change_username_model = api.model('ChangeUsername', {
-    'old_username': fields.String(required=True,
-                                  description='The current username'),
-    'new_username': fields.String(required=True,
-                                  description='The new username'),
-    'password': fields.String(required=True,
-                              description='Confirmation of the  password')
+    'old_username': fields.String(
+        required=True, description='The current username'),
+    'new_username': fields.String(
+        required=True, description='The new username'),
+    'password': fields.String(
+        required=True, description='Confirmation of the  password')
 })
 
 
@@ -467,10 +467,10 @@ class ChangeName(Resource):
         password = response.get('password')
 
         try:
-            if data.get_user_by_name(new_username):
+            if usrs.get_user_by_name(new_username):
                 return {'message': 'Username already exists.'}, \
                     HTTPStatus.BAD_REQUEST
-            data.update_user_profile(old_username, password,
+            usrs.update_user_profile(old_username, password,
                                      {NAME: new_username})
             return {'message': 'Username changed successfully.'}, \
                 HTTPStatus.OK
@@ -479,14 +479,14 @@ class ChangeName(Resource):
 
 
 change_password_model = api.model('ChangePassword', {
-    'username': fields.String(required=True,
-                              description='The username'),
-    'old_password': fields.String(required=True,
-                                  description='The current password'),
-    'new_password': fields.String(required=True,
-                                  description='The new password'),
-    'confirm_new_password': fields.String(required=True,
-                                          description='new password')
+    'username': fields.String(
+        required=True, description='The username'),
+    'old_password': fields.String(
+        required=True, description='The current password'),
+    'new_password': fields.String(
+        required=True, description='The new password'),
+    'confirm_new_password': fields.String(
+        required=True, description='Confirmation of the new password')
 })
 
 
@@ -512,7 +512,7 @@ class ChangePassword(Resource):
                    HTTPStatus.BAD_REQUEST
 
         try:
-            data.update_user_profile(username, old_password,
+            usrs.update_user_profile(username, old_password,
                                      {PASSWORD: new_password})
             return {'message': 'Password changed successfully.'}, \
                 HTTPStatus.OK
