@@ -133,14 +133,14 @@ user_model = api.model('NewUser', {
     data.PASSWORD: fields.String,
 })
 
-update_user_model = api.model('UpdateUser', {
-    data.NAME: fields.String(required=True, description='Current username'),
-    data.EMAIL: fields.String(required=True, description='Current email'),
-    data.PASSWORD: fields.String(required=True, description='Current password'),
-    data.NEW_NAME: fields.String(description='New name for the user'),
-    data.NEW_EMAIL: fields.String(description='New email for the user'),
-    data.NEW_PASSWORD: fields.String(description='New password for the user'),
-})
+# update_user_model = api.model('UpdateUser', {
+#     data.NAME: fields.String(required=True, description='Current username'),
+#     data.EMAIL: fields.String(required=True, description='Current email'),
+#     data.PASSWORD: fields.String(required=True, description='Current password'),
+#     data.NEW_NAME: fields.String(description='New name for the user'),
+#     data.NEW_EMAIL: fields.String(description='New email for the user'),
+#     data.NEW_PASSWORD: fields.String(description='New password for the user'),
+# })
 
 @api.route(f'{USERS_SLASH}')
 class Users(Resource):
@@ -177,32 +177,32 @@ class Users(Resource):
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
-    @api.expect(update_user_model)
-    @api.response(HTTPStatus.OK, 'Success')
-    @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
-    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
-    def put(self):
-        """
-        Update user account information.
-        """
-        # current_user = get_jwt_identity()
+    # @api.expect(update_user_model)
+    # @api.response(HTTPStatus.OK, 'Success')
+    # @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
+    # @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
+    # def put(self):
+    #     """
+    #     Update user account information.
+    #     """
+    #     # current_user = get_jwt_identity()
 
-        username = request.json.get(data.USERNAME)
-        email = request.json.get(data.EMAIL)
-        password = request.json.get(data.PASSWORD)
+    #     username = request.json.get(data.USERNAME)
+    #     email = request.json.get(data.EMAIL)
+    #     password = request.json.get(data.PASSWORD)
 
-        new_name = request.json.get(data.NEW_NAME)
-        new_email = request.json.get(data.NEW_EMAIL)
-        new_password = request.json.get(data.NEW_PASSWORD)
+    #     new_name = request.json.get(data.NEW_NAME)
+    #     new_email = request.json.get(data.NEW_EMAIL)
+    #     new_password = request.json.get(data.NEW_PASSWORD)
 
-        try:
-            updated = data.update_user_info(username, email, password, 
-                new_name, new_email, new_password) # need to add this in db.py
-            if not updated:
-                raise wz.NotFound('User not found.')
-            return {'message': 'User information updated successfully.'}
-        except UnauthorizedError:
-            raise wz.Unauthorized('Unauthorized: Incorrect password.')
+    #     try:
+    #         updated = data.update_user_info(username, email, password, 
+    #             new_name, new_email, new_password) # need to add this in db.py
+    #         if not updated:
+    #             raise wz.NotFound('User not found.')
+    #         return {'message': 'User information updated successfully.'}
+    #     except UnauthorizedError:
+    #         raise wz.Unauthorized('Unauthorized: Incorrect password.')
 
 
 def create_token(email):
