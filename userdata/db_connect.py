@@ -104,6 +104,7 @@ def fetch_all_as_dict(key, collection, db=USER_DB):
         ret[temp] = doc
     return ret
 
+
 def hash_str(data: str) -> str:
     """
     hashes data using SHA256
