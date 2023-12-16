@@ -491,13 +491,21 @@ class ChangeName(Resource):
             return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@api.route('/change-password/<string:username> \
-           /<string:old_password>/<string:new_password>')
+change_password_model = api.model('ChangePassword', {
+    'username': fields.String(required=True, description='The username'),
+    'old_password': fields.String(required=True, description='The current password'),
+    'new_password': fields.String(required=True, description='The new password'),
+    'confirm_new_password': fields.String(required=True, description='Confirmation of the new password')
+})
+
+
+@api.route('/change-password')
 class ChangePassword(Resource):
     """
     Endpoint to change the password of a user.
     """
 
+    @api.expect(change_password_model)
     def post(self):
         """
         Change the password of a user.
