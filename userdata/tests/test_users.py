@@ -47,6 +47,24 @@ def test_get_users(temp_user):
     usrs.del_user(temp_user)
 
 
+def test_verify_user(temp_user):
+    v = usrs.verify_user(temp_user, usrs.MOCK_PASSWORD)
+    assert v
+    usrs.del_user(temp_user)
+
+
+def test_verify_user_wrong_password(temp_user):
+    with pytest.raises(ValueError):
+        usrs.verify_user(temp_user, usrs.MOCK_PASSWORD_2)
+    usrs.del_user(temp_user)
+
+
+def test_verify_user_wrong_username(temp_user):
+    with pytest.raises(ValueError):
+        usrs.verify_user('', usrs.MOCK_PASSWORD)
+    usrs.del_user(temp_user)
+
+
 def test_add_user_dup_name(temp_user):
     """
     Make sure a duplicate user name raises a ValueError.
@@ -73,7 +91,6 @@ def test_add_user():
     ret = usrs.add_user(new_user, usrs.MOCK_EMAIL, usrs.MOCK_PASSWORD)
     assert usrs.exists(new_user)
     assert ret is not None
-    usrs.del_user(new_user)
 
 
 def test_update_user(temp_user):

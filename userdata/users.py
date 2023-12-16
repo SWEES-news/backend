@@ -73,7 +73,7 @@ def add_user(username: str, email: str, password: str) -> str:
     if exists(username):
         raise ValueError(f'Duplicate Username: {username=}')
     if exists(email):
-        raise ValueError(f'Duplicate Username: {username=}')
+        raise ValueError(f'Duplicate Username: {email=}')
     if not username:
         raise ValueError('username may not be blank')
     user = {}
@@ -87,11 +87,13 @@ def add_user(username: str, email: str, password: str) -> str:
 
 def verify_user(username: str, password: str) -> bool:
     dbc.connect_db()
+    if not exists(username):
+        raise ValueError(f'No Username: {username}')
     # Retrieve user from database using the fetch_one function
     user = dbc.fetch_one(USER_COLLECT, {NAME: username})
-    if user and password == user[PASSWORD]:
-        return True
-    return False
+    if not (password == user[PASSWORD]):
+        raise ValueError('Incorrect Password')
+    return True
 
 
 def update_user(username: str, update_dict: dict):

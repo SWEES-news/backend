@@ -18,7 +18,7 @@ def temp_article():
     # delete the article!
 
 
-def test_get_test_email():
+def test_get_test_name():
     name = news._get_random_article()
     assert isinstance(name, str)
     assert len(name) > 0
@@ -30,16 +30,16 @@ def test_gen_id():
     assert len(_id) == news.ID_LEN
 
 
-def test_add_article_dup_email(temp_article):
+def test_add_article_dup_name(temp_article):
     """
-    Make sure a duplicate article email raises a ValueError.
+    Make sure a duplicate article name raises a ValueError.
     """
     dup_name = temp_article
     with pytest.raises(ValueError):
         news.add_article(dup_name, news.MOCK_LINK)
 
 
-def test_add_article_blank_email():
+def test_add_article_blank_name():
     """
     Make sure a blank game name raises a ValueError.
     """

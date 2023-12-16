@@ -6,7 +6,7 @@ from http import HTTPStatus
 
 from flask import Flask, request
 from flask_restx import Resource, Api, fields
-from flask_jwt_extended import (JWTManager, create_access_token,
+from flask_jwt_extended import (create_access_token,
                                 jwt_required, get_jwt_identity)
 
 import werkzeug.exceptions as wz
@@ -33,8 +33,6 @@ app = Flask(__name__)
 
 api = Api(app)
 
-app.config['JWT_SECRET_KEY'] = '123456'
-jwt = JWTManager(app)
 
 # ------ Endpoint names ------ #
 MAIN_MENU_EP = '/MainMenu'
@@ -218,18 +216,26 @@ class RemoveUser(Resource):
         return {REMOVE_NM: 'User removed successfully.'}
 
 
+user_login_model = api.model('NewUser', {
+    usrs.NAME: fields.String,
+    usrs.PASSWORD: fields.String,
+})
+
+
 @api.route('/login')
 class UserLogin(Resource):
+    @api.expect(user_login_model)
+    @api.response(HTTPStatus.OK, 'Soccessful login')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Falled to login')
     def post(self):
-        response = request.get_json()
-        username = response.get('username')
-        password = response.get('password')
-
-        if usrs.verify_user(username, password):
-            access_token = create_token(username)
-            return {'access_token': access_token}, HTTPStatus.OK
-        else:
-            return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED
+        name = request.json[NAME]
+        password = request.json[PASSWORD]
+        try:
+            verify = usrs.verify_user(name, password)
+            if not verify:
+                raise wz.Unauthorized('Falled to login')
+        except ValueError as e:
+            raise wz.Unauthorized(f'{str(e)}')
 
 
 @api.route('/user/<string:name>')   # TODO should we use f'{USERS_EP}/...'
