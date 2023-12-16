@@ -75,6 +75,28 @@ def test_add_user():
     assert ret is not None
     data.del_user(new_user)
 
+
+def test_update_user(temp_user):
+    NEW_NAME = data.MOCK_NAME_2
+    NEW_EMAIL = data.MOCK_EMAIL_2
+    NEW_PASSWORD = data.MOCK_PASSWORD_2
+
+    old_user_name = temp_user
+
+    new_user_info = {
+        data.NAME: NEW_NAME,
+        data.EMAIL: NEW_EMAIL,
+        data.PASSWORD: NEW_PASSWORD,
+    }
+
+    data.update_user(old_user_name, new_user_info)
+    assert data.exists(NEW_NAME)
+    assert not data.exists(old_user_name)
+    updated_user = data.get_user_by_name(NEW_NAME)
+    assert updated_user[data.EMAIL] == NEW_EMAIL
+    assert updated_user[data.PASSWORD] == NEW_PASSWORD
+    data.del_user(NEW_NAME) # have to do this because info changed
+
 def test_del_user(temp_user):
     name = temp_user
     data.del_user(name)

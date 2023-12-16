@@ -73,6 +73,10 @@ def del_one(collection, filt, db=USER_DB):
     client[db][collection].delete_one(filt)
 
 
+def update_doc(collection, filters, update_dict, db=USER_DB):
+    return client[db][collection].update_one(filters, {'$set': update_dict})
+
+
 def fetch_all(collection, db=USER_DB):
     ret = []
     for doc in client[db][collection].find():

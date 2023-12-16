@@ -6,23 +6,33 @@ Gradually, we will fill in actual calls to our datastore.
 import random
 import userdata.db_connect as dbc  # userdata.
 
-LOCAL = "0"
-CLOUD = "1"
+# ------ configuration for MongoDB ------ #
+USER_COLLECT = 'users'
 
+
+# ------ DB fields ------ #
+NAME = 'Username'
+EMAIL = 'Email'
+PASSWORD = 'Password'
+
+
+# ------ DB rules ------ #
 ID_LEN = 24
 BIG_NUM = 100000000000000000000
-MOCK_ID = '0' * ID_LEN
 MAX_EMAIL_LEN = 320
-NAME = 'Username'
-MOCK_NAME = 'test'
-PASSWORD = 'Password'
-MOCK_PASSWORD = 2
-EMAIL = 'Email'
-MOCK_EMAIL = '1@gmail.com'
 EMAIL_TAIL = '@gmail.com'
 EMAIL_TAIL_LEN = 10
+
+
+# ------ mock values ------ #
+MOCK_ID = '0' * ID_LEN
+MOCK_NAME = 'test'
+MOCK_EMAIL = '1@gmail.com'
+MOCK_PASSWORD = 2
+MOCK_NAME_2 = 'updated'
+MOCK_EMAIL_2 = 'example@gmail.com'
+MOCK_PASSWORD_2 = 1
 MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
-USER_COLLECT = 'users'
 
 
 # returns json of mock user
@@ -39,6 +49,10 @@ def _get_random_name():
 def get_rand_test_user():
     rand_part = _get_random_name()
     return {NAME: rand_part, EMAIL: MOCK_EMAIL, PASSWORD: MOCK_PASSWORD}
+
+
+def update_test_user():
+    return {NAME: MOCK_NAME_2, EMAIL: MOCK_EMAIL_2, PASSWORD: MOCK_PASSWORD_2}
 
 
 def _gen_id() -> str:
@@ -76,9 +90,16 @@ def verify_user(username: str, password: str) -> bool:
     return False
 
 
+def update_user(username: str, update_dict: dict):
+    if exists(username):
+        return dbc.update_doc(USER_COLLECT, {NAME: username}, update_dict)
+    else:
+        raise ValueError(f'Update failure: {username} not in database.')
+
+
 def del_user(username: str):
     if exists(username):
-        dbc.del_one(USER_COLLECT, {NAME: username})
+        return dbc.del_one(USER_COLLECT, {NAME: username})
     else:
         raise ValueError(f'Delete failure: {username} not in database.')
 
@@ -94,6 +115,14 @@ def get_user_by_email(email: str):
     """
     dbc.connect_db()
     return dbc.fetch_one(USER_COLLECT, {EMAIL: email})
+
+
+def get_user_by_name(name: str):
+    """
+    Fetches a user from the database by their name.
+    """
+    dbc.connect_db()
+    return dbc.fetch_one(USER_COLLECT, {NAME: name})
 
 
 def store_article_submission(article_link: str, submitter_id: str) -> str:

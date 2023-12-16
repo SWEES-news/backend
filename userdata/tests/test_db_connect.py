@@ -16,6 +16,7 @@ TEST_COLLECT = 'test_collect'
 TEST_NAME = 'test'
 TEST_EMAIL = 'test@gmailcom'
 TEST_PASSWORD = 'testword@gmail.com'
+UPDATE = 'update'
 
 
 @pytest.fixture(scope='function')
@@ -35,3 +36,8 @@ def test_fetch_one(temp_rec):
 def test_fetch_one_not_there(temp_rec):
     ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: 'not a field value in db!'})
     assert ret is None
+
+def test_update_doc(temp_rec):
+    dbc.update_doc(TEST_COLLECT, {TEST_NAME: TEST_NAME}, {TEST_NAME: UPDATE})
+    ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: UPDATE})
+    assert ret is not None
