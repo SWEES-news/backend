@@ -6,7 +6,8 @@ from http import HTTPStatus
 
 from flask import Flask, request
 from flask_restx import Resource, Api, fields
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (JWTManager, create_access_token,
+                                jwt_required, get_jwt_identity)
 
 import werkzeug.exceptions as wz
 
@@ -30,23 +31,29 @@ api = Api(app)
 app.config['JWT_SECRET_KEY'] = '123456'
 jwt = JWTManager(app)
 
-MENU = 'menu'
-NUM = 0
-MAIN_MENU = 'MainMenu'
+# ------ Endpoint names ------ #
 MAIN_MENU_EP = '/MainMenu'
+HELLO_EP = '/hello'
+USERS_EP = '/users'
+NEWS_LINK_SLASH = '/news'
+REMOVE_EP = '/removeUser'
+
+
+# ------ Additional strings ------ #
+NUM = 0
+MENU = 'menu'
+MAIN_MENU = 'MainMenu'
 MAIN_MENU_NM = "Welcome to our site!"
 USERS = 'users'
 HELLO_STR = 'hello'
-HELLO_SLASH = '/hello'
-USERS_SLASH = '/users'
 TYPE = 'Type'
 DATA = 'Data'
 TITLE = 'Title'
 RETURN = 'Return'
 USER_ID = 'UserID'
 NEWS_LINK = 'NewsPage'
-NEWS_LINK_SLASH = '/news'
 NEWS_ID = 'NewsID'
+REMOVE_NM = 'Remove User'
 
 
 @api.route(f'/{HELLO_STR}')
@@ -104,7 +111,7 @@ class Endpoints(Resource):
         return {"Available endpoints": endpoints}
 
 
-@api.route(f'/{MAIN_MENU}')
+@api.route(f'{MAIN_MENU_EP}')
 @api.route('/')
 class MainMenu(Resource):
     """
@@ -133,20 +140,13 @@ user_model = api.model('NewUser', {
     data.PASSWORD: fields.String,
 })
 
-# update_user_model = api.model('UpdateUser', {
-#     data.NAME: fields.String(required=True, description='Current username'),
-#     data.EMAIL: fields.String(required=True, description='Current email'),
-#     data.PASSWORD: fields.String(required=True, description='Current password'),
-#     data.NEW_NAME: fields.String(description='New name for the user'),
-#     data.NEW_EMAIL: fields.String(description='New email for the user'),
-#     data.NEW_PASSWORD: fields.String(description='New password for the user'),
-# })
 
-@api.route(f'{USERS_SLASH}')
+@api.route(f'{USERS_EP}')
 class Users(Resource):
     """
-    This class supports fetching a list of all users.
+    This class supports fetching a list of all users and adding a user.
     """
+
     def get(self):
         """
         This method returns all users.
@@ -173,36 +173,11 @@ class Users(Resource):
             new_id = data.add_user(name, email, password)
             if new_id is None:
                 raise wz.ServiceUnavailable('We have a technical problem.')
+
             return {USER_ID: new_id}
+
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
-
-    # @api.expect(update_user_model)
-    # @api.response(HTTPStatus.OK, 'Success')
-    # @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
-    # @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
-    # def put(self):
-    #     """
-    #     Update user account information.
-    #     """
-    #     # current_user = get_jwt_identity()
-
-    #     username = request.json.get(data.USERNAME)
-    #     email = request.json.get(data.EMAIL)
-    #     password = request.json.get(data.PASSWORD)
-
-    #     new_name = request.json.get(data.NEW_NAME)
-    #     new_email = request.json.get(data.NEW_EMAIL)
-    #     new_password = request.json.get(data.NEW_PASSWORD)
-
-    #     try:
-    #         updated = data.update_user_info(username, email, password, 
-    #             new_name, new_email, new_password) # need to add this in db.py
-    #         if not updated:
-    #             raise wz.NotFound('User not found.')
-    #         return {'message': 'User information updated successfully.'}
-    #     except UnauthorizedError:
-    #         raise wz.Unauthorized('Unauthorized: Incorrect password.')
 
 
 def create_token(email):
@@ -210,21 +185,21 @@ def create_token(email):
     return create_access_token(identity=email)
 
 
-@api.expect(user_model)     # remove_user_model
-@api.response(HTTPStatus.OK, 'Success')
-@api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
-@api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
+@api.route(f'{REMOVE_EP}')
 class RemoveUser(Resource):
-    @jwt_required()  # This decorator ensures valid JWT is present in request headers
+    @jwt_required()  # ensures valid JWT is present in request headers
+    @api.expect(user_model)     # remove_user_model
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
     def post(self):
         """
         Remove/delete a user.
         """
-        current_user = get_jwt_identity()  # Get the identity of the current user from the JWT
 
-        username = request.json.get(data.USERNAME)
-        email = request.json.get(data.EMAIL)
-        password = request.json.get(data.PASSWORD)
+        # Get the identity of current user from JWT
+        current_user = get_jwt_identity()
+        username = request.json.get(data.NAME)
 
         if current_user != username:
             raise wz.Unauthorized(
@@ -234,8 +209,8 @@ class RemoveUser(Resource):
             data.del_user(username)
         except ValueError:
             raise wz.NotFound('User not found.')
-        
-        return {'message': 'User removed successfully.'}
+
+        return {REMOVE_NM: 'User removed successfully.'}
 
 
 @api.route('/login')
@@ -252,20 +227,54 @@ class UserLogin(Resource):
             return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED
 
 
-@api.route('/user/<string:user_id>')
-class UserDetail(Resource):
+@api.route('/user/<string:name>')   # TODO should we use f'{USERS_EP}/...'
+class UserDetail(Resource):            # here instead?
     """
     This class supports fetching details of a specific user.
     """
-    def get(self, user_id):
+
+    def get(self, name):
         """
         This method returns details of a specific user.
         """
-        user = data.get_user_by_id(user_id)
+        user = data.get_user_by_name(name)
         if user:
             return user
         else:
-            api.abort(HTTPStatus.NOT_FOUND, f'User w/ id {user_id} not found')
+            api.abort(HTTPStatus.NOT_FOUND, f'User w/ name \'{name}\''
+                      ' not found')
+
+    @api.expect(user_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Missing data')
+    def put(self, name):
+        """
+        Update user account information.
+        """
+        # current_user = get_jwt_identity()  # TODO: implement if needed
+
+        # if current_user != name:
+        #     raise wz.Unauthorized('Unauthorized: You are not authorized to '
+        #                           'update this user.')
+
+        update_dict = {}
+        # add updated info into update_dict
+        info = [data.NAME, data.EMAIL, data.PASSWORD]
+        for field in info:
+            new_field = request.json.get(field)
+            if new_field:
+                update_dict[field] = new_field
+
+        if len(update_dict) == 0:
+            raise wz.BadRequest('Must include at least one of the following: '
+                                'new username, new email, new password')
+
+        updated = data.update_user(name, update_dict)
+        if not updated:
+            raise wz.NotFound('User not found.')
+        return {'message': 'User information updated successfully.'}
 
 
 news_model = api.model('NewArticle', {
