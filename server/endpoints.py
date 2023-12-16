@@ -18,6 +18,11 @@ import userdata.db as data
 import userdata.newsdb as news
 from userdata.db import store_article_submission
 
+# ------ DB fields ------ # For endpoints that change user data
+NAME = 'Username'
+EMAIL = 'Email'
+PASSWORD = 'Password'
+
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe())))
@@ -490,7 +495,7 @@ class ChangeName(Resource):
         password = response.get('password')
 
         try:
-            data.update_user_name(old_username, new_username, password)
+            data.update_user_profile(old_username, password, {NAME: new_username} )
             return {'message': 'Username changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
@@ -527,7 +532,7 @@ class ChangePassword(Resource):
                    HTTPStatus.BAD_REQUEST
 
         try:
-            data.update_user_password(username, old_password, new_password)
+            data.update_user_profile(username, old_password, {PASSWORD: new_password})
             return {'message': 'Password changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:

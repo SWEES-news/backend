@@ -185,7 +185,7 @@ def fetch_all_with_filter(collection=ARTICLE_COLLECTION, filt={}):
     return articles
 
 
-def update_user_password(username: str, old_password: str, new_password: str):
+def update_user_profile(username: str, password: str, update_dict: dict):
     """
     Update a user's profile in the database.
 
@@ -196,32 +196,12 @@ def update_user_password(username: str, old_password: str, new_password: str):
     dbc.connect_db()
 
     # check password is correct
-    if not verify_user(username, old_password):
+    if not verify_user(username, password):
         raise ValueError('Incorrect password.')
 
-    # Update the user profile
+    # EB: Update the user profile, username is unique, right?
+    # EB: If username is not unique, we need to use _id
+    # EB: If username is in update_dict, we need to check if it is unique
     return dbc.update_doc(USER_COLLECT,
-                          {PASSWORD: old_password},
-                          {PASSWORD: new_password})
-
-
-def update_user_name(old_username: str, new_username: str, password: str):
-    """
-    Update a user's profile in the database.
-
-    :param username: The username of the user to be updated.
-    :param update_dict: A dictionary containing the fields to be updated.
-    """
-    # Connect to the database
-    dbc.connect_db()
-
-    # check password is correct
-    if not verify_user(old_username, password):
-        raise ValueError('Incorrect password.')
-
-    # Update the user profile
-    return dbc.update_doc(USER_COLLECT,
-                          {NAME: old_username},
-                          {NAME: new_username})
-
-
+                          {NAME: username},
+                          update_dict)
