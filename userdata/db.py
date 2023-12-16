@@ -72,12 +72,14 @@ def get_users() -> dict:
 def add_user(username: str, email: str, password: str) -> str:
     if exists(username):
         raise ValueError(f'Duplicate Username: {username=}')
+    if exists(email):
+        raise ValueError(f'Duplicate Username: {username=}')
     if not username:
         raise ValueError('username may not be blank')
     user = {}
     user[NAME] = username
     user[EMAIL] = email
-    user[PASSWORD] = password
+    user[PASSWORD] = password  # need to hash!
     dbc.connect_db()
     _id = dbc.insert_one(USER_COLLECT, user)
     return str(_id) if _id else "False"
@@ -93,6 +95,7 @@ def verify_user(username: str, password: str) -> bool:
 
 
 def update_user(username: str, update_dict: dict):
+    dbc.connect_db()
     if exists(username):
         return dbc.update_doc(USER_COLLECT, {NAME: username}, update_dict)
     else:
@@ -100,6 +103,7 @@ def update_user(username: str, update_dict: dict):
 
 
 def del_user(username: str):
+    dbc.connect_db()
     if exists(username):
         return dbc.del_one(USER_COLLECT, {NAME: username})
     else:
@@ -176,6 +180,42 @@ def fetch_all_with_filter(collection=ARTICLE_COLLECTION, filt={}):
     """
     # Connect to the database (if not already connected)
     dbc.connect_db()
-    # articles = dbc.fetch_all_with_filt(collection, filt)
-    articles = dbc.fetch_all(collection)
+    articles = dbc.fetch_all_with_filter(collection, filt)
+    # articles = dbc.fetch_all(collection)
     return articles
+
+
+def update_user_profile(old_username: str, new_username: str, password: str):
+    """
+    Update a user's profile in the database.
+
+    :param username: The username of the user to be updated.
+    :param update_dict: A dictionary containing the fields to be updated.
+    """
+    # Connect to the database
+    dbc.connect_db()
+
+    # check password is correct
+    if not verify_user(old_username, password):
+        raise ValueError('Incorrect password.')
+
+    # Update the user profile
+    return dbc.update_doc(USER_COLLECT,
+                          {NAME: old_username},
+                          {NAME: new_username})
+
+
+def update_user_password(username: str, new_password: str):
+    """
+    Update a user's password in the database.
+
+    :param username: The username of the user to be updated.
+    :param new_password: The new password for the user.
+    """
+    # Connect to the database
+    dbc.connect_db()
+
+    # Update the user profile
+    return dbc.update_doc(USER_COLLECT,
+                          {NAME: username},
+                          {PASSWORD: new_password})

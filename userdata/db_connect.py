@@ -86,7 +86,7 @@ def fetch_all(collection, db=USER_DB):
     return ret
 
 
-def fetch_all_with_filt(collection, filt={}, db=USER_DB):
+def fetch_all_with_filter(collection, filt={}, db=USER_DB):
     ret = []
     for doc in client[db][collection].find(filter=filt):
         # Convert ObjectId fields to string
