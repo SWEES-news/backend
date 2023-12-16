@@ -465,3 +465,56 @@ class Articles(Resource):
             DATA: data.fetch_all_with_filter(),
             RETURN: MAIN_MENU_EP,
         }
+
+
+@api.route('/change-username/<string:old_username> \
+           /<string:new_username>/<string:password>')
+class ChangeName(Resource):
+    """
+    Endpoint to change the username of a user.
+    """
+
+    def post(self):
+        """
+        Change the username of a user.
+        """
+        response = request.json
+        old_username = response.get('old_username')
+        new_username = response.get('new_username')
+        password = response.get('password')
+
+        try:
+            data.update_user_profile(old_username, new_username, password)
+            return {'message': 'Username changed successfully.'}, \
+                HTTPStatus.OK
+        except Exception as e:
+            return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+@api.route('/change-password/<string:username> \
+           /<string:old_password>/<string:new_password>')
+class ChangePassword(Resource):
+    """
+    Endpoint to change the password of a user.
+    """
+
+    def post(self):
+        """
+        Change the password of a user.
+        """
+        response = request.json
+        username = response.get('username')
+        old_password = response.get('old_password')
+        new_password = response.get('new_password')
+
+        if response.get('new_password') != \
+                response.get('confirm_new_password'):
+            return {'message': 'Passwords do not match.'}, \
+                   HTTPStatus.BAD_REQUEST
+
+        try:
+            data.update_user_password(username, old_password, new_password)
+            return {'message': 'Password changed successfully.'}, \
+                HTTPStatus.OK
+        except Exception as e:
+            return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
