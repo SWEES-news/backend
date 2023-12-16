@@ -41,3 +41,15 @@ def test_update_doc(temp_rec):
     dbc.update_doc(TEST_COLLECT, {TEST_NAME: TEST_NAME}, {TEST_NAME: UPDATE})
     ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: UPDATE})
     assert ret is not None
+
+def test_hash_str():
+    hashed = dbc.hash_str(TEST_PASSWORD)
+    assert hashed is not None
+    assert isinstance(hashed, str)
+    assert len(hashed) > 0
+
+    hashed_again = dbc.hash_str(TEST_PASSWORD)
+    assert hashed == hashed_again
+
+    different_hash = dbc.hash_str(TEST_NAME)
+    assert hashed != different_hash
