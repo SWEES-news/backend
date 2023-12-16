@@ -473,10 +473,14 @@ class Articles(Resource):
 
 
 change_username_model = api.model('ChangeUsername', {
-    'old_username': fields.String(required=True, description='The current username'),
-    'new_username': fields.String(required=True, description='The new username'),
-    'password': fields.String(required=True, description='Confirmation of the  password')
+    'old_username': fields.String(required=True,
+                                  description='The current username'),
+    'new_username': fields.String(required=True,
+                                  description='The new username'),
+    'password': fields.String(required=True,
+                              description='Confirmation of the  password')
 })
+
 
 @api.route('/change-username')
 class ChangeName(Resource):
@@ -495,7 +499,8 @@ class ChangeName(Resource):
         password = response.get('password')
 
         try:
-            data.update_user_profile(old_username, password, {NAME: new_username} )
+            data.update_user_profile(old_username, password,
+                                     {NAME: new_username})
             return {'message': 'Username changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
@@ -503,10 +508,14 @@ class ChangeName(Resource):
 
 
 change_password_model = api.model('ChangePassword', {
-    'username': fields.String(required=True, description='The username'),
-    'old_password': fields.String(required=True, description='The current password'),
-    'new_password': fields.String(required=True, description='The new password'),
-    'confirm_new_password': fields.String(required=True, description='Confirmation of the new password')
+    'username': fields.String(required=True,
+                              description='The username'),
+    'old_password': fields.String(required=True,
+                                  description='The current password'),
+    'new_password': fields.String(required=True,
+                                  description='The new password'),
+    'confirm_new_password': fields.String(required=True,
+                                          description='new password')
 })
 
 
@@ -532,7 +541,8 @@ class ChangePassword(Resource):
                    HTTPStatus.BAD_REQUEST
 
         try:
-            data.update_user_profile(username, old_password, {PASSWORD: new_password})
+            data.update_user_profile(username, old_password,
+                                     {PASSWORD: new_password})
             return {'message': 'Password changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
