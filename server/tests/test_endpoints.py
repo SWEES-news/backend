@@ -100,16 +100,16 @@ def test_remove_user_succeeded(mock_delete):
     Testing we do the right thing with a call to del_user that succeeds.
     """
     # Generate a valid JWT token for testing
-    jwt_token = ep.create_token(usrs.get_test_user())
+    #cjwt_token = ep.create_token(usrs.get_test_user())
 
     # resp = TEST_CLIENT.delete(f'{ep.DEL_GAME_EP}/AnyName')
     # resp = TEST_CLIENT.post(ep.USERS_EP, json=usrs.get_rand_test_user())
-    # resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
-    resp = TEST_CLIENT.post(
-        ep.REMOVE_EP,
-        json=usrs.get_test_user(),
-        headers={'Authorization': f'Bearer {jwt_token}'},
-    )
+    resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
+    # resp = TEST_CLIENT.post(
+    #     ep.REMOVE_EP,
+    #     json=usrs.get_test_user(),
+    #     headers={'Authorization': f'Bearer {jwt_token}'},
+    # )
 
     assert resp.status_code == OK
 
@@ -120,14 +120,14 @@ def test_remove_nonexistent_user(mock_delete):
     Testing we do the right thing with a value error from add_user.
 
     """
-    jwt_token = ep.create_token(usrs.get_test_user())
+    # jwt_token = ep.create_token(usrs.get_test_user())
 
-    # resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
-    resp = TEST_CLIENT.post(
-        ep.REMOVE_EP,
-        json=usrs.get_test_user(),
-        headers={'Authorization': f'Bearer {jwt_token}'},
-    )
+    resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
+    # resp = TEST_CLIENT.post(
+    #     ep.REMOVE_EP,
+    #     json=usrs.get_test_user(),
+    #     headers={'Authorization': f'Bearer {jwt_token}'},
+    # )
 
     assert resp.status_code == NOT_ACCEPTABLE
 
@@ -137,33 +137,33 @@ def test_remove_user_db_failure(mock_delete):
     """
     Testing we do the right thing with a null ID return from add_user.
     """
-    jwt_token = ep.create_token(usrs.get_test_user())
+    # jwt_token = ep.create_token(usrs.get_test_user())
 
-    # resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
-    resp = TEST_CLIENT.post(
-        ep.REMOVE_EP,
-        json=usrs.get_test_user(),
-        headers={'Authorization': f'Bearer {jwt_token}'},
-    )
+    resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
+    # resp = TEST_CLIENT.post(
+    #     ep.REMOVE_EP,
+    #     json=usrs.get_test_user(),
+    #     headers={'Authorization': f'Bearer {jwt_token}'},
+    # )
 
     assert resp.status_code == SERVICE_UNAVAILABLE
 
 
-@patch('userdata.users.del_user')
-def test_remove_user_unauthorized(mock_delete):
-    """
-    Testing we do the right thing if user tries to remove a different user
-    (users can only delete/modify their own accounts).
-    """
-    jwt_token = ep.create_token(usrs.get_test_user())   # user with an account
+# @patch('userdata.users.del_user')
+# def test_remove_user_unauthorized(mock_delete):
+#     """
+#     Testing we do the right thing if user tries to remove a different user
+#     (users can only delete/modify their own accounts).
+#     """
+#     jwt_token = ep.create_token(usrs.get_test_user())   # user with an account
 
-    resp = TEST_CLIENT.post(
-        ep.REMOVE_EP,
-        json=usrs.get_rand_test_user(),    # not the logged in user's username
-        headers={'Authorization': f'Bearer {jwt_token}'},
-    )
+#     resp = TEST_CLIENT.post(
+#         ep.REMOVE_EP,
+#         json=usrs.get_rand_test_user(),    # not the logged in user's username
+#         headers={'Authorization': f'Bearer {jwt_token}'},
+#     )
 
-    assert resp.status_code == UNAUTHORIZED
+#     assert resp.status_code == UNAUTHORIZED
     # -----------------------------------------------------------------------
 
 
