@@ -8,6 +8,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import userdata.users as usrs
+from userdata.db_connect import hash_str
 # import userdata.db_connect as dbc
 
 @pytest.fixture(scope='function')
@@ -111,8 +112,9 @@ def test_update_user(temp_user):
     assert not usrs.exists(old_user_name)
     updated_user = usrs.get_user_by_name(NEW_NAME)
     assert updated_user[usrs.EMAIL] == NEW_EMAIL
-    assert updated_user[usrs.PASSWORD] == NEW_PASSWORD
+    assert updated_user[usrs.PASSWORD] == hash_str(NEW_PASSWORD)
     usrs.del_user(NEW_NAME) # have to do this because info changed
+
 
 def test_del_user(temp_user):
     name = temp_user

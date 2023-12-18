@@ -30,10 +30,10 @@ EMAIL_TAIL_LEN = 10
 MOCK_ID = '0' * ID_LEN
 MOCK_NAME = 'test'
 MOCK_EMAIL = '1@gmail.com'
-MOCK_PASSWORD = 2
+MOCK_PASSWORD = 'abcdef'
 MOCK_NAME_2 = 'updated'
 MOCK_EMAIL_2 = 'example@gmail.com'
-MOCK_PASSWORD_2 = 1
+MOCK_PASSWORD_2 = 'ghijkl'
 MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
 
 
@@ -79,7 +79,7 @@ def add_user(username: str, email: str, password: str) -> str:
     user = {}
     user[NAME] = username
     user[EMAIL] = email
-    user[PASSWORD] = password  # need to hash!
+    user[PASSWORD] = dbc.hash_str(password)  # need to hash!
     dbc.connect_db()
     _id = dbc.insert_one(USER_COLLECT, user)
     return str(_id) if _id else "False"
@@ -91,17 +91,21 @@ def verify_user(username: str, password: str) -> bool:
         raise ValueError(f'No Username: {username}')
     # Retrieve user from database using the fetch_one function
     user = dbc.fetch_one(USER_COLLECT, {NAME: username})
-    if not (password == user[PASSWORD]):
+    if not (dbc.hash_str(password) == user[PASSWORD]):
         raise ValueError('Incorrect Password')
     return True
 
 
 def update_user(username: str, update_dict: dict):
     dbc.connect_db()
-    if exists(username):
-        return dbc.update_doc(USER_COLLECT, {NAME: username}, update_dict)
-    else:
+    if not exists(username):
         raise ValueError(f'Update failure: {username} not in database.')
+    else:
+        ud = update_dict  # preserving update_dict here while hashing password
+        if PASSWORD in ud:
+            ud = update_dict.copy()
+            ud[PASSWORD] = dbc.hash_str(ud[PASSWORD])
+        return dbc.update_doc(USER_COLLECT, {NAME: username}, ud)
 
 
 def del_user(username: str):
@@ -201,6 +205,12 @@ def update_user_profile(username: str, password: str, update_dict: dict):
     if not verify_user(username, password):
         raise ValueError('Incorrect password.')
 
+    ud = update_dict
+
+    if PASSWORD in ud:
+        ud = update_dict.copy()
+        ud[PASSWORD] = dbc.hash_str(ud[PASSWORD])
+
     return dbc.update_doc(USER_COLLECT,
                           {NAME: username},
-                          update_dict)
+                          ud)
