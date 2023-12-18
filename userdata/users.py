@@ -35,6 +35,7 @@ MOCK_NAME_2 = 'updated'
 MOCK_EMAIL_2 = 'example@gmail.com'
 MOCK_PASSWORD_2 = 'ghijkl'
 MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
+# MOCK_USER_REMOVED = { "acknowledged" : True, "deletedCount" : 1 }
 
 
 # returns json of mock user

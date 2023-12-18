@@ -70,7 +70,7 @@ def del_one(collection, filt, db=USER_DB):
     """
     Find with a filter and return on the first doc found.
     """
-    client[db][collection].delete_one(filt)
+    return client[db][collection].delete_one(filt)
 
 
 def update_doc(collection, filters, update_dict, db=USER_DB):

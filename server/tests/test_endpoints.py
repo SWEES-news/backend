@@ -92,6 +92,40 @@ def test_users_add_db_failure(mock_add):
 #     pass
 
 
+# ------------------------------------------------------------------------
+# , return_value=usrs.MOCK_USER_REMOVED, autospec=True
+@patch('userdata.users.del_user')
+def test_remove_user_succeeded(mock_delete):
+    """
+    Testing we do the right thing with a call to del_user that succeeds.
+    """
+    # resp = TEST_CLIENT.delete(f'{ep.DEL_GAME_EP}/AnyName')
+    # resp = TEST_CLIENT.post(ep.USERS_EP, json=usrs.get_rand_test_user())
+    resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
+
+    assert resp.status_code == OK
+
+
+@patch('userdata.users.del_user', side_effect=ValueError(), autospec=True)
+def test_remove_nonexistent_user(mock_delete):
+    """
+    Testing we do the right thing with a value error from add_user.
+
+    """
+    resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
+    assert resp.status_code == NOT_ACCEPTABLE
+
+
+@patch('userdata.users.del_user', return_value=None)
+def test_remove_user_db_failure(mock_delete):
+    """
+    Testing we do the right thing with a null ID return from add_user.
+    """
+    resp = TEST_CLIENT.post(ep.REMOVE_EP, json=usrs.get_test_user())
+    assert resp.status_code == SERVICE_UNAVAILABLE
+    # -----------------------------------------------------------------------
+
+
 @patch('userdata.newsdb.get_article_by_id')
 def test_bias_analysis_success(mock_get_article):
     """
