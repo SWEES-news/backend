@@ -232,7 +232,7 @@ class UserLogin(Resource):
         password = request.json[PASSWORD]
         try:
             verify = usrs.verify_user(name, password)
-            if not verify:
+            if not verify or verify is None:
                 raise wz.Unauthorized('Falled to login')
         except ValueError as e:
             raise wz.Unauthorized(f'{str(e)}')
@@ -307,14 +307,8 @@ class News(Resource):
 
 
 submit_article_model = api.model('SubmitArticle', {
-    'article_link':
-        fields.String(
-            required=True,
-            description='The URL link to the article'),
-    'submitter_id':
-        fields.String(
-            required=True,
-            description='The ID of the user submitting the article')
+    'article_link': fields.String,
+    'submitter_id': fields.String,
 })
 
 
@@ -327,9 +321,8 @@ class SubmitArticle(Resource):
         """
         Submit an article for review.
         """
-        data = request.json
-        article_link = data['article_link']
-        submitter_id = data['submitter_id']
+        article_link = request.json['article_link']
+        submitter_id = request.json['submitter_id']
 
         # Validate the input data
         if not article_link or not submitter_id:
@@ -342,12 +335,13 @@ class SubmitArticle(Resource):
         # For example, you might save it to a database.
         submission_id = store_article_submission(article_link, submitter_id)
 
+        if submission_id is None:
+            raise wz.NotAcceptable(f'{str(submission_id)} Not Found')
         return (
             {
                 "message": "Article submitted successfully",
                 "submission_id": str(submission_id)  # causes a 500
             },
-            HTTPStatus.OK
         )
 
 
