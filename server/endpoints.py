@@ -40,6 +40,7 @@ HELLO_EP = '/hello'
 USERS_EP = '/users'
 NEWS_LINK_SLASH = '/news'
 REMOVE_EP = '/removeUser'
+CLEAR_EP = '/ClearUserDataBase'
 
 
 # ------ Additional strings ------ #
@@ -547,6 +548,33 @@ class ChangeEmail(Resource):
             usrs.update_user_profile(username, password,
                                      {EMAIL: new_email})
             return {'message': 'EMAIL changed successfully.'}, \
+                HTTPStatus.OK
+        except Exception as e:
+            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
+
+
+DatabaseClear = api.model('Database Name', {
+    'Name': fields.String(required=True, description='Database'),
+})
+
+
+@api.route(CLEAR_EP)
+class ClearUserCollection(Resource):
+    """
+    Removes all elements in a database.
+    """
+
+    @api.expect(DatabaseClear)
+    def put(self):
+        """
+        Clears the User Database.
+        """
+        response = request.json
+        name = response.get('Name')
+
+        try:
+            usrs.clear_user_data(name)
+            return {'message': 'Database Cleared'}, \
                 HTTPStatus.OK
         except Exception as e:
             return {'message': str(e)}, HTTPStatus.BAD_REQUEST

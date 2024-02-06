@@ -73,6 +73,14 @@ def del_one(collection, filt, db=USER_DB):
     return client[db][collection].delete_one(filt)
 
 
+def del_all(collection, db=USER_DB):
+    """
+    Removes all elements in a collection.
+    """
+    client[db][collection].drop()
+    return client[db][collection]
+
+
 def update_doc(collection, filters, update_dict, db=USER_DB):
     return client[db][collection].update_one(filters, {'$set': update_dict})
 

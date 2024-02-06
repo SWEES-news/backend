@@ -215,3 +215,17 @@ def update_user_profile(username: str, password: str, update_dict: dict):
     return dbc.update_doc(USER_COLLECT,
                           {NAME: username},
                           ud)
+
+
+def clear_user_data(name: str):
+    """
+    WARNING! THIS REMOVES ALL DATA FROM THE DATABASE!!!
+    """
+
+    dbc.connect_db()
+    if name != USER_COLLECT:
+        raise ValueError(f'Wrong Collection Name, {name}')
+    result = dbc.del_all(USER_COLLECT)
+    add_user(MOCK_NAME, MOCK_EMAIL, MOCK_PASSWORD)
+    del_user(MOCK_NAME)
+    return result
