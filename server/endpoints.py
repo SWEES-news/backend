@@ -8,6 +8,7 @@ from flask import Flask, request
 from flask_restx import Resource, Api, fields
 from flask_jwt_extended import (create_access_token,
                                 jwt_required, get_jwt_identity)
+from flask_cors import CORS
 
 import werkzeug.exceptions as wz
 
@@ -30,6 +31,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 app = Flask(__name__)
+CORS(app)
 
 api = Api(app)
 
