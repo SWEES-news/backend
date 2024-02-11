@@ -2,7 +2,7 @@
 
 ### Description:
 * **Week 1 (Feb 4 - Feb 11)**  
-Plan:  
+Plan:FrontEnd: Basic react template. (General structure of the front end) BackEnd: Refer to Kanban tasks   
 Done:  
 Problems or Questions:
 
