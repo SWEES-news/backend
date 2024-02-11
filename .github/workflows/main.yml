@@ -13,8 +13,8 @@ on:
   workflow_dispatch:
 
 env:
-  DEMO_HOME: /home/runner/work/SWEES_news/SWEES_news/
-  PYTHONPATH: /home/runner/work/SWEES_news/SWEES_news/
+  DEMO_HOME: /home/runner/work/backend/backend/
+  PYTHONPATH: /home/runner/work/backend/backend/
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

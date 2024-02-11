@@ -1,7 +1,7 @@
 #!/bin/bash
 # This shell script deploys a new version to a server.
 
-PROJ_DIR=SWEES_fall2023
+PROJ_DIR=backend
 VENV=SWEES
 PA_DOMAIN="SWEES.pythonanywhere.com"
 PA_USER='SWEES'
