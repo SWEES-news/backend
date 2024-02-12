@@ -11,7 +11,7 @@ URI="${URI_FRONT}${MONGODB_PASSWORD}${URI_BACK}"
 CONNECT_STR="mongodb+srv://swees.mumkgcx.mongodb.net/"
 if [ -z $DATA_DIR ]
 then
-    DATA_DIR=/Users/ez/Desktop/Git/SWEES_fall2023
+    DATA_DIR=/Users/ez/Desktop/Git/backend
 fi
 BKUP_DIR=$DATA_DIR/bkup
 EXP=mongoexport

@@ -75,6 +75,14 @@ def test_add_user_dup_name(temp_user):
         usrs.add_user(dup_name, usrs.MOCK_NAME, usrs.MOCK_PASSWORD)
     usrs.del_user(temp_user)
 
+def test_clear_collection_wrong_name(temp_user):
+    """
+    Makes sure protection from clearing database works
+    """
+    name = temp_user
+    with pytest.raises(ValueError):
+        usrs.clear_user_data("Wrong Name")
+    usrs.del_user(name)
 
 def test_add_user_blank_name():
     """

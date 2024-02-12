@@ -7,6 +7,9 @@ The goal of this project is to make it easier to digest news articles and find b
 **Problem:** There are many different reporters and organizations reporting news, and it is impossible for one person to research each one. It is also impossible for news reporting to be 100% objective since reporters have to choose what details to include in their stories and frame the story in a way that keeps readers interested. Given all this, how can a person catch the biases that inform each news report they consume?
 
 **Solution:** Build a tool that will find all the articles/reports for a given story, analyze the differences between the articles, and use AI to detect the potential biases for each story. When a consumer reads a news article, they can use the tool analyze "between the lines" of the article and get a sense of how biased/objective that article may be.
+
+This is a senior design project. [Progress and Goals](./ProgressAndGoals.md) is a discussion of what we completed in Fall 2023, and what we plan to complete in Spring 2024.
+
 ### target customers
 People who read news articles, and wish for ease in handling the complexities of news intake.
 ### implementation

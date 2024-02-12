@@ -25,9 +25,12 @@ Goals
   - Dashboard/home page
   - View, upload articles
   - Analyze, see analysis
+  - Make it user friendly and easy to understand
 - Backend
   - analyze articles
   - Store analysis in DB
   - Endpoints for analysis
+  - Using multiple approaches for bias analysis
+  - Potentially allowing users to compare multiple articles
 - Automation
   - Kanban board

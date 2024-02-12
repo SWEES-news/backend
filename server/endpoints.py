@@ -8,6 +8,7 @@ from flask import Flask, request
 from flask_restx import Resource, Api, fields
 from flask_jwt_extended import (create_access_token,
                                 jwt_required, get_jwt_identity)
+from flask_cors import CORS
 
 import werkzeug.exceptions as wz
 
@@ -30,6 +31,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 app = Flask(__name__)
+CORS(app)
 
 api = Api(app)
 
@@ -40,6 +42,7 @@ HELLO_EP = '/hello'
 USERS_EP = '/users'
 NEWS_LINK_SLASH = '/news'
 REMOVE_EP = '/removeUser'
+CLEAR_EP = '/ClearUserDataBase'
 
 
 # ------ Additional strings ------ #
@@ -547,6 +550,33 @@ class ChangeEmail(Resource):
             usrs.update_user_profile(username, password,
                                      {EMAIL: new_email})
             return {'message': 'EMAIL changed successfully.'}, \
+                HTTPStatus.OK
+        except Exception as e:
+            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
+
+
+DatabaseClear = api.model('Database Name', {
+    'Name': fields.String(required=True, description='Database'),
+})
+
+
+@api.route(CLEAR_EP)
+class ClearUserCollection(Resource):
+    """
+    Removes all elements in a database.
+    """
+
+    @api.expect(DatabaseClear)
+    def put(self):
+        """
+        Clears the User Database.
+        """
+        response = request.json
+        name = response.get('Name')
+
+        try:
+            usrs.clear_user_data(name)
+            return {'message': 'Database Cleared'}, \
                 HTTPStatus.OK
         except Exception as e:
             return {'message': str(e)}, HTTPStatus.BAD_REQUEST
