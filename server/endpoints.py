@@ -219,7 +219,7 @@ class RemoveUser(Resource):
         return {REMOVE_NM: 'User removed successfully.'}
 
 
-user_login_model = api.model('NewUser', {
+user_login_model = api.model('LoginUser', {
     usrs.NAME: fields.String,
     usrs.PASSWORD: fields.String,
 })
@@ -523,7 +523,7 @@ class ChangePassword(Resource):
             return {'message': str(e)}, HTTPStatus.BAD_REQUEST
 
 
-change_email_model = api.model('ChangePassword', {
+change_email_model = api.model('ChangeEmail', {
     'username': fields.String(required=True, description='The username'),
     'password': fields.String(required=True, description='current password'),
     'new_email': fields.String(required=True, description='new email')
