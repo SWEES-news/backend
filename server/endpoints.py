@@ -6,8 +6,8 @@ from http import HTTPStatus
 
 from flask import Flask, request
 from flask_restx import Resource, Api, fields
-from flask_jwt_extended import (create_access_token,
-                                jwt_required, get_jwt_identity)
+from flask_jwt_extended import (create_access_token)  # ,
+#                                # jwt_required, get_jwt_identity)
 from flask_cors import CORS
 
 import werkzeug.exceptions as wz
@@ -35,6 +35,10 @@ CORS(app)
 
 api = Api(app)
 
+# namespaces
+# example
+# ns = api.Namespace('basic stuff', description="this is basic stuff")
+# use ns.route instead of api.route
 
 # ------ Endpoint names ------ #
 MAIN_MENU_EP = '/MainMenu'
@@ -193,28 +197,26 @@ def create_token(username):
 
 @api.route(f'{REMOVE_EP}')
 class RemoveUser(Resource):
-    @jwt_required()  # ensures valid JWT is present in request headers
+    # @jwt_required()  # ensures valid JWT is present in request headers
     @api.expect(user_model)     # remove_user_model
     @api.response(HTTPStatus.OK, 'Success')
     @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
     @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
-    def post(self):
+    def delete(self):
         """
         Remove/delete a user.
         """
-
-        # Get the identity of current user from JWT
-        current_user = get_jwt_identity()
         username = request.json.get(usrs.NAME)
-
-        if current_user != username:
-            raise wz.Unauthorized(
-                'Unauthorized: You are not authorized to remove this user.')
-
+        password = request.json.get(usrs.PASSWORD)
         try:
-            usrs.del_user(username)
-        except ValueError:
+            if usrs.verify_user(username, password):
+                usrs.del_user(username)
+            else:
+                raise ValueError()
+        except KeyError:
             raise wz.NotFound('User not found.')
+        except ValueError:
+            raise wz.Unauthorized('Password incorrect.')
 
         return {REMOVE_NM: 'User removed successfully.'}
 
@@ -567,7 +569,7 @@ class ClearUserCollection(Resource):
     """
 
     @api.expect(DatabaseClear)
-    def put(self):
+    def delete(self):
         """
         Clears the User Database.
         """

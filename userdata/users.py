@@ -89,11 +89,11 @@ def add_user(username: str, email: str, password: str) -> str:
 def verify_user(username: str, password: str) -> bool:
     dbc.connect_db()
     if not exists(username):
-        raise ValueError(f'No Username: {username}')
+        raise KeyError(f'No Username exists: {username}')
     # Retrieve user from database using the fetch_one function
     user = dbc.fetch_one(USER_COLLECT, {NAME: username})
     if not (dbc.hash_str(password) == user[PASSWORD]):
-        raise ValueError('Incorrect Password')
+        return False
     return True
 
 
@@ -114,7 +114,7 @@ def del_user(username: str):
     if exists(username):
         return dbc.del_one(USER_COLLECT, {NAME: username})
     else:
-        raise ValueError(f'Delete failure: {username} not in database.')
+        raise KeyError(f'User {username} not found.')
 
 
 def exists(name: str) -> bool:

@@ -45,25 +45,20 @@ def test_get_users(temp_user):
         assert isinstance(user, str)
         assert isinstance(users[user], dict)
     assert temp_user in users
-    usrs.del_user(temp_user)
 
 
 def test_verify_user(temp_user):
     v = usrs.verify_user(temp_user, usrs.MOCK_PASSWORD)
     assert v
-    usrs.del_user(temp_user)
 
 
 def test_verify_user_wrong_password(temp_user):
-    with pytest.raises(ValueError):
-        usrs.verify_user(temp_user, usrs.MOCK_PASSWORD_2)
-    usrs.del_user(temp_user)
+    assert not usrs.verify_user(temp_user, usrs.MOCK_PASSWORD_2)
 
 
-def test_verify_user_wrong_username(temp_user):
-    with pytest.raises(ValueError):
+def test_verify_user_wrong_username():
+    with pytest.raises(KeyError):
         usrs.verify_user('', usrs.MOCK_PASSWORD)
-    usrs.del_user(temp_user)
 
 
 def test_add_user_dup_name(temp_user):
@@ -73,16 +68,13 @@ def test_add_user_dup_name(temp_user):
     dup_name = temp_user
     with pytest.raises(ValueError):
         usrs.add_user(dup_name, usrs.MOCK_NAME, usrs.MOCK_PASSWORD)
-    usrs.del_user(temp_user)
 
-def test_clear_collection_wrong_name(temp_user):
+def test_clear_collection_wrong_name():
     """
     Makes sure protection from clearing database works
     """
-    name = temp_user
     with pytest.raises(ValueError):
         usrs.clear_user_data("Wrong Name")
-    usrs.del_user(name)
 
 def test_add_user_blank_name():
     """
@@ -132,5 +124,5 @@ def test_del_user(temp_user):
 
 def test_del_user_not_there():
     name = usrs._get_random_name()
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         usrs.del_user(name)
