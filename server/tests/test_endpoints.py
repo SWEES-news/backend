@@ -35,18 +35,10 @@ import unittest
 
 TEST_CLIENT = ep.app.test_client()
 
-# tests if the hello world endpoint, which indicates if server is running at all
-def test_hello():
-    resp = TEST_CLIENT.get(ep.HELLO_EP)
-    print(f'{resp=}')
-    resp_json = resp.get_json()
-    print(f'{resp_json=}')
-    assert ep.HELLO_STR in resp_json
-
 # checks the users
 @pytest.mark.skip('this test does not work since we are switching from API')
 def test_list_users():
-    resp = TEST_CLIENT.get(ep.Users_SLASH)
+    resp = TEST_CLIENT.get(ep.USERS_EP)
     resp_json = resp.get_json()
     assert isinstance(resp_json, dict)
     assert len(resp_json) > 0
@@ -176,8 +168,8 @@ def test_bias_analysis_success(mock_get_article):
     mock_article = {'id': 'some_id', 'content': 'This is a test article'}
     mock_get_article.return_value = mock_article
 
-    response = TEST_CLIENT.post('/bias-analysis', json={
-        'article_id': 'some_id',
+    article_id = 'some_id'
+    response = TEST_CLIENT.post(f'{ep.ANALYSIS_EP}/{article_id}', json={
         # 'analysis_parameters': {}  # Optional parameters if needed
     })
     assert response.status_code == OK
@@ -190,9 +182,9 @@ def test_bias_analysis_article_not_found(mock_get_article):
     """
     Test bias analysis when the article is not found.
     """
-    response = TEST_CLIENT.post('/bias-analysis', json={
-        'article_id': 'non_existent_id',
-    })
+
+    article_id = 'nonexistent_id'
+    response = TEST_CLIENT.post(f'{ep.ANALYSIS_EP}/{article_id}', json={})
     assert response.status_code == NOT_FOUND
 
 
@@ -205,9 +197,8 @@ def test_bias_analysis_server_error(mock_get_article):
     # Simulate a server error during article retrieval
     mock_get_article.side_effect = Exception('Database error')
 
-    response = TEST_CLIENT.post('/bias_analysis', json={
-        'article_id': 'some_id',
-    })
+    article_id = 'some_id'
+    response = TEST_CLIENT.post(f'/{ep.ANALYSIS_EP}/{article_id}', json={})
     assert response.status_code == BAD_REQUEST
 
 
@@ -215,7 +206,7 @@ def test_bias_analysis_server_error(mock_get_article):
 def test_successful_submission(mock_store):
     # Mocking the database call
 
-    response = TEST_CLIENT.post('/submit-article', json={
+    response = TEST_CLIENT.post(f'{ep.ARTICLES_EP}/submit', json={
         'article_link': 'http://example.com/article',
         'submitter_id': 123
     })
@@ -226,7 +217,7 @@ def test_invalid_data_submission(mock_store):
     # Mocking the database call
 
     # Testing with invalid data
-    response = TEST_CLIENT.post('/submit-article', json={
+    response = TEST_CLIENT.post(f'{ep.ARTICLES_EP}/submit', json={
         'article_link': '',
         'submitter_id': 123
     })
@@ -238,7 +229,7 @@ def test_server_error_condition(self, mock_store):
     # Mocking the database call to simulate a server error
     mock_store.side_effect = Exception('Database error')
 
-    response = self.app.post('/submitarticle', json={
+    response = self.app.post(f'{ep.ARTICLES_EP}/submit', json={
         'article_link': 'http://example.com/article',
         'submitter_id': 123
     })
@@ -251,7 +242,7 @@ def test_server_error_condition(self, mock_store):
 def test_valid_credentials(mock_verify):
     # Simulating a scenario where the credentials are valid
 
-    response = TEST_CLIENT.post('/login', json={
+    response = TEST_CLIENT.post(f'{ep.USERS_EP}/login', json={
         ep.NAME: 'test@example.com',
         ep.PASSWORD: 'password123'
     })
@@ -262,7 +253,7 @@ def test_valid_credentials(mock_verify):
 def test_invalid_credentials(mock_verify):
     # Simulating a scenario where the credentials are invalid
 
-    response = TEST_CLIENT.post('/login', json={
+    response = TEST_CLIENT.post(f'{ep.USERS_EP}/login', json={
         ep.NAME: 'wrong@example.com',
         ep.PASSWORD: 'wrongpassword'
     })

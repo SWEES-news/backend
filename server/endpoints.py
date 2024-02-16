@@ -33,21 +33,28 @@ sys.path.insert(0, parentdir)
 app = Flask(__name__)
 CORS(app)
 
-api = Api(app)
+api = Api(app, title='SWEES API', default='extras')
 
 # namespaces
 # example
+
+us = api.namespace('user',
+                   description="operations for users")
+ar = api.namespace('articles',
+                   description="operations for user-submitted articles")
+an = api.namespace('analysis',
+                   description="operations for analyzing article bias")
 # ns = api.Namespace('basic stuff', description="this is basic stuff")
 # use ns.route instead of api.route
 
 # ------ Endpoint names ------ #
-MAIN_MENU_EP = '/MainMenu'
-HELLO_EP = '/hello'
-USERS_EP = '/users'
-NEWS_LINK_SLASH = '/news'
-REMOVE_EP = '/removeUser'
-CLEAR_EP = '/ClearUserDataBase'
+USERS_EP = f'/{us.name}'
+ARTICLES_EP = f'/{ar.name}'
+ANALYSIS_EP = f'/{an.name}'
 
+MAIN_MENU_EP = '/MainMenu'
+REMOVE_EP = '/remove'
+CLEAR_EP = '/ClearUserDataBase'
 
 # ------ Additional strings ------ #
 NUM = 0
@@ -55,7 +62,6 @@ MENU = 'menu'
 MAIN_MENU = 'MainMenu'
 MAIN_MENU_NM = "Welcome to our site!"
 USERS = 'users'
-HELLO_STR = 'hello'
 TYPE = 'Type'
 DATA = 'Data'
 TITLE = 'Title'
@@ -64,47 +70,6 @@ USER_ID = 'UserID'
 NEWS_LINK = 'NewsPage'
 NEWS_ID = 'NewsID'
 REMOVE_NM = 'Remove User'
-
-
-@api.route(f'/{HELLO_STR}')
-class HelloWorld(Resource):
-    """
-    The purpose of the HelloWorld class is to have a simple test to see if the
-    app is working at all.
-    """
-    def get(self):
-        """
-        A trivial endpoint to see if the server is running.
-        It just answers with "hello world."
-        """
-        return {HELLO_STR: 'world'}
-
-
-@api.route('/whoami')
-class whoami(Resource):
-    """
-    The purpose of the whoami endpoint is to get one's public ip address
-    """
-    def get(self):
-        """
-        A trivial endpoint to see if the server is running.
-        It just answers with ip addr
-        """
-        return {'ip': request.remote_addr}
-
-
-@api.route('/countNumberOfEndpoints')
-class countNumberOfEndpoints(Resource):
-    """
-    The purpose of the whoami endpoint is to get one's public ip address
-    """
-    def get(self):
-        """
-        A trivial endpoint to see if the server is running.
-        It just answers with ip addr
-        """
-        numPoints = len([rule.rule for rule in api.app.url_map.iter_rules()])
-        return {'countNumberOfEndpoints': numPoints}
 
 
 @api.route('/endpoints')
@@ -121,8 +86,7 @@ class Endpoints(Resource):
         return {"Available endpoints": endpoints}
 
 
-@api.route(f'{MAIN_MENU_EP}')
-@api.route('/')
+@api.route('/', f'{MAIN_MENU_EP}')
 class MainMenu(Resource):
     """
     This will deliver our main menu.
@@ -151,15 +115,15 @@ user_model = api.model('NewUser', {
 })
 
 
-@api.route(f'{USERS_EP}')
+@us.route('')
 class Users(Resource):
     """
-    This class supports fetching a list of all users and adding a user.
+    Get a list of all users, or add users.
     """
 
     def get(self):
         """
-        This method returns all users.
+        Get all users.
         """
         return {
             TYPE: DATA,
@@ -195,7 +159,7 @@ def create_token(username):
     return create_access_token(identity=username)
 
 
-@api.route(f'{REMOVE_EP}')
+@us.route(f'{REMOVE_EP}')
 class RemoveUser(Resource):
     # @jwt_required()  # ensures valid JWT is present in request headers
     @api.expect(user_model)     # remove_user_model
@@ -227,10 +191,10 @@ user_login_model = api.model('LoginUser', {
 })
 
 
-@api.route('/login')
+@us.route('/login')
 class UserLogin(Resource):
     @api.expect(user_login_model)
-    @api.response(HTTPStatus.OK, 'Soccessful login')
+    @api.response(HTTPStatus.OK, 'Successful login')
     @api.response(HTTPStatus.UNAUTHORIZED, 'Falled to login')
     def post(self):
         name = request.json[NAME]
@@ -243,15 +207,15 @@ class UserLogin(Resource):
             raise wz.Unauthorized(f'{str(e)}')
 
 
-@api.route('/user/<string:name>')   # TODO should we use f'{USERS_EP}/...'
-class UserDetail(Resource):            # here instead?
+@us.route('/<string:name>')
+class UserDetail(Resource):
     """
-    This class supports fetching details of a specific user.
+    Fetch details of a specific user.
     """
 
     def get(self, name):
         """
-        This method returns details of a specific user.
+        Get details of a specific user.
         """
         user = usrs.get_user_by_name(name)
         if user:
@@ -268,22 +232,22 @@ news_model = api.model('NewArticle', {
 
 
 """
-The /news endpoint serves as a means for users to add to or to
+The /articles endpoint (ar) serves as a means for users to add to or to
 view the list of stored news article links.
 When a user selects an article from this list for bias analysis,
 they would use a different endpoint,
-the /analyze-bias endpoint to submit their request for analysis.
+the /analysis endpoint (an) to submit their request for analysis.
 """
 
 
-@api.route(f'{NEWS_LINK_SLASH}')
+@ar.route('')
 class News(Resource):
     """
     This class supports fetching links to an article
     """
     def get(self):
         """
-        This method returns all news article links and name.
+        Get all news article links and name.
         """
         return {
             TYPE: DATA,
@@ -317,7 +281,7 @@ submit_article_model = api.model('SubmitArticle', {
 })
 
 
-@api.route('/submit-article')
+@ar.route('/submit')
 class SubmitArticle(Resource):
     @api.expect(submit_article_model)
     @api.response(HTTPStatus.OK, 'Article submitted successfully')
@@ -352,25 +316,24 @@ class SubmitArticle(Resource):
 
 # Define the request model for bias analysis
 analyze_bias_model = api.model('AnalyzeBias', {
-    'article_id':
-    fields.String(required=True, description='ID of the article to analyze'),
+    # 'article_id':
+    # fields.String(required=True, description='ID of the article to analyze'),
     'analysis_parameters':
     fields.Raw(required=False, description='Optional parameters for analysis')
 })
 
 
-@api.route('/bias-analysis')
+@an.route('/<string:article_id>')
 class AnalyzeBias(Resource):
     @api.expect(analyze_bias_model)
     @api.response(HTTPStatus.OK, 'Bias analysis completed')
     @api.response(HTTPStatus.BAD_REQUEST, 'Invalid request data')
     @api.response(HTTPStatus.NOT_FOUND, 'Article not found')
-    def post(self):
+    def post(self, article_id):
         """
         Analyze the bias in a submitted news article.
         """
-        data = request.json
-        article_id = data.get('article_id')
+        # data = request.json
         # analysis_parameters = data.get('analysis_parameters', {})
 
         # Use the provided function to retrieve the article by its ID
@@ -394,19 +357,15 @@ class AnalyzeBias(Resource):
             'bias_level': 'moderate',
             'bias_type': ['political', 'emotional'],
             'detailed_analysis': '...'
-        }
+        }  # should send this in get, not post, once we clean up
 
-        # return jsonify({
-        #     'article_id': article_id,
-        #     'analysis_result': analysis_result
-        # }), HTTPStatus.OK
         return {
             'article_id': article_id,
             'analysis_result': analysis_result
         }, HTTPStatus.OK
 
 
-@api.route('/user/<string:username>/articles')
+@ar.route('/<string:username>')
 class UserArticles(Resource):
     """
     Endpoint to retrieve articles submitted by a specific user.
@@ -428,14 +387,14 @@ class UserArticles(Resource):
             return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@api.route('/get-articles')
+@ar.route('/all')
 class Articles(Resource):
     """
     Gets all articles that have been submitted to the site by all users
     """
     def get(self):
         """
-        This method returns all news article links and name.
+        Get all news article links and titles.
         """
         return {
             TYPE: DATA,
@@ -455,16 +414,16 @@ change_username_model = api.model('ChangeUsername', {
 })
 
 
-@api.route('/change-username')
+@us.route('/username')
 class ChangeName(Resource):
     """
-    Endpoint to change the username of a user.
+    Endpoint to update the username of a user.
     """
 
     @api.expect(change_username_model)
     def put(self):
         """
-        Change the username of a user.
+        Update theusername of a user.
         """
         response = request.json
         old_username = response.get('old_username')
@@ -495,16 +454,16 @@ change_password_model = api.model('ChangePassword', {
 })
 
 
-@api.route('/change-password')
+@us.route('/password')
 class ChangePassword(Resource):
     """
-    Endpoint to change the password of a user.
+    Endpoint to update the password of a user.
     """
 
     @api.expect(change_password_model)
     def put(self):
         """
-        Change the password of a user.
+        Update the password of a user.
         """
         response = request.json
         username = response.get('username')
@@ -532,16 +491,16 @@ change_email_model = api.model('ChangeEmail', {
 })
 
 
-@api.route('/change-email')
+@us.route('/email')
 class ChangeEmail(Resource):
     """
-    Endpoint to change the email of a user.
+    Endpoint to update the email of a user.
     """
 
     @api.expect(change_email_model)
     def put(self):
         """
-        Change the email of a user.
+        Update the email of a user.
         """
         response = request.json
         username = response.get('username')
