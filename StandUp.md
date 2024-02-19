@@ -7,8 +7,8 @@ Done:
 Problems or Questions:
 
 * **Week 2 (Feb 12 - Feb 18)**  
-Plan:  
-Done:  
+Plan: Combime organize URLS in the format of (user/users, News[include submit article], Delete). Also, deleting a user should be a DELETE method not a POST method.  
+Done:  Namespaces have been added. The methods have been cleaned up and reorganized. Worked on frontend(inclusing navbar). Made some progress on AI.
 Problems or Questions:
 
 * **Week 3 (Feb 19 - Feb 25)**  
