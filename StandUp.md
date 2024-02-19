@@ -8,11 +8,11 @@ Problems or Questions:
 
 * **Week 2 (Feb 12 - Feb 18)**  
 Plan: Combime organize URLS in the format of (user/users, News[include submit article], Delete). Also, deleting a user should be a DELETE method not a POST method.  
-Done:  Namespaces have been added. The methods have been cleaned up and reorganized. Worked on frontend(inclusing navbar). Made some progress on AI.
+Done:  Namespaces have been added. The methods have been cleaned up and reorganized. Worked on frontend(inclusing navbar). Made some progress on AI.  
 Problems or Questions:
 
 * **Week 3 (Feb 19 - Feb 25)**  
-Plan:  
+Plan: Develop MongoDB Atlas vector database, also start LangChain to implement the model(using rag) and connect it to OpenAI. Maybe create an MVP to be tested by potential users(might need to be done the week after.) Finally, create basic graphical environment for front end.  
 Done:  
 Problems or Questions:
 
