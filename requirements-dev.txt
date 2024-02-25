@@ -7,3 +7,5 @@ Flask-Marshmallow
 newsdataapi
 scrapy
 python-dotenv
+html2text
+beautifulsoup4

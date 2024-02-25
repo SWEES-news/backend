@@ -47,5 +47,16 @@ def test_add_article_blank_name():
         news.add_article('', news.MOCK_LINK)
 
 
-ADD_NAME = 'Crazy News'
+def test_get_text_from_article_link():
+    text = news.get_text_from_article_link(news.MOCK_LINK)
+    assert isinstance(text, str)
+    print(text)
+    assert len(text) > 0
 
+
+# def test_get_clean_text_from_article_link():
+#     title, body = news.get_clean_text_from_article_link(news.MOCK_LINK)
+#     assert isinstance(body, str)
+#     assert isinstance(title, str)
+#     print(body)
+#     assert len(body) < 0

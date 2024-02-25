@@ -4,6 +4,9 @@ At first, it will just contain stubs that return fake data.
 Gradually, we will fill in actual calls to our datastore.
 """
 import random
+import requests
+import html2text
+from bs4 import BeautifulSoup
 
 ID_LEN = 24
 BIG_NUM = 100000000000000000000
@@ -84,3 +87,27 @@ def get_article_by_id(article_id: str):
     articles_collection = db.articles
     article = articles_collection.find_one({'_id': article_id})
     return article
+
+
+def get_text_from_article_link(link: str):
+    response = requests.get(link)
+    html_str = response.content
+    h = html2text.HTML2Text()
+    h.ignore_links = True
+    h.ignore_images = True
+    text = h.handle(str(html_str))
+    return text
+
+
+def get_clean_text_from_article_link(link: str):
+    soup = BeautifulSoup(link, 'lxml')
+    text_content = soup.find('header',
+                             attrs={'class': 'collection-headline-flex'}).h1
+    r1 = text_content.text.strip()
+    text_content = soup.find('article').find_all('p')
+    r2 = ''
+    for i in text_content:
+        r2 == i.text.strip()
+    title = r1
+    body = r2
+    return title, body
