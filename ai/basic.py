@@ -34,15 +34,22 @@ def main():
   model = ChatOpenAI(model=MODEL)
   chain = prompt | model | StrOutputParser()
 
-  content = ''
-  with open('ai/test_article.txt', 'r') as article:
-    content = article.read()
+  content_1 = ''; content_2 = ''
 
-  response = chain.invoke({'content': content})
+  with open('ai/test_article.txt', 'r') as article:
+    content_1 = article.read()
+  
+  with open('ai/test_article_2.txt', 'r') as article2:
+    content_2 = article2.read()
+  
+  response = chain.batch([{'content': content_1}, {'content': content_2}])
+  # response = chain.invoke({'content': content_1})
 
   with open('ai/test_response.md', 'w') as out:
-    print(response, file=out)
+    print(response[0], file=out)
 
+  with open('ai/test_response_2.md', 'w') as out:
+    print(response[1], file=out)
 
 if __name__ == "__main__":
   main()
