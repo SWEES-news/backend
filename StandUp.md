@@ -13,11 +13,11 @@ Problems or Questions:
 
 * **Week 3 (Feb 19 - Feb 25)**  
 Plan: Develop MongoDB Atlas vector database, also start LangChain to implement the model(using rag) and connect it to OpenAI. Maybe create an MVP to be tested by potential users(might need to be done the week after.) Finally, create basic graphical environment for front end.  
-Done:  
-Problems or Questions:
+Done: We mainly focused more on AI and a bit on frontend.   
+Problems or Questions: Hard t ofind common time slots for teamwork. not enough communication this week.
 
 * **Week 4 (Feb 26 - March 3)**  
-Plan:  
+Plan: More cohisive work, more meetings and more communication. Fix AI issues and get it working. Maybe create a visual map fpr frontend?  
 Done:  
 Problems or Questions:
 
