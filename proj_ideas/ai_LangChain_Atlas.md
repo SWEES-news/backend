@@ -15,17 +15,84 @@ MongoDB Atlas facilitates the creation of a vector search index in its UI, where
 
 LangChain and OpenAI can be utilized together, with OpenAI providing vector embeddings and LangChain facilitating the development of applications that integrate these embeddings for richer, more personalized experiences.
 
+### Istallation:
+
+To install LangChain run:
 ```
 pip install langchain-openai
 ```
-
+The langchain-experimental package holds experimental LangChain code, intended for research and experimental uses. Install with:
+```
+pip install langchain-experimental
+```
+The LangChain CLI is useful for working with LangChain templates and other LangServe projects. Install with:
+```
+pip install langchain-cli
+```
+### LangSmith:
+Many of the applications you build with LangChain will contain multiple steps with multiple invocations of LLM calls. As these applications get more and more complex, it becomes crucial to be able to inspect what exactly is going on inside your chain or agent. The best way to do this is with LangSmith.
+```
+export LANGCHAIN_TRACING_V2="true"
+export LANGCHAIN_API_KEY="..."
+```
+### Quick Start:
+Import the LangChain x OpenAI integration package.
+```
+pip install langchain-openai
+```
+Accessing the API requires an API key, which you can get by creating an OpenAI account and creating a key. Once we have a key we'll want to set it as an environment variable by running:
 ```
 export OPENAI_API_KEY="..."
 ```
-
+We can then initialize the model:
 ```python
 from langchain_openai import ChatOpenAI
 llm = ChatOpenAI()
+```
+A quick starter code base can be:
+```python
+from langchain_community.vectorstores import DocArrayInMemorySearch
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_openai.chat_models import ChatOpenAI
+from langchain_openai.embeddings import OpenAIEmbeddings
+
+# For demonstration, I'm using placeholders.
+articles = [
+    "This article discusses various policies implemented by the current administration...",
+    "The recent legislation passed by the senate shows a clear bias towards...",
+]
+
+vectorstore = DocArrayInMemorySearch.from_texts(
+    articles,
+    embedding=OpenAIEmbeddings(),
+)
+retriever = vectorstore.as_retriever()
+
+# We have to modify the template to analyze the political bias of the retrieved article.
+template = """Analyze the political bias of the following article content:
+{context}
+
+Question: Does this article have a political bias towards Democrat, Republican, or show no clear bias?
+"""
+prompt = ChatPromptTemplate.from_template(template)
+model = ChatOpenAI()
+output_parser = StrOutputParser()
+
+setup_and_retrieval = RunnableParallel(
+    {"context": retriever, "question": RunnablePassthrough()}
+)
+
+# Chain setup to analyze bias.
+chain = setup_and_retrieval | prompt | model | output_parser
+
+# Invoke the chain with a query related to the article content to analyze its bias.
+# The query can be a keyword or phrase from the article to retrieve it from the vector store.
+bias_analysis_result = chain.invoke("current administration policies")
+
+print(bias_analysis_result)
+
 ```
 
 [Quickstart LangChain](https://python.langchain.com/docs/get_started/quickstart)  
