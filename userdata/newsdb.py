@@ -100,14 +100,15 @@ def get_text_from_article_link(link: str):
 
 
 def get_clean_text_from_article_link(link: str):
-    soup = BeautifulSoup(link, 'lxml')
-    text_content = soup.find('header',
-                             attrs={'class': 'collection-headline-flex'}).h1
-    r1 = text_content.text.strip()
-    text_content = soup.find('article').find_all('p')
-    r2 = ''
-    for i in text_content:
-        r2 == i.text.strip()
-    title = r1
-    body = r2
-    return title, body
+    page = requests.get(link)
+    soup = BeautifulSoup(page.text, 'lxml')
+    # container = soup.find('div',
+    # class_=['entry-content', 'entry-content-read-more'])
+    # articletext = container.find_all('p')
+    articletext = soup.find_all('p')
+    print(articletext)
+    body = ''
+    for paragraph in articletext[:-1]:
+        text = paragraph.get_text()
+        body += text
+    return body
