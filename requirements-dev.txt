@@ -9,3 +9,4 @@ scrapy
 python-dotenv
 html2text
 beautifulsoup4
+bcrypt

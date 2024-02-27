@@ -1,6 +1,7 @@
 import os
 import pymongo as pm
 import hashlib
+import bcrypt
 
 LOCAL = "0"
 CLOUD = "1"
@@ -113,8 +114,5 @@ def fetch_all_as_dict(key, collection, db=USER_DB):
     return ret
 
 
-def hash_str(data: str) -> str:
-    """
-    hashes data using SHA256
-    """
-    return hashlib.sha256(data.encode()).hexdigest()
+def hash_str(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()

@@ -5,6 +5,7 @@ Gradually, we will fill in actual calls to our datastore.
 """
 import random
 import userdata.db_connect as dbc  # userdata.
+import bcrypt
 
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
@@ -92,9 +93,7 @@ def verify_user(username: str, password: str) -> bool:
         raise KeyError(f'No Username exists: {username}')
     # Retrieve user from database using the fetch_one function
     user = dbc.fetch_one(USER_COLLECT, {NAME: username})
-    if not (dbc.hash_str(password) == user[PASSWORD]):
-        return False
-    return True
+    return bcrypt.checkpw(password.encode(), user[PASSWORD].encode())
 
 
 def update_user(username: str, update_dict: dict):
