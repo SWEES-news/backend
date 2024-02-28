@@ -3,6 +3,7 @@ import pytest
 import os
 import sys
 import inspect
+import bcrypt
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -112,7 +113,7 @@ def test_update_user(temp_user):
     assert not usrs.exists(old_user_name)
     updated_user = usrs.get_user_by_name(NEW_NAME)
     assert updated_user[usrs.EMAIL] == NEW_EMAIL
-    assert updated_user[usrs.PASSWORD] == hash_str(NEW_PASSWORD)
+    assert bcrypt.checkpw(NEW_PASSWORD.encode(), updated_user[usrs.PASSWORD].encode()) # updated_user[usrs.PASSWORD] == hash_str(NEW_PASSWORD)
     usrs.del_user(NEW_NAME) # have to do this because info changed
 
 

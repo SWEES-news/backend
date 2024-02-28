@@ -1,6 +1,5 @@
 import os
 import pymongo as pm
-import hashlib
 import bcrypt
 
 LOCAL = "0"
