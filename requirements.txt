@@ -8,3 +8,5 @@ langchain-core
 langchain-community
 langchain-openai
 bcrypt
+html2text
+beautifulsoup4
