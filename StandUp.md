@@ -18,11 +18,11 @@ Problems or Questions: Hard t ofind common time slots for teamwork. not enough c
 
 * **Week 4 (Feb 26 - March 3)**  
 Plan: More cohisive work, more meetings and more communication. Fix AI issues and get it working. Maybe create a visual map fpr frontend?  
-Done:  
-Problems or Questions:
+Done: AI model is working now but not connected to the rest of backend properly. Web scrapping has been added but only limited to free articles. some small changes to backend and frontend(more details in commits).  
+Problems or Questions: Need to add web scrapping for paid contents? Or is it not needed?
 
 * **Week 5 (March 4 - March 10)**  
-Plan:  
+Plan: Connect the AI model to the backend properly and improve web scrapping a bit more. Add tests. Maybe improve frontend a bit more.  
 Done:  
 Problems or Questions:
 
