@@ -28,12 +28,26 @@ prompt_template = (
   'Your response:\n'
 )
 
+def analyze_content(texts : list[str]) -> list[str]:
+  """
+  separately analyzes each text for news bias.
 
-def main():
+  :param texts: the texts to analyze.
+
+  returns responses: a list of analyses.
+  """
   prompt = ChatPromptTemplate.from_template(prompt_template)
   model = ChatOpenAI(model=MODEL)
   chain = prompt | model | StrOutputParser()
 
+  docs = [{'content': doc} for doc in texts]
+
+  responses = chain.batch(docs)
+
+  return responses
+
+def main():
+  """Example of how to analyze content."""
   content_1 = ''; content_2 = ''
 
   with open('ai/test_article.txt', 'r') as article:
@@ -42,14 +56,13 @@ def main():
   with open('ai/test_article_2.txt', 'r') as article2:
     content_2 = article2.read()
   
-  response = chain.batch([{'content': content_1}, {'content': content_2}])
-  # response = chain.invoke({'content': content_1})
+  responses = analyze_content([content_1, content_2])
 
   with open('ai/test_response.md', 'w') as out:
-    print(response[0], file=out)
+    print(responses[0], file=out)
 
   with open('ai/test_response_2.md', 'w') as out:
-    print(response[1], file=out)
+    print(responses[1], file=out)
 
 if __name__ == "__main__":
   main()
