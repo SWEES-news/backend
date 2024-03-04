@@ -104,6 +104,9 @@ def get_text_from_article_link(link: str):
 def get_clean_text_from_article_link(link: str):
     page = requests.get(link)
     soup = BeautifulSoup(page.text, 'lxml')
+    title = soup.find('title')
+    print(title.get_text())
+    author = soup.find('small',  itemprop="author")
     # container = soup.find('div',
     # class_=['entry-content', 'entry-content-read-more'])
     # articletext = container.find_all('p')
@@ -113,4 +116,4 @@ def get_clean_text_from_article_link(link: str):
     for paragraph in articletext[:-1]:
         text = paragraph.get_text()
         body += text
-    return body
+    return title, author, body

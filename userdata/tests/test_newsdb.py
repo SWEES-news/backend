@@ -56,7 +56,10 @@ def test_get_text_from_article_link():
 
 @pytest.mark.skip('the scrapping tool currently does not work')
 def test_get_clean_text_from_article_link():
-    body = news.get_clean_text_from_article_link(news.MOCK_LINK)
+    title, author, body = news.get_clean_text_from_article_link(news.MOCK_LINK)
     assert isinstance(body, str)
-    print(body)
-    assert len(body) > 0
+    # print(body)
+    # assert len(body) > 0
+    print(author)
+    assert len(author) > 0
+    assert  isinstance(author, str)
