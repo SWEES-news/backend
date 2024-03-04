@@ -25,6 +25,8 @@ if article:
 
     # Wrap the extracted text to a maximum line width of 85 characters
     wrapped_text = textwrap.fill(article_text, width=85)
-    print(wrapped_text)
+
+    with open('article_article_link.txt', 'w') as file:
+        file.write(wrapped_text)
 else:
     print("Article tag not found.")
