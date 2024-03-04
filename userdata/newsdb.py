@@ -7,6 +7,7 @@ import random
 import requests
 import html2text
 from bs4 import BeautifulSoup
+from cleantext import clean
 
 ID_LEN = 24
 BIG_NUM = 100000000000000000000
@@ -96,6 +97,7 @@ def get_text_from_article_link(link: str):
     h.ignore_links = True
     h.ignore_images = True
     text = h.handle(str(html_str))
+    text = clean(text, no_emails=True, no_phone_numbers=True)
     return text
 
 

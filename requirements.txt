@@ -10,3 +10,4 @@ langchain-openai
 bcrypt
 html2text
 beautifulsoup4
+clean-text
