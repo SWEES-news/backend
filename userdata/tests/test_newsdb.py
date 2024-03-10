@@ -8,6 +8,9 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
+CLEAN_MOCK_TEXT = '0\nthe first'
+MOCK_TEXT = CLEAN_MOCK_TEXT + '\nwww@gmail.com \n* \n845-812-1234'
+
 import newsdb as news
 
 @pytest.fixture(scope='function')
@@ -52,6 +55,14 @@ def test_get_text_from_article_link():
     assert isinstance(text, str)
     print(text)
     assert len(text) > 0
+
+
+def test_clean_text():
+    text = MOCK_TEXT
+    text = news.clean_text(text)
+    assert isinstance(text, str)
+    print(text)
+    assert text == CLEAN_MOCK_TEXT
 
 
 @pytest.mark.skip('the scrapping tool currently does not work')
