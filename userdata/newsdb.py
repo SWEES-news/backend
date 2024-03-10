@@ -98,7 +98,29 @@ def get_text_from_article_link(link: str):
     h.ignore_images = True
     text = h.handle(str(html_str))
     text = clean(text, no_emails=True, no_phone_numbers=True)
-    return text
+    splitText = text.splitlines()
+    # print(splitText)
+    textLen = len(splitText)
+    i = 0
+    newList = []
+    charDict = {
+        r'"': 0,
+        '[': 1,
+        '(': 2
+    }
+    while i < textLen:
+        # print(len(splitText[i]))
+        if len(splitText[i]) == 0:
+            del splitText[i]
+            textLen -= 1
+        elif not splitText[i][0].isalnum() and not splitText[i][0] in charDict:
+            print(str(i) + ': ' + splitText[i])
+        else:
+            newList.append(splitText[i])
+        i += 1
+    # print(splitText)
+    newText = '\n'.join(newList)
+    return newText
 
 
 def get_clean_text_from_article_link(link: str):
