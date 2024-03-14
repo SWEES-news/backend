@@ -1,14 +1,20 @@
 import requests
 from bs4 import BeautifulSoup
 import textwrap
+import logging
 
-"""
-To be improved:
-This is the initial approch that we are using. However, this method can not extract the text of
-paid articles, such as New York Times.
-so if the user is subscribed to those websites, we are not able to extraxt it using this code.
-We might need to come up with a different approcah.
-"""
+logging.basicConfig(level=logging.INFO)
+
+def fetch_article_content(url):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raises an exception for 4XX or 5XX errors
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request failed: {e}")
+        return None
+
+    return response.text
 
 # A test URL of an article
 url = 'https://www.engadget.com/the-morning-after-apples-car-project-may-be-dead-121513763.html'
