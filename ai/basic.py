@@ -65,21 +65,14 @@ def write_response(file_path: str, response: str):
 
 def main():
   """Example of how to analyze content."""
-  content_1 = ''; content_2 = ''
+  content_files = ['ai/test_article.txt', 'ai/test_article_2.txt']
+  response_files = ['ai/test_response.md', 'ai/test_response_2.md']
 
-  with open('ai/test_article.txt', 'r') as article:
-    content_1 = article.read()
-  
-  with open('ai/test_article_2.txt', 'r') as article2:
-    content_2 = article2.read()
-  
-  responses = analyze_content([content_1, content_2])
+  contents = [read_content(file) for file in content_files]
+  responses = analyze_content(contents)
 
-  with open('ai/test_response.md', 'w') as out:
-    print(responses[0], file=out)
-
-  with open('ai/test_response_2.md', 'w') as out:
-    print(responses[1], file=out)
+  for response, file in zip(responses, response_files):
+      write_response(file, response)
 
 
 
