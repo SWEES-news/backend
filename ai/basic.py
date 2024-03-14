@@ -46,6 +46,23 @@ def analyze_content(texts : list[str]) -> list[str]:
 
   return responses
 
+def read_content(file_path: str) -> str:
+    """Reads content from a file."""
+    try:
+        with open(file_path, 'r') as file:
+            return file.read()
+    except Exception as e:
+        print(f"Error reading {file_path}: {e}")
+        return ""
+
+def write_response(file_path: str, response: str):
+    """Writes a response to a file."""
+    try:
+        with open(file_path, 'w') as file:
+            print(response, file=file)
+    except Exception as e:
+        print(f"Error writing to {file_path}: {e}")
+
 def main():
   """Example of how to analyze content."""
   content_1 = ''; content_2 = ''
@@ -63,6 +80,8 @@ def main():
 
   with open('ai/test_response_2.md', 'w') as out:
     print(responses[1], file=out)
+
+
 
 if __name__ == "__main__":
   main()
