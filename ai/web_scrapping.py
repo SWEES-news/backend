@@ -29,3 +29,14 @@ def save_article(text, filename='article.txt', width=85):
     wrapped_text = textwrap.fill(text, width=width)
     with open(filename, 'w') as file:
         file.write(wrapped_text)
+
+def main(url):
+    html_content = fetch_article_content(url)
+    if html_content:
+        article_text = extract_text(html_content)
+        if article_text:
+            save_article(article_text)
+
+if __name__ == "__main__":
+    url = 'https://www.engadget.com/the-morning-after-apples-car-project-may-be-dead-121513763.html'
+    main(url)
