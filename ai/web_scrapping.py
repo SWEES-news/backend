@@ -16,23 +16,16 @@ def fetch_article_content(url):
 
     return response.text
 
-# A test URL of an article
-url = 'https://www.engadget.com/the-morning-after-apples-car-project-may-be-dead-121513763.html'
+def extract_text(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    article = soup.find('article')
+    if not article:
+        logging.warning("Article tag not found.")
+        return None
+    
+    return article.get_text()
 
-# Fetch the content of the URL
-response = requests.get(url)
-
-soup = BeautifulSoup(response.text, 'html.parser')
-
-# Finding the article text
-article = soup.find('article')
-if article:
-    article_text = article.get_text()
-
-    # Wrap the extracted text to a maximum line width of 85 characters
-    wrapped_text = textwrap.fill(article_text, width=85)
-
-    with open('article_article_link.txt', 'w') as file:
+def save_article(text, filename='article.txt', width=85):
+    wrapped_text = textwrap.fill(text, width=width)
+    with open(filename, 'w') as file:
         file.write(wrapped_text)
-else:
-    print("Article tag not found.")
