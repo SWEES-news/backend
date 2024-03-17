@@ -6,6 +6,7 @@ Gradually, we will fill in actual calls to our datastore.
 import random
 import userdata.db_connect as dbc  # userdata.
 import bcrypt
+import json
 
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
@@ -218,15 +219,29 @@ def update_user_profile(username: str, password: str, update_dict: dict):
 
 def clear_user_data(name: str):
     """
-    WARNING! THIS REMOVES ALL DATA FROM THE DATABASE!!!
+    WARNING! THIS REMOVES ALL DATA FROM THE DATABASE EXCEPT 1!!!
     """
 
     dbc.connect_db()
-    if name != USER_COLLECT:
-        raise ValueError(f'Wrong Collection Name, {name}')
-    result = dbc.del_all(USER_COLLECT)
-    add_user(MOCK_NAME, MOCK_EMAIL, MOCK_PASSWORD)
-    del_user(MOCK_NAME)
+    if name not in get_all_collection():
+        raise ValueError(f'Collection Does Not Exist: , {name}')
+    data = dbc.fetch_all(name)
+    if len(data) == 0:
+        raise ValueError(f'Collection is empty: , {name}')
+    result = dbc.del_all(name)
+    dbc.insert_one(name, data[0])
+    value = json.dumps(data[0])
+    key = ''
+    found_start = 8
+    for i in range(len(value)):
+        if (value[i] == '\"'):
+            if (found_start == 0):
+                break
+            else:
+                found_start -= 1
+        elif (found_start == 1):
+            key += value[i]
+    # dbc.del_one(name, key)
     return result
 
 
