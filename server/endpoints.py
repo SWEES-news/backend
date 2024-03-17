@@ -537,7 +537,6 @@ class Collection(Resource):
                 HTTPStatus.OK
         except Exception as e:
             return {'message': str(e)}, HTTPStatus.BAD_REQUEST
-    
 
     def get(self):
         """
