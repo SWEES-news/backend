@@ -54,7 +54,7 @@ ANALYSIS_EP = f'/{an.name}'
 
 MAIN_MENU_EP = '/MainMenu'
 REMOVE_EP = '/remove'
-CLEAR_EP = '/ClearUserDataBase'
+CLEAR_EP = '/Collection'
 
 # ------ Additional strings ------ #
 NUM = 0
@@ -522,11 +522,7 @@ DatabaseClear = api.model('Database Name', {
 
 
 @api.route(CLEAR_EP)
-class ClearUserCollection(Resource):
-    """
-    Removes all elements in a database.
-    """
-
+class Collection(Resource):
     @api.expect(DatabaseClear)
     def delete(self):
         """
@@ -541,3 +537,15 @@ class ClearUserCollection(Resource):
                 HTTPStatus.OK
         except Exception as e:
             return {'message': str(e)}, HTTPStatus.BAD_REQUEST
+    
+
+    def get(self):
+        """
+        Get the name of every collection.
+        """
+        return {
+            TYPE: DATA,
+            TITLE: 'collection name',
+            DATA: usrs.get_all_collection(),
+            RETURN: MAIN_MENU_EP,
+        }

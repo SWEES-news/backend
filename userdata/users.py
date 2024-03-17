@@ -228,3 +228,8 @@ def clear_user_data(name: str):
     add_user(MOCK_NAME, MOCK_EMAIL, MOCK_PASSWORD)
     del_user(MOCK_NAME)
     return result
+
+
+def get_all_collection():
+    dbc.connect_db()
+    return dbc.fetch_collection_name()

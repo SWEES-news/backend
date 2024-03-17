@@ -115,3 +115,8 @@ def fetch_all_as_dict(key, collection, db=USER_DB):
 
 def hash_str(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+# returns collection names
+def fetch_collection_name(db=USER_DB):
+    return client[db].list_collection_names()
