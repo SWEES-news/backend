@@ -3,8 +3,7 @@ import tempfile
 import pytest
 from unittest.mock import patch
 
-import basic
-from basic import analyze_content, read_content, write_response
+from ..basic import analyze_content, read_content, write_response
 
 @pytest.fixture
 def sample_texts():
@@ -15,7 +14,7 @@ def test_analyze_content(sample_texts):
     with patch('basic.ChatPromptTemplate.from_template') as mock_prompt_template, \
          patch('basic.ChatOpenAI') as mock_chat_openai, \
          patch('basic.StrOutputParser') as mock_output_parser:
-        
+
         # Mocking the chain response
         mock_output_parser.return_value = ["Analysis 1", "Analysis 2"]
 
