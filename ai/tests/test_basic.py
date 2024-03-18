@@ -33,3 +33,29 @@
 
 #         # Assert the correct response
 #         assert responses == ["Analysis 1", "Analysis 2"]
+
+
+# def test_read_content(tmpdir):
+#     # Create a temporary file and write content
+#     test_content = "Test content"
+#     test_file = tmpdir.join("test_file.txt")
+#     test_file.write(test_content)
+
+#     # Read the content from the file
+#     content = read_content(str(test_file))
+
+#     # Assert content is read correctly
+#     assert content == test_content
+
+# def test_write_response(tmpdir):
+#     # Create a temporary file path
+#     test_file = os.path.join(tmpdir, "test_file.txt")
+#     test_response = "Test response"
+
+#     # Write response to the file
+#     write_response(test_file, test_response)
+
+#     # Read content from the file and assert
+#     with open(test_file, 'r') as file:
+#         written_response = file.read()
+#     assert written_response == test_response
