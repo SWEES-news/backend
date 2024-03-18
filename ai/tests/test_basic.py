@@ -1,9 +1,14 @@
 import os
+import sys
+import inspect
 import tempfile
 import pytest
 from unittest.mock import patch
 
-from ..basic import analyze_content, read_content, write_response
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+from basic import analyze_content, read_content, write_response
 
 @pytest.fixture
 def sample_texts():
