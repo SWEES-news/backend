@@ -47,13 +47,16 @@ def analyze_content(texts : list[str]) -> list[str]:
   return responses
 
 def read_content(file_path: str) -> str:
-    """Reads content from a file."""
+    """Reads content from a file and returns the content as a string.
+    Returns None if there's an error reading the file."""
     try:
         with open(file_path, 'r') as file:
             return file.read()
-    except Exception as e:
-        print(f"Error reading {file_path}: {e}")
-        return ""
+    except FileNotFoundError as e:
+        logging.error(f"File not found {file_path}: {e}")
+    except IOError as e:
+        logging.error(f"IO error reading {file_path}: {e}")
+    return None
 
 def write_response(file_path: str, response: str):
     """Writes a response to a file."""
