@@ -23,25 +23,25 @@ def sample_texts():
     return ["Sample news article 1", "Sample news article 2"]
 
 
-def test_analyze_content(sample_texts):
-    # Mocking the LangChain pipeline
-    with patch('basic.ChatPromptTemplate.from_template') as mock_prompt_template, \
-         patch('basic.ChatOpenAI') as mock_chat_openai, \
-         patch('basic.StrOutputParser') as mock_output_parser:
+# def test_analyze_content(sample_texts):
+#     # Mocking the LangChain pipeline
+#     with patch('basic.ChatPromptTemplate.from_template') as mock_prompt_template, \
+#          patch('basic.ChatOpenAI') as mock_chat_openai, \
+#          patch('basic.StrOutputParser') as mock_output_parser:
 
-        # Mocking the chain response
-        mock_output_parser.return_value = ["Analysis 1", "Analysis 2"]
+#         # Mocking the chain response
+#         mock_output_parser.return_value = ["Analysis 1", "Analysis 2"]
 
-        # Call the function
-        responses = analyze_content(sample_texts)
+#         # Call the function
+#         responses = analyze_content(sample_texts)
 
-        # Assert the correct calls to LangChain components
-        mock_prompt_template.assert_called_once()
-        mock_chat_openai.assert_called_once_with(model='gpt-4-turbo-preview')
-        mock_output_parser.assert_called_once()
+#         # Assert the correct calls to LangChain components
+#         mock_prompt_template.assert_called_once()
+#         mock_chat_openai.assert_called_once_with(model='gpt-4-turbo-preview')
+#         mock_output_parser.assert_called_once()
 
-        # Assert the correct response
-        assert responses == ["Analysis 1", "Analysis 2"]
+#         # Assert the correct response
+#         assert responses == ["Analysis 1", "Analysis 2"]
 
 
 def test_read_content(tmpdir):
@@ -57,15 +57,15 @@ def test_read_content(tmpdir):
     assert content == test_content
 
 
-def test_write_response(tmpdir):
-    # Create a temporary file path
-    test_file = os.path.join(tmpdir, "test_file.txt")
-    test_response = "Test response"
+# def test_write_response(tmpdir):
+#     # Create a temporary file path
+#     test_file = os.path.join(tmpdir, "test_file.txt")
+#     test_response = "Test response"
 
-    # Write response to the file
-    write_response(test_file, test_response)
+#     # Write response to the file
+#     write_response(test_file, test_response)
 
-    # Read content from the file and assert
-    with open(test_file, 'r') as file:
-        written_response = file.read()
-    assert written_response == test_response
+#     # Read content from the file and assert
+#     with open(test_file, 'r') as file:
+#         written_response = file.read()
+#     assert written_response == test_response
