@@ -2,6 +2,7 @@ include common.mk
 
 API_DIR = server
 DB_DIR = userdata
+AI_DIR = ai
 REQ_DIR = .
 
 PKG = $(API_DIR)
@@ -18,7 +19,7 @@ github: FORCE
 tests: 
 	cd $(API_DIR); make tests
 	cd $(DB_DIR); make tests
-
+	cd $(AI_DIR); make tests
 
 dev_env: FORCE
 	pip3 install -r $(REQ_DIR)/requirements-dev.txt
