@@ -6,13 +6,16 @@ Gradually, we will fill in actual calls to our datastore.
 import random
 import userdata.db_connect as dbc  # userdata.
 import bcrypt
-import json
+from bson.objectid import ObjectId
+from bson.errors import InvalidId
+
 
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
 ARTICLE_COLLECTION = 'articles'
 # field name for user ID in the articles collection
-USER_ID_FIELD = 'submitter_id'
+SUBMITTER_ID_FIELD = 'submitter_id'
+OBJECTID = '_id'
 
 # ------ DB fields ------ #
 NAME = 'Username'
@@ -138,58 +141,31 @@ def get_user_by_name(name: str):
     return dbc.fetch_one(USER_COLLECT, {NAME: name})
 
 
-def store_article_submission(article_link: str, submitter_id: str) -> str:
+def get_user_by_id(user_id: str) -> dict:
     """
-    Store the submitted article for review.
+    Fetches a user from the database by their ID.
     """
-    # Connect to the database
+    if not isinstance(user_id, (str, bytes)):
+        raise TypeError(f"Expected user_id to be str or bytes, got {type(user_id)}")
+
+    try:
+        # MUST convert the string ID to an ObjectId
+        object_id = ObjectId(user_id)
+    except InvalidId:
+        return None
+
     dbc.connect_db()
-
-    # Create a new article submission record
-    submission_record = {
-        "article_link": article_link,
-        "submitter_id": submitter_id,
-    }
-
-    # Insert the record into the database and retrieve the submission ID
-    submission_id = dbc.insert_one(ARTICLE_COLLECTION, submission_record)
-
-    return submission_id
+    return dbc.fetch_one(USER_COLLECT, {OBJECTID: object_id})
 
 
-def get_articles_by_username(username):
-    """
-    Fetch all articles submitted by a specific user identified by username.
-
-    :param username: The username of the user.
-    :return: A list of articles submitted by the user.
-    """
-    # Connect to the database (if not already connected)
-    dbc.connect_db()
-
-    # Fetch the user by username to get the user's ID
-    user = dbc.fetch_one(USER_COLLECT, {'username': username})
-    if not user:
-        return None  # User not found
-
-    user_id = user['_id']
-
-    # Fetch all articles submitted by this user
-    articles = dbc.fetch_all_with_filter(ARTICLE_COLLECTION,
-                                         {USER_ID_FIELD: user_id})
-
-    return articles
-
-
-def fetch_all_with_filter(collection=ARTICLE_COLLECTION, filt={}):
+def fetch_all_with_filter(filt={}):
     """
     Find with a filter and return all matching docs.
     """
     # Connect to the database (if not already connected)
     dbc.connect_db()
-    articles = dbc.fetch_all_with_filter(collection, filt)
-    # articles = dbc.fetch_all(collection)
-    return articles
+    users = dbc.fetch_all_with_filter(USER_COLLECT, filt)
+    return users
 
 
 def update_user_profile(username: str, password: str, update_dict: dict):
@@ -208,6 +184,8 @@ def update_user_profile(username: str, password: str, update_dict: dict):
 
     ud = update_dict
 
+    # The user is attempting to update their password
+    # Hash the password if it is being updated
     if PASSWORD in ud:
         ud = update_dict.copy()
         ud[PASSWORD] = dbc.hash_str(ud[PASSWORD])
@@ -219,7 +197,7 @@ def update_user_profile(username: str, password: str, update_dict: dict):
 
 def clear_user_data(name: str):
     """
-    WARNING! THIS REMOVES ALL DATA FROM THE DATABASE EXCEPT 1!!!
+    WARNING! THIS REMOVES ALL ROWS FROM THE DATABASE.
     """
 
     dbc.connect_db()
@@ -229,19 +207,6 @@ def clear_user_data(name: str):
     if len(data) == 0:
         raise ValueError(f'Collection is empty: , {name}')
     result = dbc.del_all(name)
-    dbc.insert_one(name, data[0])
-    value = json.dumps(data[0])
-    key = ''
-    found_start = 8
-    for i in range(len(value)):
-        if (value[i] == '\"'):
-            if (found_start == 0):
-                break
-            else:
-                found_start -= 1
-        elif (found_start == 1):
-            key += value[i]
-    # dbc.del_one(name, key)
     return result
 
 

@@ -2,27 +2,17 @@
 This is the file containing all of the endpoints for our flask app.
 The endpoint called `endpoints` will return all available endpoints.
 """
-from http import HTTPStatus
-
-from flask import Flask, request
-from flask_restx import Resource, Api, fields
-from flask_jwt_extended import (create_access_token)  # ,
-#                                # jwt_required, get_jwt_identity)
+from flask import Flask, request, session
+from flask_restx import Api, Resource, fields, reqparse
 from flask_cors import CORS
-
+from http import HTTPStatus
 import werkzeug.exceptions as wz
 
 import os
 import sys
 import inspect
-import userdata.users as usrs
-import userdata.newsdb as news
-from userdata.users import store_article_submission
-
-# ------ DB fields ------ # For endpoints that change user data
-NAME = 'Username'
-EMAIL = 'Email'
-PASSWORD = 'Password'
+import userdata.users as users
+import userdata.articles as articles
 
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
@@ -31,9 +21,11 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'h-J_l62fxF1uDXqKjHS3EQ')  # secure asf
 CORS(app)
 
 api = Api(app, title='SWEES API', default='extras')
+
 
 # namespaces
 # example
@@ -47,14 +39,31 @@ an = api.namespace('analysis',
 # ns = api.Namespace('basic stuff', description="this is basic stuff")
 # use ns.route instead of api.route
 
-# ------ Endpoint names ------ #
+# ------ Namespace names ------ #
 USERS_EP = f'/{us.name}'
 ARTICLES_EP = f'/{ar.name}'
-ANALYSIS_EP = f'/{an.name}'
+
+# ------ Endpoint names ------ #
+ACCOUNT_EP = '/account'
+REGISTER_EP = '/register'
+LOGIN_EP = '/login'
+LOGOUT_EP = '/logout'
+UPDATE_USERNAME_EP = '/update/username'
+UPDATE_PASSWORD_EP = '/update/password'
+UPDATE_EMAIL_EP = '/update/email'
+DELETE_EP = '/update/DeleteAccount'
+STATUS_EP = '/status'
+SUBMIT_EP = '/submit'
+SUBMISSIONS_EP = '/submissions'
+ANALYSIS_EP = '/submissions/analysis'
 
 MAIN_MENU_EP = '/MainMenu'
-REMOVE_EP = '/remove'
 CLEAR_EP = '/Collection'
+
+"""
+Add endpoint to delete articles
+Only delete article if Link was not provided
+"""
 
 # ------ Additional strings ------ #
 NUM = 0
@@ -66,10 +75,6 @@ TYPE = 'Type'
 DATA = 'Data'
 TITLE = 'Title'
 RETURN = 'Return'
-USER_ID = 'UserID'
-NEWS_LINK = 'NewsPage'
-NEWS_ID = 'NewsID'
-REMOVE_NM = 'Remove User'
 
 
 @api.route('/endpoints')
@@ -109,29 +114,50 @@ class MainMenu(Resource):
 
 
 user_model = api.model('NewUser', {
-    usrs.NAME: fields.String,
-    usrs.EMAIL: fields.String,
-    usrs.PASSWORD: fields.String,
+    users.NAME: fields.String,
+    users.EMAIL: fields.String,
+    users.PASSWORD: fields.String,
 })
 
 
 @us.route('')
 class Users(Resource):
     """
-    Get a list of all users, or add users.
+    Get a list of all users. DEBUG REMOVE FROM PROD.
     """
 
     def get(self):
         """
-        Get all users.
+        Get a list of all users. DEBUG REMOVE FROM PROD.
         """
         return {
             TYPE: DATA,
             TITLE: 'Current Users',
-            DATA: usrs.get_users(),
+            DATA: users.get_users(),
             RETURN: MAIN_MENU_EP,
         }
 
+
+@us.route(ACCOUNT_EP)
+class UserAccount(Resource):
+    def get(self):
+        """
+        Get the account information of the currently logged in user.
+        """
+        if 'user_id' in session:
+            user = users.get_user_by_id(session['user_id'])
+            return {
+                TYPE: DATA,
+                TITLE: 'Account Information',
+                DATA: user,
+                RETURN: MAIN_MENU_EP,
+            }
+        else:
+            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+
+
+@us.route(REGISTER_EP)
+class RegisterUser(Resource):
     @api.expect(user_model)
     @api.response(HTTPStatus.OK, 'Success')
     @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
@@ -139,27 +165,22 @@ class Users(Resource):
         """
         Add a user.
         """
-        name = request.json[usrs.NAME]
-        email = request.json[usrs.EMAIL]
-        password = request.json[usrs.PASSWORD]
+        name = request.json[users.NAME]
+        email = request.json[users.EMAIL]
+        password = request.json[users.PASSWORD]
 
         try:
-            new_id = usrs.add_user(name, email, password)
+            new_id = users.add_user(name, email, password)
             if new_id is None:
                 raise wz.ServiceUnavailable('We have a technical problem.')
 
-            return {USER_ID: new_id}
+            return {users.OBJECTID: new_id}
 
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
 
-def create_token(username):
-    print('in create token')
-    return create_access_token(identity=username)
-
-
-@us.route(f'{REMOVE_EP}')
+@us.route(DELETE_EP)
 class RemoveUser(Resource):
     # @jwt_required()  # ensures valid JWT is present in request headers
     @api.expect(user_model)     # remove_user_model
@@ -170,11 +191,11 @@ class RemoveUser(Resource):
         """
         Remove/delete a user.
         """
-        username = request.json.get(usrs.NAME)
-        password = request.json.get(usrs.PASSWORD)
+        username = request.json.get(users.NAME)
+        password = request.json.get(users.PASSWORD)
         try:
-            if usrs.verify_user(username, password):
-                usrs.del_user(username)
+            if users.verify_user(username, password):
+                users.del_user(username)
             else:
                 raise ValueError()
         except KeyError:
@@ -182,12 +203,12 @@ class RemoveUser(Resource):
         except ValueError:
             raise wz.Unauthorized('Password incorrect.')
 
-        return {REMOVE_NM: 'User removed successfully.'}
+        return {'UPDATE': 'User removed successfully.'}
 
 
 user_login_model = api.model('LoginUser', {
-    usrs.NAME: fields.String,
-    usrs.PASSWORD: fields.String,
+    users.NAME: fields.String(required=True, min_length=3, max_length=25, description='User Name'),
+    users.PASSWORD: fields.String(required=True, min_length=6, description='Password')
 })
 
 
@@ -197,14 +218,34 @@ class UserLogin(Resource):
     @api.response(HTTPStatus.OK, 'Successful login')
     @api.response(HTTPStatus.UNAUTHORIZED, 'Falled to login')
     def post(self):
-        name = request.json[NAME]
-        password = request.json[PASSWORD]
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument(users.NAME, type=str, required=True, help='Username cannot be blank', location='json')
+        parser.add_argument(users.PASSWORD, type=str, required=True, help='Password cannot be blank', location='json')
+        args = parser.parse_args()
+        print(args.items())
+        username = args[users.NAME]
+        password = args[users.PASSWORD]
         try:
-            verify = usrs.verify_user(name, password)
-            if not verify or verify is None:
+            if users.verify_user(username, password):
+                user_id = users.get_user_by_name(username)[users.OBJECTID]
+                session['user_id'] = user_id
+                return {'message': 'Login successful'}, HTTPStatus.OK
+            else:
                 raise wz.Unauthorized('Falled to login')
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             raise wz.Unauthorized(f'{str(e)}')
+
+
+@us.route('/logout')
+class UserLogout(Resource):
+    def get(self):
+        if 'user_id' in session:
+            userid = session['user_id']
+            session.pop('user_id')
+            username = users.get_user_by_id(userid)[users.NAME]
+            return {'message': f'Logged out {username}'}, HTTPStatus.OK
+        else:
+            return {'message': 'No user currently logged in'}, HTTPStatus.BAD_REQUEST
 
 
 @us.route('/<string:name>')
@@ -215,9 +256,9 @@ class UserDetail(Resource):
 
     def get(self, name):
         """
-        Get details of a specific user.
+        Get details of a specific user. Remove from Prod.
         """
-        user = usrs.get_user_by_name(name)
+        user = users.get_user_by_name(name)
         if user:
             return user
         else:
@@ -225,93 +266,124 @@ class UserDetail(Resource):
                       ' not found')
 
 
-news_model = api.model('NewArticle', {
-    news.NAME: fields.String,
-    news.LINK: fields.Integer,
+@us.route('/status')
+class LoggedIn(Resource):
+    def get(self):
+        """
+        Check if a user is currently logged in.
+        """
+        if 'user_id' in session:
+            print(session)
+            return {'message':
+                    f"User {users.get_user_by_id(session['user_id'])[users.NAME]} is currently logged in"}, HTTPStatus.OK
+        else:
+            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+
+
+submit_article_model = api.model('SubmitArticle', {
+    articles.ARTICLE_LINK: fields.String(required=True, description='Link to the article'),
+    articles.ARTICLE_TITLE: fields.String(required=True, description='Title this article'),
 })
 
 
-"""
-The /articles endpoint (ar) serves as a means for users to add to or to
-view the list of stored news article links.
-When a user selects an article from this list for bias analysis,
-they would use a different endpoint,
-the /analysis endpoint (an) to submit their request for analysis.
-"""
-
-
-@ar.route('')
-class News(Resource):
+@ar.route('/all')
+class Articles(Resource):
     """
-    This class supports fetching links to an article
+    Gets all articles that have been submitted to the site by all users
     """
     def get(self):
         """
-        Get all news article links and name.
+        Get all news article links and titles.
         """
         return {
             TYPE: DATA,
             TITLE: 'Stored Articles',
-            DATA: news.get_articles(),
+            DATA: articles.fetch_all(),
             RETURN: MAIN_MENU_EP,
         }
 
-    @api.expect(news_model)
-    @api.response(HTTPStatus.OK, 'Success')
-    @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
-    def post(self):
-        """
-        Add a news link.
-        """
-        name = request.json[news.NAME]
-        link = request.json[news.LINK]
-
-        try:
-            new_id = news.add_article(name, link)
-            if new_id is None:
-                raise wz.ServiceUnavailable('We have a technical problem.')
-            return {NEWS_ID: new_id}
-        except ValueError as e:
-            raise wz.NotAcceptable(f'{str(e)}')
-
 
 submit_article_model = api.model('SubmitArticle', {
-    'article_link': fields.String,
-    'submitter_id': fields.String,
+    articles.ARTICLE_LINK: fields.String(description='Link to the article'),
+    articles.ARTICLE_BODY: fields.String(description='Body of the article'),
+    articles.ARTICLE_TITLE: fields.String(required=True, description='Title of the article'),
 })
 
 
-@ar.route('/submit')
+@ar.route(SUBMIT_EP)
 class SubmitArticle(Resource):
     @api.expect(submit_article_model)
     @api.response(HTTPStatus.OK, 'Article submitted successfully')
     @api.response(HTTPStatus.BAD_REQUEST, 'Invalid data')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
     def post(self):
         """
         Submit an article for review.
+        Must submit either a link or a body of text, or both.
         """
-        article_link = request.json['article_link']
-        submitter_id = request.json['submitter_id']
+        if 'user_id' not in session:
+            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument(articles.ARTICLE_LINK, type=str, required=False,
+                            help='Article link cannot be blank if article body is also blank.')
+        parser.add_argument(articles.ARTICLE_BODY, type=str, required=False,
+                            help='Article body must be between 100 and 5000 characters if article_link is blank.')
+        parser.add_argument(articles.ARTICLE_TITLE, type=str, required=False,
+                            help='Title is not required. Will be replaced by body if not provided.')
 
-        # Validate the input data
-        if not article_link or not submitter_id:
-            api.abort(
-                HTTPStatus.BAD_REQUEST,
-                "Invalid data: 'article_link' and 'submitter_id' are required"
-            )
+        args = parser.parse_args()
+        print(args.items())
+        submitter_id = session['user_id']
+        article_link = args[articles.ARTICLE_LINK]
+        article_body = args[articles.ARTICLE_BODY]
+        article_title = args[articles.ARTICLE_TITLE]
 
-        # Implement logic to store the article submission for review.
-        # For example, you might save it to a database.
-        submission_id = store_article_submission(article_link, submitter_id)
+        if not article_link and not article_body:
+            return {'message':
+                    f"Either {articles.ARTICLE_LINK} or {articles.ARTICLE_BODY} must be provided"}, HTTPStatus.BAD_REQUEST
+        if not article_link and (not article_body or len(article_body) < 100 or len(article_body) > 5000):
+            return {'message':
+                    "Article body must be between 100 and 5000 characters"}, HTTPStatus.BAD_REQUEST
+        if not article_body:  # do scrape of link
+            # article_body = articles.scrape_link(article_link) # replace with actual function
+            article_body = "This is a placeholder for the scraped article body"
+            if article_body is None:
+                return {'message': "Failed to scrape the article body"}, HTTPStatus.BAD_REQUEST
+        if article_title is None:
+            article_title = article_body[:25] + "..."
 
-        if submission_id is None:
-            raise wz.NotAcceptable(f'{str(submission_id)} Not Found')
-        return (
-            {
-                "message": "Article submitted successfully",
-                "submission_id": str(submission_id)  # causes a 500
-            },
-        )
+        try:
+            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link, article_body)
+            if not success:
+                return {'message': f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+        return {
+            "message": f"Article {article_title} submitted successfully",
+            "submission_id": str(submission_id)
+        }, HTTPStatus.OK
+
+
+@ar.route(SUBMISSIONS_EP)
+class SubmittedArticles(Resource):
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
+    def get(self):
+        """
+        Get all news article links and name submitted by the logged in user.
+        """
+        if 'user_id' in session:
+            user_id = session['user_id']
+            username = users.get_user_by_id(user_id)[users.NAME]
+            return {
+                TYPE: DATA,
+                TITLE: 'Stored Articles',
+                DATA: articles.get_articles_by_username(username),
+            }
+        else:
+            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
 
 
 # Define the request model for bias analysis
@@ -323,7 +395,7 @@ analyze_bias_model = api.model('AnalyzeBias', {
 })
 
 
-@an.route('/<string:article_id>')
+@ar.route(f"{ANALYSIS_EP}/<string:article_id>")
 class AnalyzeBias(Resource):
     @api.expect(analyze_bias_model)
     @api.response(HTTPStatus.OK, 'Bias analysis completed')
@@ -331,13 +403,13 @@ class AnalyzeBias(Resource):
     @api.response(HTTPStatus.NOT_FOUND, 'Article not found')
     def post(self, article_id):
         """
-        Analyze the bias in a submitted news article.
+        Analyze the bias in a submitted article.
         """
         # data = request.json
         # analysis_parameters = data.get('analysis_parameters', {})
 
         # Use the provided function to retrieve the article by its ID
-        article = news.get_article_by_id(article_id)
+        article = users.get_article_by_id(article_id)
         if not article:
             api.abort(HTTPStatus.NOT_FOUND,
                       f'Article with ID {article_id} not found')
@@ -365,45 +437,6 @@ class AnalyzeBias(Resource):
         }, HTTPStatus.OK
 
 
-@ar.route('/<string:username>')
-class UserArticles(Resource):
-    """
-    Endpoint to retrieve articles submitted by a specific user.
-    """
-
-    def get(self, username):
-        """
-        Return a list of articles submitted by the given user.
-        """
-        try:
-            articles = usrs.get_articles_by_username(username)
-
-            return {
-                'username': username,
-                'articles': articles
-            }, HTTPStatus.OK
-
-        except Exception as e:
-            return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
-
-
-@ar.route('/all')
-class Articles(Resource):
-    """
-    Gets all articles that have been submitted to the site by all users
-    """
-    def get(self):
-        """
-        Get all news article links and titles.
-        """
-        return {
-            TYPE: DATA,
-            TITLE: 'Stored Articles',
-            DATA: usrs.fetch_all_with_filter(),
-            RETURN: MAIN_MENU_EP,
-        }
-
-
 change_username_model = api.model('ChangeUsername', {
     'old_username': fields.String(
         required=True, description='The current username'),
@@ -414,7 +447,7 @@ change_username_model = api.model('ChangeUsername', {
 })
 
 
-@us.route('/username')
+@us.route(UPDATE_USERNAME_EP)
 class ChangeName(Resource):
     """
     Endpoint to update the username of a user.
@@ -431,11 +464,10 @@ class ChangeName(Resource):
         password = response.get('password')
 
         try:
-            if usrs.get_user_by_name(new_username):
+            if users.get_user_by_name(new_username):
                 return {'message': 'Username already exists.'}, \
-                    HTTPStatus.BAD_REQUEST
-            usrs.update_user_profile(old_username, password,
-                                     {NAME: new_username})
+                        HTTPStatus.BAD_REQUEST
+            users.update_user_profile(old_username, password, {users.NAME: new_username})
             return {'message': 'Username changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
@@ -454,7 +486,7 @@ change_password_model = api.model('ChangePassword', {
 })
 
 
-@us.route('/password')
+@us.route(UPDATE_PASSWORD_EP)
 class ChangePassword(Resource):
     """
     Endpoint to update the password of a user.
@@ -476,8 +508,7 @@ class ChangePassword(Resource):
                    HTTPStatus.BAD_REQUEST
 
         try:
-            usrs.update_user_profile(username, old_password,
-                                     {PASSWORD: new_password})
+            users.update_user_profile(username, old_password, {users.PASSWORD: new_password})
             return {'message': 'Password changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
@@ -491,7 +522,7 @@ change_email_model = api.model('ChangeEmail', {
 })
 
 
-@us.route('/email')
+@us.route(UPDATE_EMAIL_EP)
 class ChangeEmail(Resource):
     """
     Endpoint to update the email of a user.
@@ -508,8 +539,7 @@ class ChangeEmail(Resource):
         new_email = response.get('new_email')
 
         try:
-            usrs.update_user_profile(username, password,
-                                     {EMAIL: new_email})
+            users.update_user_profile(username, password, {users.EMAIL: new_email})
             return {'message': 'EMAIL changed successfully.'}, \
                 HTTPStatus.OK
         except Exception as e:
@@ -532,7 +562,7 @@ class Collection(Resource):
         name = response.get('Name')
 
         try:
-            usrs.clear_user_data(name)
+            users.clear_user_data(name)
             return {'message': 'Database Cleared'}, \
                 HTTPStatus.OK
         except Exception as e:
@@ -545,6 +575,6 @@ class Collection(Resource):
         return {
             TYPE: DATA,
             TITLE: 'collection name',
-            DATA: usrs.get_all_collection(),
+            DATA: users.get_all_collection(),
             RETURN: MAIN_MENU_EP,
         }

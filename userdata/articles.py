@@ -1,0 +1,99 @@
+"""
+This file will manage interactions with our data store.
+At first, it will just contain stubs that return fake data.
+Gradually, we will fill in actual calls to our datastore.
+"""
+import userdata.db_connect as dbc  # userdata.
+from bson.objectid import ObjectId
+from bson.errors import InvalidId
+import userdata.extras as extras
+import userdata.users as users  # articles depends on user, avoid circular import!
+
+
+# ------ configuration for MongoDB ------ #
+USER_COLLECT = 'users'
+ARTICLE_COLLECTION = 'articles'
+# field name for user ID in the articles collection
+SUBMITTER_ID_FIELD = 'submitter_id'
+ARTICLE_LINK = "article_link"
+ARTICLE_TITLE = "article_title"
+ARTICLE_BODY = "article_body"
+
+
+# ------ DB fields ------ #
+NAME = users.NAME
+EMAIL = users.EMAIL
+PASSWORD = users.PASSWORD
+SUBMITTER_ID_FIELD = users.SUBMITTER_ID_FIELD
+OBJECTID = '_id'
+
+
+def store_article_submission(submitter_id: str, article_title: str, article_link: str = "", article_body: str = "") -> (bool, str):
+    """
+    Store the submitted article for review.
+    """
+    user = users.get_user_by_id(submitter_id)
+    if not user:
+        return False, f"User with {submitter_id} NOT found"
+
+    # Create a new article submission record
+    submission_record = {
+        ARTICLE_LINK: article_link,
+        ARTICLE_TITLE: article_title,
+        ARTICLE_BODY: article_body,
+        SUBMITTER_ID_FIELD: user[OBJECTID],
+    }
+
+    dbc.connect_db()
+    submission_id = dbc.insert_one(ARTICLE_COLLECTION, submission_record)
+    return True, submission_id
+
+
+def get_article_by_id(article_id):
+    """
+    Fetches an article from the database by their ID.
+    """
+    try:
+        # MUST convert the string ID to an ObjectId
+        object_id = ObjectId(article_id)
+    except InvalidId:
+        return None
+
+    dbc.connect_db()
+    return dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: object_id})
+
+
+def fetch_all_with_filter(filt={}):
+    """
+    Find with a filter and return all matching docs.
+    """
+    # Connect to the database (if not already connected)
+    articles = extras.fetch_all_with_filter(ARTICLE_COLLECTION, filt)
+    return articles
+
+
+def fetch_all():
+    """
+    Find all.
+    """
+    # Connect to the database (if not already connected)
+    articles = fetch_all_with_filter()
+    return articles
+
+
+def get_articles_by_username(username):
+    """
+    Fetch all articles submitted by a specific user identified by username.
+
+    :param username: The username of the user.
+    :return: A list of articles submitted by the user.
+    """
+    user = users.get_user_by_name(username)
+    if not user:
+        return f"User {username} NOT found"  # User not found
+
+    user_id = user[OBJECTID]
+
+    # Fetch all articles submitted by this user
+    articles = fetch_all_with_filter({SUBMITTER_ID_FIELD: user_id})
+    return articles

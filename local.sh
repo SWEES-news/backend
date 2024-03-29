@@ -3,6 +3,7 @@
 export FLASK_ENV=development
 export PROJ_DIR=$PWD
 export DEBUG=1
+export SECRET_KEY='h-J_l62fxF1uDXqKjHS3EQ'
 
 # run our server locally:
 PYTHONPATH=$(pwd):$PYTHONPATH
