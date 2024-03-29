@@ -1,6 +1,6 @@
 # common make vars and targets:
 export LINTER = flake8
-export PYLINTFLAGS = --exclude=__main__.py
+export PYLINTFLAGS = --exclude=__main__.py --max-line-length=135
 
 PYTHONFILES = $(shell ls *.py)
 PYTESTFLAGS = -vv --verbose --cov-branch --cov-report term-missing --tb=short -W ignore::FutureWarning
