@@ -28,7 +28,7 @@ def extract_content(html_content):
     # Extract author
     author_tag = soup.find(class_='author')  # Adjust class as needed
     author = author_tag.get_text(strip=True) if author_tag else "No Author Found"
-    
+
     # Extract article text
     article = soup.find('article')
     if not article:
