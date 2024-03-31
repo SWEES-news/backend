@@ -12,4 +12,3 @@ html2text
 beautifulsoup4
 clean-text
 flask_restplus
-flask-restx

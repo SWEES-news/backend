@@ -22,22 +22,24 @@ UPDATE = 'update'
 @pytest.fixture(scope='function')
 def temp_rec():
     temp = dbc.connect_db()
+    name = TEST_NAME
     dbc.client[TEST_DB][TEST_COLLECT].insert_one({TEST_NAME: TEST_NAME})
     # yield to our test function
-    yield
+    yield name
     dbc.client[TEST_DB][TEST_COLLECT].delete_one({TEST_NAME: TEST_NAME})
 
 # this fails when fetching string with '.' character in
 def test_fetch_one(temp_rec):
-    ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: TEST_NAME})
+    ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: temp_rec})
     assert ret is not None
 
 
-def test_fetch_one_not_there(temp_rec):
+def test_fetch_one_not_there():
     ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: 'not a field value in db!'})
     assert ret is None
 
 def test_update_doc(temp_rec):
-    dbc.update_doc(TEST_COLLECT, {TEST_NAME: TEST_NAME}, {TEST_NAME: UPDATE})
+    dbc.update_doc(TEST_COLLECT, {TEST_NAME: temp_rec}, {TEST_NAME: UPDATE})
     ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: UPDATE})
     assert ret is not None
+    dbc.client[TEST_DB][TEST_COLLECT].delete_one({TEST_NAME: UPDATE})
