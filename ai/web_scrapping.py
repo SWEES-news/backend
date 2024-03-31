@@ -20,26 +20,36 @@ def fetch_article_content(url):
 
 def extract_text(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
+
+    # Extract title
+    title_tag = soup.find('title')
+    title = title_tag.get_text(strip=True) if title_tag else "No Title Found"
+    
+    # Extract article text
     article = soup.find('article')
     if not article:
         logging.warning("Article tag not found.")
         return None
 
-    return article.get_text()
+    article_text = article.get_text(strip=True)
+
+    return title, article_text
 
 
-def save_article(text, filename='article.txt', width=85):
-    wrapped_text = textwrap.fill(text, width=width)
+def save_article(title, article_text, filename='article.txt', width=85):
     with open(filename, 'w') as file:
+        file.write(f"Title: {title}\n")
+        file.write("Article Body:\n")
+        wrapped_text = textwrap.fill(article_text, width=width)
         file.write(wrapped_text)
 
 
 def main(url):
     html_content = fetch_article_content(url)
     if html_content:
-        article_text = extract_text(html_content)
+        title, article_text = extract_content(html_content)
         if article_text:
-            save_article(article_text)
+            save_article(title, article_text)
 
 
 if __name__ == "__main__":
