@@ -73,12 +73,19 @@ def del_one(collection, filt, db=USER_DB):
     return client[db][collection].delete_one(filt)
 
 
+def del_first(collection, db=USER_DB):
+    """
+    Deletes first element it finds.
+    """
+    return client[db][collection].delete_one({})
+
+
 def del_all(collection, db=USER_DB):
     """
     Removes all elements in a collection.
     """
     client[db][collection].drop()
-    return client[db][collection]
+    return collection
 
 
 def update_doc(collection, filters, update_dict, db=USER_DB):

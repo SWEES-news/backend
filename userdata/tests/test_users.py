@@ -75,7 +75,14 @@ def test_clear_collection_wrong_name():
     Makes sure protection from clearing database works
     """
     with pytest.raises(ValueError):
-        usrs.clear_user_data("Wrong Name")
+        usrs.clear_data("Wrong Name")
+
+def test_clear_collection_empty():
+    """
+    cannot clear a collection that's already empty
+    """
+    with pytest.raises(ValueError):
+        usrs.clear_data("blank_collect")
 
 def test_add_user_blank_name():
     """

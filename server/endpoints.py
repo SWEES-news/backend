@@ -562,7 +562,7 @@ class Collection(Resource):
         name = response.get('Name')
 
         try:
-            users.clear_user_data(name)
+            users.clear_data(name)
             return {'message': 'Database Cleared'}, \
                 HTTPStatus.OK
         except Exception as e:

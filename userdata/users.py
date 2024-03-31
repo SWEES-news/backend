@@ -195,7 +195,7 @@ def update_user_profile(username: str, password: str, update_dict: dict):
                           ud)
 
 
-def clear_user_data(name: str):
+def clear_data(name: str):
     """
     WARNING! THIS REMOVES ALL ROWS FROM THE DATABASE.
     """
@@ -206,8 +206,11 @@ def clear_user_data(name: str):
     data = dbc.fetch_all(name)
     if len(data) == 0:
         raise ValueError(f'Collection is empty: , {name}')
-    result = dbc.del_all(name)
-    return result
+    element = data[0]
+    collection = dbc.del_all(name)
+    dbc.insert_one(collection, element)
+    dbc.del_first(collection)
+    return collection
 
 
 def get_all_collection():
