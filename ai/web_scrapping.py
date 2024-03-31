@@ -18,7 +18,7 @@ def fetch_article_content(url):
     return response.text
 
 
-def extract_text(html_content):
+def extract_content(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Extract title
