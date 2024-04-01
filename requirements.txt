@@ -4,6 +4,7 @@ flask-cors
 werkzeug
 pymongo
 flask_jwt_extended
+langchain
 langchain-core
 langchain-community
 langchain-openai
