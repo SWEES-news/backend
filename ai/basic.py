@@ -5,7 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter # 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
 
@@ -72,9 +72,9 @@ def analyze_content(texts: list[str]) -> list[str]:
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = [text_splitter.split_text(doc) for doc in texts]
 
-    # vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+    vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
 
-    return responses
+    return responses, vectorstore
 
 
 def read_content(file_path: str) -> str:
@@ -105,7 +105,12 @@ def main():
     response_files = ['ai/test_response.md', 'ai/test_response_2.md']
 
     contents = [read_content(file) for file in content_files]
-    responses = analyze_content(contents)
+    responses, vectorDB = analyze_content(contents)
+
+    # need to modify this...
+    query = "Any phrase that I want to check against the vectorDB"
+    docs = vectorDB.similarity_search(query)
+    print(docs[0].page_content)
 
     for response, file in zip(responses, response_files):
         write_response(file, response)
