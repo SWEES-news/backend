@@ -3,6 +3,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
+from langchain_community.vectorstores import Chroma
+from langchain_openai import OpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter # 
+
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
 
 PROMPT_TEMPLATE = (
@@ -63,6 +67,12 @@ def analyze_content(texts: list[str]) -> list[str]:
     docs = [{'content': doc} for doc in texts]
 
     responses = chain.batch(docs)
+
+    # Store the articles as vector embeddings in a vector store
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splits = [text_splitter.split_text(doc) for doc in texts]
+
+    # vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
 
     return responses
 
