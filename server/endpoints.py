@@ -56,9 +56,13 @@ STATUS_EP = '/status'
 SUBMIT_EP = '/submit'
 SUBMISSIONS_EP = '/submissions'
 ANALYSIS_EP = '/submissions/analysis'
+ENDPOINTS_EP = '/endpoints'
 
 MAIN_MENU_EP = '/MainMenu'
 CLEAR_EP = '/Collection'
+USER_NAME_EP = '/<string:name>'
+ALL_EP = '/all'
+ARTICLE_ID_EP = '/<string:article_id>'
 
 """
 Add endpoint to delete articles
@@ -77,7 +81,7 @@ TITLE = 'Title'
 RETURN = 'Return'
 
 
-@api.route('/endpoints')
+@api.route(ENDPOINTS_EP)
 class Endpoints(Resource):
     """
     This class will serve as live, fetchable documentation of what endpoints
@@ -212,11 +216,12 @@ user_login_model = api.model('LoginUser', {
 })
 
 
-@us.route('/login')
+@us.route(LOGIN_EP)
 class UserLogin(Resource):
     @api.expect(user_login_model)
     @api.response(HTTPStatus.OK, 'Successful login')
-    @api.response(HTTPStatus.UNAUTHORIZED, 'Falled to login')
+    @api.response(HTTPStatus.NOT_FOUND, 'Not a valid username')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Wrong password')
     def post(self):
         parser = reqparse.RequestParser(bundle_errors=True)
         parser.add_argument(users.NAME, type=str, required=True, help='Username cannot be blank', location='json')
@@ -236,7 +241,7 @@ class UserLogin(Resource):
             raise wz.Unauthorized(f'{str(e)}')
 
 
-@us.route('/logout')
+@us.route(LOGOUT_EP)
 class UserLogout(Resource):
     def get(self):
         if 'user_id' in session:
@@ -248,7 +253,7 @@ class UserLogout(Resource):
             return {'message': 'No user currently logged in'}, HTTPStatus.BAD_REQUEST
 
 
-@us.route('/<string:name>')
+@us.route(USER_NAME_EP)
 class UserDetail(Resource):
     """
     Fetch details of a specific user.
@@ -266,7 +271,7 @@ class UserDetail(Resource):
                       ' not found')
 
 
-@us.route('/status')
+@us.route(STATUS_EP)
 class LoggedIn(Resource):
     def get(self):
         """
@@ -286,7 +291,7 @@ submit_article_model = api.model('SubmitArticle', {
 })
 
 
-@ar.route('/all')
+@ar.route(ALL_EP)
 class Articles(Resource):
     """
     Gets all articles that have been submitted to the site by all users
@@ -395,7 +400,7 @@ analyze_bias_model = api.model('AnalyzeBias', {
 })
 
 
-@ar.route(f"{ANALYSIS_EP}/<string:article_id>")
+@ar.route(f"{ANALYSIS_EP}{ARTICLE_ID_EP}")
 class AnalyzeBias(Resource):
     @api.expect(analyze_bias_model)
     @api.response(HTTPStatus.OK, 'Bias analysis completed')
