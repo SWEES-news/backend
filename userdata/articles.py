@@ -30,7 +30,8 @@ SUBMITTER_ID_FIELD = users.SUBMITTER_ID_FIELD
 OBJECTID = '_id'
 
 
-def store_article_submission(submitter_id: str, article_title: str, article_link: str = "", article_body: str = "", private_article: bool = False) -> (bool, str):
+def store_article_submission(submitter_id: str, article_title: str, article_link: str = "",
+                             article_body: str = "", private_article: bool = False) -> (bool, str):
     """
     Store the submitted article for review.
     """

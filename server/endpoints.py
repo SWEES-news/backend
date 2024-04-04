@@ -299,6 +299,7 @@ class LoggedIn(Resource):
 article_query_parser = reqparse.RequestParser()
 article_query_parser.add_argument('title_keyword', type=str, required=False, help='Keyword to search in article titles')
 
+
 @ar.route(ALL_EP)
 class Articles(Resource):
     """
@@ -309,7 +310,8 @@ class Articles(Resource):
         """
         Get all news article links and titles.
         """
-        args = article_query_parser.parse_args()
+        # args = article_query_parser.parse_args()
+        article_query_parser.parse_args()
         title_keyword = request.args.get('title_keyword', None)
         return {
             TYPE: DATA,
@@ -373,7 +375,8 @@ class SubmitArticle(Resource):
             article_title = article_body[:25] + "..."
 
         try:
-            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link, article_body, private_article)
+            success, submission_id = articles.store_article_submission(submitter_id,
+                                                                       article_title, article_link, article_body, private_article)
             if not success:
                 return {'message': f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
         except Exception as e:
