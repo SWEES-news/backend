@@ -205,7 +205,7 @@ def clear_data(name: str):
         raise ValueError(f'Collection Does Not Exist: , {name}')
     data = dbc.fetch_all(name)
     if len(data) == 0:
-        raise ValueError(f'Collection is empty: , {name}')
+        return name
     element = data[0]
     collection = dbc.del_all(name)
     dbc.insert_one(collection, element)

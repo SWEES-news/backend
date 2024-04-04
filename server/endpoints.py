@@ -36,12 +36,14 @@ ar = api.namespace('articles',
                    description="operations for user-submitted articles")
 an = api.namespace('analysis',
                    description="operations for analyzing article bias")
+col = api.namespace('collecions', description="generic operations for data in collections")
 # ns = api.Namespace('basic stuff', description="this is basic stuff")
 # use ns.route instead of api.route
 
 # ------ Namespace names ------ #
 USERS_EP = f'/{us.name}'
 ARTICLES_EP = f'/{ar.name}'
+COLLECTIONS_EP = f'/{col.name}'
 
 # ------ Endpoint names ------ #
 ACCOUNT_EP = '/account'
@@ -243,7 +245,7 @@ class UserLogin(Resource):
             else:
                 raise wz.Unauthorized('Falled to login')
         except (ValueError, KeyError) as e:
-            raise wz.Unauthorized(f'{str(e)}')
+            raise wz.Unauthorized(f'{str(e)} Something Went Really Wrong')
 
 
 @us.route(LOGOUT_EP)
@@ -581,7 +583,7 @@ DatabaseClear = api.model('Database Name', {
 })
 
 
-@api.route(CLEAR_EP)
+@col.route(CLEAR_EP)
 class Collection(Resource):
     @api.expect(DatabaseClear)
     def delete(self):

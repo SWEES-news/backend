@@ -77,13 +77,6 @@ def test_clear_collection_wrong_name():
     with pytest.raises(ValueError):
         usrs.clear_data("Wrong Name")
 
-def test_clear_collection_empty():
-    """
-    cannot clear a collection that's already empty
-    """
-    with pytest.raises(ValueError):
-        usrs.clear_data("blank_collect")
-
 def test_add_user_blank_name():
     """
     Make sure a blank game name raises a ValueError.
