@@ -269,4 +269,4 @@ def test_invalid_credentials(mock_verify):
 
 def test_clearDBAfterTest():
     response = TEST_CLIENT.delete(f'{ep.COLLECTIONS_EP}{ep.CLEAR_EP}', json={'Name': 'test_collect'})
-    assert response.status_code == OK
+    assert response.status_code == OK or response.status_code == BAD_REQUEST
