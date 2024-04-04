@@ -22,7 +22,7 @@ sys.path.insert(0, parentdir)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'h-J_l62fxF1uDXqKjHS3EQ')  # secure asf
-CORS(app)
+cors = CORS(app, supports_credentials=True, resources={r"*": {"origins": "http://localhost:3000"}})
 
 api = Api(app, title='SWEES API', default='extras')
 
@@ -78,6 +78,7 @@ USERS = 'users'
 TYPE = 'Type'
 DATA = 'Data'
 TITLE = 'Title'
+USER = 'User'
 RETURN = 'Return'
 
 
@@ -154,6 +155,7 @@ class UserAccount(Resource):
                 TYPE: DATA,
                 TITLE: 'Account Information',
                 DATA: user,
+                USER: users.get_user_if_logged_in(session),
                 RETURN: MAIN_MENU_EP,
             }
         else:
@@ -212,7 +214,7 @@ class RemoveUser(Resource):
 
 user_login_model = api.model('LoginUser', {
     users.NAME: fields.String(required=True, min_length=3, max_length=25, description='User Name'),
-    users.PASSWORD: fields.String(required=True, min_length=6, description='Password')
+    users.PASSWORD: fields.String(required=True, min_length=4, description='Password')
 })
 
 
@@ -234,7 +236,10 @@ class UserLogin(Resource):
             if users.verify_user(username, password):
                 user_id = users.get_user_by_name(username)[users.OBJECTID]
                 session['user_id'] = user_id
-                return {'message': 'Login successful'}, HTTPStatus.OK
+                return {
+                    DATA: 'Login successful',
+                    USER: users.get_user_if_logged_in(session),
+                    }, HTTPStatus.OK
             else:
                 raise wz.Unauthorized('Falled to login')
         except (ValueError, KeyError) as e:
@@ -279,10 +284,14 @@ class LoggedIn(Resource):
         """
         if 'user_id' in session:
             print(session)
-            return {'message':
-                    f"User {users.get_user_by_id(session['user_id'])[users.NAME]} is currently logged in"}, HTTPStatus.OK
+            return {
+                USER: users.get_user_if_logged_in(session)
+                }, HTTPStatus.OK
         else:
-            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+            return {
+                DATA: 'No user currently logged in',
+                USER: 'None'
+                }, HTTPStatus.UNAUTHORIZED
 
 
 submit_article_model = api.model('SubmitArticle', {
@@ -327,7 +336,7 @@ class SubmitArticle(Resource):
         Must submit either a link or a body of text, or both.
         """
         if 'user_id' not in session:
-            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+            return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
         parser = reqparse.RequestParser(bundle_errors=True)
         parser.add_argument(articles.ARTICLE_LINK, type=str, required=False,
                             help='Article link cannot be blank if article body is also blank.')
@@ -368,7 +377,8 @@ class SubmitArticle(Resource):
 
         return {
             "message": f"Article {article_title} submitted successfully",
-            "submission_id": str(submission_id)
+            "submission_id": str(submission_id),
+            USER: users.get_user_if_logged_in(session),
         }, HTTPStatus.OK
 
 
@@ -386,6 +396,7 @@ class SubmittedArticles(Resource):
                 TYPE: DATA,
                 TITLE: 'Stored Articles',
                 DATA: articles.get_articles_by_username(username),
+                USER: users.get_user_if_logged_in(session),
             }
         else:
             return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
@@ -438,7 +449,8 @@ class AnalyzeBias(Resource):
 
         return {
             'article_id': article_id,
-            'analysis_result': analysis_result
+            'analysis_result': analysis_result,
+            USER: users.get_user_if_logged_in(session),
         }, HTTPStatus.OK
 
 
@@ -470,13 +482,17 @@ class ChangeName(Resource):
 
         try:
             if users.get_user_by_name(new_username):
-                return {'message': 'Username already exists.'}, \
-                        HTTPStatus.BAD_REQUEST
+                return {'message': 'Username already exists.'}, HTTPStatus.BAD_REQUEST
             users.update_user_profile(old_username, password, {users.NAME: new_username})
-            return {'message': 'Username changed successfully.'}, \
-                HTTPStatus.OK
+            return {
+                DATA: 'Username changed successfully.',
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.OK
         except Exception as e:
-            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
+            return {
+                DATA: str(e),
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.BAD_REQUEST
 
 
 change_password_model = api.model('ChangePassword', {
@@ -509,15 +525,20 @@ class ChangePassword(Resource):
 
         if response.get('new_password') != \
                 response.get('confirm_new_password'):
-            return {'message': 'Passwords do not match.'}, \
-                   HTTPStatus.BAD_REQUEST
+            return {DATA: 'Passwords do not match.',
+                    USER: users.get_user_if_logged_in(session),
+                    }, HTTPStatus.BAD_REQUEST
 
         try:
             users.update_user_profile(username, old_password, {users.PASSWORD: new_password})
-            return {'message': 'Password changed successfully.'}, \
-                HTTPStatus.OK
+            return {
+                DATA: 'Password changed successfully.', 
+                USER: users.get_user_if_logged_in(session)
+                }, HTTPStatus.OK
         except Exception as e:
-            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
+            return {DATA: str(e),
+                    USER: users.get_user_if_logged_in(session),
+                    }, HTTPStatus.BAD_REQUEST
 
 
 change_email_model = api.model('ChangeEmail', {
@@ -545,10 +566,14 @@ class ChangeEmail(Resource):
 
         try:
             users.update_user_profile(username, password, {users.EMAIL: new_email})
-            return {'message': 'EMAIL changed successfully.'}, \
-                HTTPStatus.OK
+            return {
+                DATA: 'EMAIL changed successfully.',
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.OK
         except Exception as e:
-            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
+            return {DATA: str(e),
+                    USER: users.get_user_if_logged_in(session),
+                    }, HTTPStatus.BAD_REQUEST
 
 
 DatabaseClear = api.model('Database Name', {
@@ -568,10 +593,15 @@ class Collection(Resource):
 
         try:
             users.clear_data(name)
-            return {'message': 'Database Cleared'}, \
-                HTTPStatus.OK
+            return {
+                DATA: 'Database Cleared',
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.OK
         except Exception as e:
-            return {'message': str(e)}, HTTPStatus.BAD_REQUEST
+            return {
+                DATA: str(e),
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.BAD_REQUEST
 
     def get(self):
         """
@@ -582,4 +612,5 @@ class Collection(Resource):
             TITLE: 'collection name',
             DATA: users.get_all_collection(),
             RETURN: MAIN_MENU_EP,
+            USER: users.get_user_if_logged_in(session),
         }
