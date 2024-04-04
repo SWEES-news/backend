@@ -532,7 +532,7 @@ class ChangePassword(Resource):
         try:
             users.update_user_profile(username, old_password, {users.PASSWORD: new_password})
             return {
-                DATA: 'Password changed successfully.', 
+                DATA: 'Password changed successfully.',
                 USER: users.get_user_if_logged_in(session)
                 }, HTTPStatus.OK
         except Exception as e:
