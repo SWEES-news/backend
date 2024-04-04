@@ -217,6 +217,7 @@ def get_all_collection():
     dbc.connect_db()
     return dbc.fetch_collection_name()
 
+
 def get_user_if_logged_in(session):
     """
     Get the user if they are logged in.
