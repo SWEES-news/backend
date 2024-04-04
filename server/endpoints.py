@@ -296,25 +296,25 @@ class LoggedIn(Resource):
                 }, HTTPStatus.UNAUTHORIZED
 
 
-submit_article_model = api.model('SubmitArticle', {
-    articles.ARTICLE_LINK: fields.String(required=True, description='Link to the article'),
-    articles.ARTICLE_TITLE: fields.String(required=True, description='Title this article'),
-})
-
+article_query_parser = reqparse.RequestParser()
+article_query_parser.add_argument('title_keyword', type=str, required=False, help='Keyword to search in article titles')
 
 @ar.route(ALL_EP)
 class Articles(Resource):
     """
-    Gets all articles that have been submitted to the site by all users
+    Gets all public articles that have been submitted to the site by all users
     """
+    @api.expect(article_query_parser)
     def get(self):
         """
         Get all news article links and titles.
         """
+        args = article_query_parser.parse_args()
+        title_keyword = request.args.get('title_keyword', None)
         return {
             TYPE: DATA,
             TITLE: 'Stored Articles',
-            DATA: articles.fetch_all(),
+            DATA: articles.fetch_all_with_filter({articles.PRIVATE: False}, title_keyword),
             RETURN: MAIN_MENU_EP,
         }
 
@@ -323,6 +323,7 @@ submit_article_model = api.model('SubmitArticle', {
     articles.ARTICLE_LINK: fields.String(description='Link to the article'),
     articles.ARTICLE_BODY: fields.String(description='Body of the article'),
     articles.ARTICLE_TITLE: fields.String(required=True, description='Title of the article'),
+    articles.PRIVATE: fields.String(description='Is the article/text private?'),
 })
 
 
@@ -346,6 +347,8 @@ class SubmitArticle(Resource):
                             help='Article body must be between 100 and 5000 characters if article_link is blank.')
         parser.add_argument(articles.ARTICLE_TITLE, type=str, required=False,
                             help='Title is not required. Will be replaced by body if not provided.')
+        parser.add_argument(articles.PRIVATE, type=str, required=False,
+                            help='Is the article private?')
 
         args = parser.parse_args()
         print(args.items())
@@ -353,6 +356,7 @@ class SubmitArticle(Resource):
         article_link = args[articles.ARTICLE_LINK]
         article_body = args[articles.ARTICLE_BODY]
         article_title = args[articles.ARTICLE_TITLE]
+        private_article = args[articles.PRIVATE] or False
 
         if not article_link and not article_body:
             return {'message':
@@ -369,7 +373,7 @@ class SubmitArticle(Resource):
             article_title = article_body[:25] + "..."
 
         try:
-            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link, article_body)
+            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link, article_body, private_article)
             if not success:
                 return {'message': f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
         except Exception as e:

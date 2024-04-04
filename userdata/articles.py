@@ -8,6 +8,7 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 import userdata.extras as extras
 import userdata.users as users  # articles depends on user, avoid circular import!
+import re
 
 
 # ------ configuration for MongoDB ------ #
@@ -18,6 +19,7 @@ SUBMITTER_ID_FIELD = 'submitter_id'
 ARTICLE_LINK = "article_link"
 ARTICLE_TITLE = "article_title"
 ARTICLE_BODY = "article_body"
+PRIVATE = "private"
 
 
 # ------ DB fields ------ #
@@ -28,7 +30,7 @@ SUBMITTER_ID_FIELD = users.SUBMITTER_ID_FIELD
 OBJECTID = '_id'
 
 
-def store_article_submission(submitter_id: str, article_title: str, article_link: str = "", article_body: str = "") -> (bool, str):
+def store_article_submission(submitter_id: str, article_title: str, article_link: str = "", article_body: str = "", private_article: bool = False) -> (bool, str):
     """
     Store the submitted article for review.
     """
@@ -42,6 +44,7 @@ def store_article_submission(submitter_id: str, article_title: str, article_link
         ARTICLE_TITLE: article_title,
         ARTICLE_BODY: article_body,
         SUBMITTER_ID_FIELD: user[OBJECTID],
+        PRIVATE: private_article
     }
 
     dbc.connect_db()
@@ -63,11 +66,16 @@ def get_article_by_id(article_id):
     return dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: object_id})
 
 
-def fetch_all_with_filter(filt={}):
+def fetch_all_with_filter(filt={}, title_keyword=None):
     """
     Find with a filter and return all matching docs.
+    If a title_keyword is provided, it filters articles by titles containing that keyword.
     """
     # Connect to the database (if not already connected)
+    if title_keyword:
+        # Use regular expressions for case-insensitive search
+        filt[ARTICLE_TITLE] = {'$regex': re.compile(title_keyword, re.IGNORECASE)}
+
     articles = extras.fetch_all_with_filter(ARTICLE_COLLECTION, filt)
     return articles
 
