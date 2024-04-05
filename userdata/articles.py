@@ -18,6 +18,7 @@ ARTICLE_COLLECTION = 'articles'
 ARTICLE_LINK = "article_link"
 ARTICLE_TITLE = "article_title"
 ARTICLE_BODY = "article_body"
+ARTICLE_PREVIEW = "article_preview"
 PRIVATE = "private"
 
 
@@ -29,8 +30,7 @@ SUBMITTER_ID_FIELD = users.SUBMITTER_ID_FIELD
 OBJECTID = '_id'
 
 
-def store_article_submission(submitter_id: str, article_title: str, article_link: str = "",
-                             article_body: str = "", private_article: bool = False) -> (bool, str):
+def store_article_submission(submitter_id: str, article_title: str, article_link: str = "", article_body: str = "", article_preview: str="", private_article: bool = False) -> (bool, str):
     """
     Store the submitted article for review.
     """
@@ -43,6 +43,7 @@ def store_article_submission(submitter_id: str, article_title: str, article_link
         ARTICLE_LINK: article_link,
         ARTICLE_TITLE: article_title,
         ARTICLE_BODY: article_body,
+        ARTICLE_PREVIEW: article_preview,
         SUBMITTER_ID_FIELD: user[OBJECTID],
         PRIVATE: private_article
     }
@@ -66,7 +67,7 @@ def get_article_by_id(article_id):
     return dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: object_id})
 
 
-def fetch_all_with_filter(filt={}, constrained=False, title_keyword=None, submitter_id=None):
+def fetch_all_with_filter(filt={}, projection={}, constrained=False, title_keyword=None, submitter_id=None):
     """
     Find with a filter and return all matching docs.
     If a title_keyword is provided, it filters articles by titles containing that keyword.
@@ -80,9 +81,9 @@ def fetch_all_with_filter(filt={}, constrained=False, title_keyword=None, submit
         filt[SUBMITTER_ID_FIELD] = submitter_id
 
     if constrained:
-        articles = extras.fetch_all_with_constrained_filter(ARTICLE_COLLECTION, filt)
+        articles = extras.fetch_all_with_constrained_filter(ARTICLE_COLLECTION, filt, projection)
     else:
-        articles = extras.fetch_all_with_filter(ARTICLE_COLLECTION, filt)
+        articles = extras.fetch_all_with_filter(ARTICLE_COLLECTION, filt, projection)
     return articles
 
 

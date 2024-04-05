@@ -13,6 +13,7 @@ import sys
 import inspect
 import userdata.users as users
 import userdata.articles as articles
+import string 
 
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
@@ -82,6 +83,8 @@ DATA = 'Data'
 TITLE = 'Title'
 USER = 'User'
 RETURN = 'Return'
+
+punctuation_chars = string.punctuation
 
 
 @api.route(ENDPOINTS_EP)
@@ -320,7 +323,7 @@ class Articles(Resource):
         return {
             TYPE: DATA,
             TITLE: 'Stored Articles',
-            DATA: articles.fetch_all_with_filter({articles.PRIVATE: 'False'}, True, title_keyword), # conjunctive filter
+            DATA: articles.fetch_all_with_filter({articles.PRIVATE: 'False'}, {articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0}, True, title_keyword), # conjunctive filter
             RETURN: MAIN_MENU_EP,
         }
 
@@ -339,11 +342,13 @@ class SubmittedArticles(Resource):
             return {
                 TYPE: DATA,
                 TITLE: 'Stored Articles',
-                DATA: articles.fetch_all_with_filter({}, True, title_keyword, user_id), # intersect with user_id filter
-                USER: users.get_user_if_logged_in(session),
+                DATA: articles.fetch_all_with_filter({}, projection={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0}, constrained=True, title_keyword=title_keyword, submitter_id=user_id),
+                USER: users.get_user_if_logged_in(session), 
             }
         else:
             return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+        
+
         
 
 submit_article_model = api.model('SubmitArticle', {
@@ -397,15 +402,13 @@ class SubmitArticle(Resource):
             article_body = "This is a placeholder for the scraped article body"
             if article_body is None:
                 return {'message': "Failed to scrape the article body"}, HTTPStatus.BAD_REQUEST
-        print(article_title)
-        if article_title is None:
-            article_title = article_body[:25] + "..."
+        if article_title == "":
+            article_title = article_body[:25].strip().strip(punctuation_chars) + "..."
 
-        print(article_title)
+        article_preview = article_body[:150].strip().strip(punctuation_chars) + "..."
 
         try:
-            success, submission_id = articles.store_article_submission(submitter_id,
-                                                                       article_title, article_link, article_body, private_article)
+            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link, article_body, article_preview, private_article)
             if not success:
                 return {'message': f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
         except Exception as e:

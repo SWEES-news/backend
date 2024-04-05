@@ -24,21 +24,22 @@ ID_LEN = 24
 BIG_NUM = 100000000000000000000
 
 
-def fetch_all_with_filter(collection, filt={}):
+def fetch_all_with_filter(collection, filt={}, projection={}, db=dbc.USER_DB):
     """
     Find with a filter and return all matching docs.
+    Projection can be used to include or exclude fields.
     """
     dbc.connect_db()
-    results = dbc.fetch_all_with_filter(collection, filt)
+    results = dbc.fetch_all_with_filter(collection, filt, projection, db)
     return results
 
-
-def fetch_all_with_constrained_filter(collection, filt={}):
+def fetch_all_with_constrained_filter(collection, filt={}, projection={}, db=dbc.USER_DB):
     """
-    Find with a filter and return all matching docs.
+    Find with a filter and return all matching docs with constraints.
+    Projection can be used to include or exclude fields.
     """
     dbc.connect_db()
-    results = dbc.fetch_all_with_constrained_filter(collection, filt)
+    results = dbc.fetch_all_with_constrained_filter(collection, filt, projection, db)
     return results
 
 

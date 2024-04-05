@@ -101,38 +101,34 @@ def fetch_all(collection, db=USER_DB):
     return ret
 
 
-def fetch_all_with_constrained_filter(collection, filt={}, db=USER_DB):
+# In dbc.py
+
+def fetch_all_with_filter(collection, filt={}, projection={}, db=USER_DB):
+    """
+    Fetch all documents matching the filter with specified projection.
+    """
     ret = []
-    for doc in client[db][collection].find(filter=filt):
-        # Convert ObjectId fields to string
+    for doc in client[db][collection].find(filt, projection=projection):
         if '_id' in doc:
             doc['_id'] = str(doc['_id'])
         ret.append(doc)
     return ret
 
-def fetch_all_with_filter(collection, filt={}, db=USER_DB):
+def fetch_all_with_constrained_filter(collection, filt={}, projection={}, db=USER_DB):
     """
-    Relaxed (Broad) Querying: This refers to a search or query condition where multiple criteria are combined with an OR logic.
-    It's "looser" because it returns records that meet any one of the specified conditions,
-    broadening the result set. The modification you made to use the $or operator in MongoDB shifts
-    the querying approach from constrained to relaxed.
+    Fetch all documents matching a broader filter (using $or) with specified projection.
     """
-    # Create an array for $or operation
-    or_conditions = []
-
-    for key, value in filt.items():
-        # Each key-value pair in filt becomes a separate condition in the $or array
-        or_conditions.append({key: value})
-
-    # Construct the final query
+    # Construct the broader query with $or
+    or_conditions = [{'$or': [{key: value} for key, value in filt.items()]}] if filt else []
     query = {'$or': or_conditions} if or_conditions else {}
 
     ret = []
-    for doc in client[db][collection].find(query):
+    for doc in client[db][collection].find(query, projection=projection):
         if '_id' in doc:
             doc['_id'] = str(doc['_id'])
         ret.append(doc)
     return ret
+
 
 
 def fetch_all_as_dict(key, collection, db=USER_DB):
