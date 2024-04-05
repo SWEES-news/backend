@@ -15,7 +15,6 @@ import re
 USER_COLLECT = 'users'
 ARTICLE_COLLECTION = 'articles'
 # field name for user ID in the articles collection
-SUBMITTER_ID_FIELD = 'submitter_id'
 ARTICLE_LINK = "article_link"
 ARTICLE_TITLE = "article_title"
 ARTICLE_BODY = "article_body"
@@ -66,7 +65,7 @@ def get_article_by_id(article_id):
     return dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: object_id})
 
 
-def fetch_all_with_filter(filt={}, title_keyword=None):
+def fetch_all_with_filter(filt={}, constrained=False, title_keyword=None, submitter_id=None):
     """
     Find with a filter and return all matching docs.
     If a title_keyword is provided, it filters articles by titles containing that keyword.
@@ -76,7 +75,13 @@ def fetch_all_with_filter(filt={}, title_keyword=None):
         # Use regular expressions for case-insensitive search
         filt[ARTICLE_TITLE] = {'$regex': re.compile(title_keyword, re.IGNORECASE)}
 
-    articles = extras.fetch_all_with_filter(ARTICLE_COLLECTION, filt)
+    if submitter_id:
+        filt[SUBMITTER_ID_FIELD] = submitter_id
+
+    if constrained:
+        articles = extras.fetch_all_with_constrained_filter(ARTICLE_COLLECTION, filt)
+    else:
+        articles = extras.fetch_all_with_filter(ARTICLE_COLLECTION, filt)
     return articles
 
 

@@ -36,7 +36,7 @@ ar = api.namespace('articles',
                    description="operations for user-submitted articles")
 an = api.namespace('analysis',
                    description="operations for analyzing article bias")
-col = api.namespace('collecions', description="generic operations for data in collections")
+col = api.namespace('collections', description="generic operations for data in collections")
 # ns = api.Namespace('basic stuff', description="this is basic stuff")
 # use ns.route instead of api.route
 
@@ -59,11 +59,11 @@ SUBMIT_EP = '/submit'
 SUBMISSIONS_EP = '/submissions'
 ANALYSIS_EP = '/submissions/analysis'
 ENDPOINTS_EP = '/endpoints'
+ALL_EP = '/all'
 
 MAIN_MENU_EP = '/MainMenu'
-CLEAR_EP = '/Collection'
+CLEAR_EP = '/clear'
 USER_NAME_EP = '/<string:name>'
-ALL_EP = '/all'
 ARTICLE_ID_EP = '/<string:article_id>'
 
 """
@@ -245,6 +245,7 @@ class UserLogin(Resource):
             else:
                 raise wz.Unauthorized('Falled to login')
         except (ValueError, KeyError) as e:
+            print(str(e))
             raise wz.Unauthorized(f'{str(e)} Something Went Really Wrong')
 
 
@@ -255,9 +256,11 @@ class UserLogout(Resource):
             userid = session['user_id']
             session.pop('user_id')
             username = users.get_user_by_id(userid)[users.NAME]
-            return {'message': f'Logged out {username}'}, HTTPStatus.OK
+            return {DATA: f'Logged out {username}'}, HTTPStatus.OK
         else:
-            return {'message': 'No user currently logged in'}, HTTPStatus.BAD_REQUEST
+            msg = 'No user currently logged in'
+            print(msg)
+            return {DATA: msg}, HTTPStatus.BAD_REQUEST
 
 
 @us.route(USER_NAME_EP)
@@ -303,6 +306,7 @@ article_query_parser.add_argument('title_keyword', type=str, required=False, hel
 class Articles(Resource):
     """
     Gets all public articles that have been submitted to the site by all users
+    Option to filter by title keyword
     """
     @api.expect(article_query_parser)
     def get(self):
@@ -314,10 +318,31 @@ class Articles(Resource):
         return {
             TYPE: DATA,
             TITLE: 'Stored Articles',
-            DATA: articles.fetch_all_with_filter({articles.PRIVATE: False}, title_keyword),
+            DATA: articles.fetch_all_with_filter({articles.PRIVATE: 'False'}, True, title_keyword), # conjunctive filter
             RETURN: MAIN_MENU_EP,
         }
 
+@ar.route(SUBMISSIONS_EP)
+class SubmittedArticles(Resource):
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
+    @api.expect(article_query_parser)
+    def get(self):
+        """
+        Get all news article links and name submitted by the logged in user.
+        """
+        if 'user_id' in session:
+            user_id = session['user_id']
+            args = article_query_parser.parse_args()
+            title_keyword = request.args.get('title_keyword', None)
+            return {
+                TYPE: DATA,
+                TITLE: 'Stored Articles',
+                DATA: articles.fetch_all_with_filter({}, True, title_keyword, user_id), # intersect with user_id filter
+                USER: users.get_user_if_logged_in(session),
+            }
+        else:
+            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+        
 
 submit_article_model = api.model('SubmitArticle', {
     articles.ARTICLE_LINK: fields.String(description='Link to the article'),
@@ -356,6 +381,7 @@ class SubmitArticle(Resource):
         article_link = args[articles.ARTICLE_LINK]
         article_body = args[articles.ARTICLE_BODY]
         article_title = args[articles.ARTICLE_TITLE]
+        # print(args[articles.PRIVATE])
         private_article = args[articles.PRIVATE] or False
 
         if not article_link and not article_body:
@@ -369,8 +395,11 @@ class SubmitArticle(Resource):
             article_body = "This is a placeholder for the scraped article body"
             if article_body is None:
                 return {'message': "Failed to scrape the article body"}, HTTPStatus.BAD_REQUEST
+        print(article_title)
         if article_title is None:
             article_title = article_body[:25] + "..."
+
+        print(article_title)
 
         try:
             success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link, article_body, private_article)
@@ -386,26 +415,6 @@ class SubmitArticle(Resource):
             "submission_id": str(submission_id),
             USER: users.get_user_if_logged_in(session),
         }, HTTPStatus.OK
-
-
-@ar.route(SUBMISSIONS_EP)
-class SubmittedArticles(Resource):
-    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
-    def get(self):
-        """
-        Get all news article links and name submitted by the logged in user.
-        """
-        if 'user_id' in session:
-            user_id = session['user_id']
-            username = users.get_user_by_id(user_id)[users.NAME]
-            return {
-                TYPE: DATA,
-                TITLE: 'Stored Articles',
-                DATA: articles.get_articles_by_username(username),
-                USER: users.get_user_if_logged_in(session),
-            }
-        else:
-            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
 
 
 # Define the request model for bias analysis
@@ -587,12 +596,12 @@ DatabaseClear = api.model('Database Name', {
 })
 
 
-@col.route(CLEAR_EP)
+@col.route('/db')
 class Collection(Resource):
     @api.expect(DatabaseClear)
     def delete(self):
         """
-        Clears the User Database.
+        Clears the specified Database.
         """
         response = request.json
         name = response.get('Name')
@@ -620,3 +629,42 @@ class Collection(Resource):
             RETURN: MAIN_MENU_EP,
             USER: users.get_user_if_logged_in(session),
         }
+
+
+@col.route(f"{CLEAR_EP}/users")
+class Collection(Resource):
+    def delete(self):
+        """
+        Clears the users Database.
+        """
+        try:
+            data = users.clear_data('users')
+            return {
+                DATA: 'Users Database Cleared: ' + data,
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.OK
+        except Exception as e:
+            return {
+                DATA: str(e),
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.BAD_REQUEST
+
+
+@col.route(f"{CLEAR_EP}/articles")
+class Collection(Resource):
+    def delete(self):
+        """
+        Clears the articles Database.
+        """
+        print("hello")
+        try:
+            users.clear_data('articles')
+            return {
+                DATA: 'articles Database Cleared',
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.OK
+        except Exception as e:
+            return {
+                DATA: str(e),
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.BAD_REQUEST

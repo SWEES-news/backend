@@ -33,6 +33,15 @@ def fetch_all_with_filter(collection, filt={}):
     return results
 
 
+def fetch_all_with_constrained_filter(collection, filt={}):
+    """
+    Find with a filter and return all matching docs.
+    """
+    dbc.connect_db()
+    results = dbc.fetch_all_with_constrained_filter(collection, filt)
+    return results
+
+
 def get_all_collection():
     dbc.connect_db()
     return dbc.fetch_collection_name()
