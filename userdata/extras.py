@@ -46,3 +46,30 @@ def fetch_all_with_constrained_filter(collection, filt={}, projection={}, db=dbc
 def get_all_collection():
     dbc.connect_db()
     return dbc.fetch_collection_name()
+
+
+def fetch_with_combined_filter(collection, or_filter, and_filter, remove_filter, db=dbc.USER_DB):
+    """
+    Find with a filter and return all matching docs.
+    Combines OR and AND filters, with projection to remove certain fields.
+    """
+    # Combine OR and AND conditions
+    query_conditions = []
+
+    # Add OR conditions
+    if or_filter:
+        or_conditions = [{'$or': [{key: value} for key, value in or_filter.items()]}]
+        query_conditions.extend(or_conditions)
+
+    # Add AND conditions
+    if and_filter:
+        and_conditions = [{key: value} for key, value in and_filter.items()]
+        query_conditions.extend(and_conditions)
+
+    # Construct final query
+    query = {'$and': query_conditions} if query_conditions else {}
+
+    # Connect to the database
+    dbc.connect_db()
+    return dbc.fetch_all_with_filter(collection, query, projection=remove_filter, db=db)
+

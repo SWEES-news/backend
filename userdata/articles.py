@@ -53,7 +53,7 @@ def store_article_submission(submitter_id: str, article_title: str, article_link
     return True, submission_id
 
 
-def get_article_by_id(article_id):
+def get_article_by_id(article_id, user_id=None):
     """
     Fetches an article from the database by their ID.
     """
@@ -63,8 +63,13 @@ def get_article_by_id(article_id):
     except InvalidId:
         return None
 
+    # ret the article only if it belongs to the user or its public
     dbc.connect_db()
-    return dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: object_id})
+    article = dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: object_id})
+    if article and (article[SUBMITTER_ID_FIELD] == user_id or article[PRIVATE] == "False"):
+        return article
+    else:
+        return None
 
 
 def fetch_all_with_filter(filt={}, projection={}, constrained=False, title_keyword=None, submitter_id=None):
@@ -111,4 +116,17 @@ def get_articles_by_username(username):
 
     # Fetch all articles submitted by this user
     articles = fetch_all_with_filter({SUBMITTER_ID_FIELD: user_id})
+    return articles
+
+
+def fetch_with_combined_filter(or_filter, and_filter, remove_filter, title_keyword=None, db=dbc.USER_DB):
+    """
+    Find with a filter and return all matching docs.
+    Combines OR and AND filters, with projection to remove certain fields.
+    """
+    if title_keyword:
+        query_or_filter = {ARTICLE_TITLE: {'$regex': re.compile(title_keyword, re.IGNORECASE)}, **or_filter}
+    else:
+        query_or_filter = or_filter
+    articles = extras.fetch_with_combined_filter(ARTICLE_COLLECTION, query_or_filter, and_filter, remove_filter, db)
     return articles

@@ -317,13 +317,18 @@ class Articles(Resource):
         """
         Get all news article links and titles.
         """
-        # args = article_query_parser.parse_args()
+        args = article_query_parser.parse_args()
         article_query_parser.parse_args()
         title_keyword = request.args.get('title_keyword', None)
         return {
             TYPE: DATA,
             TITLE: 'Stored Articles',
-            DATA: articles.fetch_all_with_filter({articles.PRIVATE: 'False'}, {articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0}, True, title_keyword), # conjunctive filter
+            DATA: articles.fetch_with_combined_filter(
+                and_filter={articles.PRIVATE: 'False'}, 
+                or_filter={}, 
+                remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
+                title_keyword=title_keyword
+                ),
             RETURN: MAIN_MENU_EP,
         }
 
@@ -338,17 +343,43 @@ class SubmittedArticles(Resource):
         if 'user_id' in session:
             user_id = session['user_id']
             args = article_query_parser.parse_args()
+            article_query_parser.parse_args()
             title_keyword = request.args.get('title_keyword', None)
             return {
                 TYPE: DATA,
                 TITLE: 'Stored Articles',
-                DATA: articles.fetch_all_with_filter({}, projection={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0}, constrained=True, title_keyword=title_keyword, submitter_id=user_id),
+                DATA: articles.fetch_with_combined_filter(
+                and_filter={articles.SUBMITTER_ID_FIELD: user_id}, 
+                or_filter={}, 
+                remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
+                title_keyword=title_keyword
+                ),
                 USER: users.get_user_if_logged_in(session), 
             }
         else:
             return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
-        
 
+
+@ar.route('/<string:article_id>')
+@api.doc(params={'article_id': 'An ID of an article'})
+class ArticleById(Resource):
+    @api.response(HTTPStatus.OK, 'Article submitted successfully')
+    @ar.response(HTTPStatus.NOT_FOUND, 'Article not found')
+    @ar.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
+    def get(self, article_id):
+        """
+        Get an article by its ID
+        """
+        user_id = session.get('user_id', None)
+        if not user_id:
+            # return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+            pass # lets say they can still view public ones
+        
+        article = articles.get_article_by_id(article_id, user_id)
+        if article:
+            return article
+        else:
+            return {'message': 'Article not found or not authorized'}, HTTPStatus.NOT_FOUND
         
 
 submit_article_model = api.model('SubmitArticle', {
@@ -446,7 +477,7 @@ class AnalyzeBias(Resource):
         # analysis_parameters = data.get('analysis_parameters', {})
 
         # Use the provided function to retrieve the article by its ID
-        article = users.get_article_by_id(article_id)
+        article = users.get_article_by_id(article_id) # this needs to be secure and use user_id MUST
         if not article:
             api.abort(HTTPStatus.NOT_FOUND,
                       f'Article with ID {article_id} not found')
