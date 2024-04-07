@@ -45,7 +45,7 @@ MAX_MOCK_LEN = MAX_EMAIL_LEN - EMAIL_TAIL_LEN
 
 # returns json of mock user
 def get_test_user():
-    return {NAME: MOCK_NAME, EMAIL: MOCK_EMAIL, PASSWORD: MOCK_PASSWORD}
+    return {OBJECTID: MOCK_ID, NAME: MOCK_NAME, EMAIL: MOCK_EMAIL, PASSWORD: MOCK_PASSWORD}
 
 
 # returns a randomly generated mock email

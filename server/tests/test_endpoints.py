@@ -239,6 +239,7 @@ def test_server_error_condition(self, mock_store):
 def test_create_user(mock_add):
     # Simulating a scenario where the credentials are valid
     print(f'{ep.USERS_EP}{ep.REGISTER_EP}')
+    mock_add.return_value = usrs.MOCK_ID
     response = TEST_CLIENT.post(ep.USERS_EP + ep.REGISTER_EP, json={
         usrs.NAME: 'test@example.com',
         usrs.EMAIL: 'test@example.com',
@@ -246,10 +247,11 @@ def test_create_user(mock_add):
     })
     assert response.status_code == OK
 
-@pytest.mark.skip('Thinks that Session is a String?')
-@patch('userdata.users.verify_user_by_name', return_value=True)
-@patch('userdata.users.get_user_by_name', return_value='fake_token') 
-def test_valid_credentials(mock_get, mock_verify):
+@patch('userdata.users.verify_user_by_name')
+@patch('userdata.users.get_user_by_name') 
+def test_valid_credentials(mock_get, mock_verify): 
+    mock_get.return_value = usrs.get_test_user()
+    mock_verify.return_value = True
     response = TEST_CLIENT.post(ep.USERS_EP + ep.LOGIN_EP, json={
         usrs.NAME: 'test@example.com',
         usrs.PASSWORD: 'password123'

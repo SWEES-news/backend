@@ -248,15 +248,18 @@ class UserLogin(Resource):
             if users.verify_user_by_name(username, password):
                 user_id = users.get_user_by_name(username)[users.OBJECTID]
                 session['user_id'] = user_id
+                data = users.get_user_if_logged_in(session)
+                if data is None:
+                    raise wz.NotFound('Problem with login')
                 return {
                     DATA: 'Login successful',
-                    USER: users.get_user_if_logged_in(session),
+                    USER: data,
                     }, HTTPStatus.OK
             else:
                 raise wz.Unauthorized('Falled to login')
         except (ValueError, KeyError) as e:
             print(str(e))
-            raise wz.Unauthorized(f'{str(e)} Something Went Really Wrong')
+            raise wz.BadRequest(f'{str(e)} Something Went Really Wrong')
 
 
 @us.route(LOGOUT_EP)
