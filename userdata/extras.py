@@ -36,6 +36,7 @@ def fetch_all_with_filter(collection, filt={}, projection={}, db=dbc.USER_DB):
     results = dbc.fetch_all_with_filter(collection, filt, projection, db)
     return results
 
+
 def fetch_all_with_constrained_filter(collection, filt={}, projection={}, db=dbc.USER_DB):
     """
     Find with a filter and return all matching docs with constraints.
@@ -76,6 +77,7 @@ def fetch_with_combined_filter(collection, or_filter, and_filter, remove_filter,
     dbc.connect_db()
     return dbc.fetch_all_with_filter(collection, query, projection=remove_filter, db=db)
 
+
 def str_to_objectid(str_id):
     """
     Convert a string ID to an ObjectId.
@@ -89,4 +91,3 @@ def str_to_objectid(str_id):
     except InvalidId:
         return None
     return object_id
-

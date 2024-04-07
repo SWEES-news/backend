@@ -100,6 +100,7 @@ def verify_user(user_id: str, password: str) -> bool:
     user = dbc.fetch_one(USER_COLLECT, {OBJECTID: user_id})
     return bcrypt.checkpw(password.encode(), user[PASSWORD].encode())
 
+
 def verify_user_by_name(username: str, password: str) -> bool:
     dbc.connect_db()
     if not exists(username):
@@ -127,8 +128,9 @@ def del_user(username: str):
         return dbc.del_one(USER_COLLECT, {NAME: username})
     else:
         raise KeyError(f'User {username} not found.')
-    
-def del_user_by_id(user_id: str):    
+
+
+def del_user_by_id(user_id: str):
     dbc.connect_db()
     if exists_id(user_id):
         return dbc.del_one(USER_COLLECT, {OBJECTID: user_id})
@@ -139,6 +141,7 @@ def del_user_by_id(user_id: str):
 def exists(name: str) -> bool:
     dbc.connect_db()
     return dbc.fetch_one(USER_COLLECT, {NAME: name})
+
 
 def exists_id(user_id: str) -> bool:
     dbc.connect_db()
@@ -195,7 +198,7 @@ def update_user_profile(user_id: str, password: str, update_dict: dict):
     :param username: The username of the user to be updated.
     :param update_dict: A dictionary containing the fields to be updated.
     """
-    
+
     # Connect to the database
     dbc.connect_db()
 

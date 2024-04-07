@@ -114,6 +114,7 @@ def fetch_all_with_filter(collection, filt={}, projection={}, db=USER_DB):
         ret.append(doc)
     return ret
 
+
 def fetch_all_with_constrained_filter(collection, filt={}, projection={}, db=USER_DB):
     """
     Fetch all documents matching a broader filter (using $or) with specified projection.
@@ -128,7 +129,6 @@ def fetch_all_with_constrained_filter(collection, filt={}, projection={}, db=USE
             doc['_id'] = str(doc['_id'])
         ret.append(doc)
     return ret
-
 
 
 def fetch_all_as_dict(key, collection, db=USER_DB):
