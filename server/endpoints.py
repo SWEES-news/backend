@@ -14,7 +14,7 @@ import sys
 import inspect
 import userdata.users as users
 import userdata.articles as articles
-import string 
+import string
 
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
@@ -191,9 +191,11 @@ class RegisterUser(Resource):
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
+
 password_model = api.model('PasswordModel', {
     users.PASSWORD: fields.String(required=True, description='User password')
 })
+
 
 @us.route(DELETE_EP)
 class RemoveUser(Resource):
@@ -206,7 +208,6 @@ class RemoveUser(Resource):
         Remove/delete a user.
         """
         user_id = session.get('user_id', None)
-        payload = request.json
         password = request.json.get(users.PASSWORD)
         try:
             object_id = extras.str_to_objectid(user_id)
@@ -323,20 +324,20 @@ class Articles(Resource):
         """
         Get all news article links and titles.
         """
-        args = article_query_parser.parse_args()
         article_query_parser.parse_args()
         title_keyword = request.args.get('title_keyword', None)
         return {
             TYPE: DATA,
             TITLE: 'Stored Articles',
             DATA: articles.fetch_with_combined_filter(
-                and_filter={articles.PRIVATE: 'False'}, 
-                or_filter={}, 
+                and_filter={articles.PRIVATE: 'False'},
+                or_filter={},
                 remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
                 title_keyword=title_keyword
                 ),
             RETURN: MAIN_MENU_EP,
         }
+
 
 @ar.route(SUBMISSIONS_EP)
 class SubmittedArticles(Resource):
@@ -348,19 +349,18 @@ class SubmittedArticles(Resource):
         """
         if 'user_id' in session:
             user_id = session['user_id']
-            args = article_query_parser.parse_args()
             article_query_parser.parse_args()
             title_keyword = request.args.get('title_keyword', None)
             return {
                 TYPE: DATA,
                 TITLE: 'Stored Articles',
                 DATA: articles.fetch_with_combined_filter(
-                and_filter={articles.SUBMITTER_ID_FIELD: user_id}, 
-                or_filter={}, 
-                remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
-                title_keyword=title_keyword
+                    and_filter={articles.SUBMITTER_ID_FIELD: user_id},
+                    or_filter={},
+                    remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
+                    title_keyword=title_keyword
                 ),
-                USER: users.get_user_if_logged_in(session), 
+                USER: users.get_user_if_logged_in(session),
             }
         else:
             return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
@@ -379,14 +379,14 @@ class ArticleById(Resource):
         user_id = session.get('user_id', None)
         if not user_id:
             # return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
-            pass # lets say they can still view public ones
-        
+            pass  # lets say they can still view public ones
+
         article = articles.get_article_by_id(article_id, user_id)
         if article:
             return article
         else:
             return {DATA: 'Article not found or not authorized'}, HTTPStatus.NOT_FOUND
-        
+
 
 submit_article_model = api.model('SubmitArticle', {
     articles.ARTICLE_LINK: fields.String(description='Link to the article'),
@@ -445,7 +445,8 @@ class SubmitArticle(Resource):
         article_preview = article_body[:150].strip().strip(punctuation_chars) + "..."
 
         try:
-            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link, article_body, article_preview, private_article)
+            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link,
+                                                                       article_body, article_preview, private_article)
             if not success:
                 return {DATA: f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
         except Exception as e:
@@ -483,7 +484,7 @@ class AnalyzeBias(Resource):
         # analysis_parameters = data.get('analysis_parameters', {})
 
         # Use the provided function to retrieve the article by its ID
-        article = users.get_article_by_id(article_id) # this needs to be secure and use user_id MUST
+        article = users.get_article_by_id(article_id)  # this needs to be secure and use user_id MUST
         if not article:
             api.abort(HTTPStatus.NOT_FOUND,
                       f'Article with ID {article_id} not found')
@@ -674,7 +675,7 @@ class Collection(Resource):
 
 
 @col.route(f"{CLEAR_EP}/users")
-class Collection(Resource):
+class UsersCollectionWipe(Resource):
     def delete(self):
         """
         Clears the users Database.
@@ -693,7 +694,7 @@ class Collection(Resource):
 
 
 @col.route(f"{CLEAR_EP}/articles")
-class Collection(Resource):
+class ArticlesCollectionWipe(Resource):
     def delete(self):
         """
         Clears the articles Database.
