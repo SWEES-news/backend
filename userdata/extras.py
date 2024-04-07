@@ -5,6 +5,9 @@ Gradually, we will fill in actual calls to our datastore.
 """
 import userdata.db_connect as dbc  # userdata.
 
+from bson.objectid import ObjectId
+from bson.errors import InvalidId
+
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
 ARTICLE_COLLECTION = 'articles'
@@ -72,4 +75,18 @@ def fetch_with_combined_filter(collection, or_filter, and_filter, remove_filter,
     # Connect to the database
     dbc.connect_db()
     return dbc.fetch_all_with_filter(collection, query, projection=remove_filter, db=db)
+
+def str_to_objectid(str_id):
+    """
+    Convert a string ID to an ObjectId.
+    """
+    if not isinstance(str_id, (str, bytes, ObjectId)):
+        raise TypeError(f"Expected id to be str or bytes, got {type(str_id)}")
+
+    try:
+        # MUST convert the string ID to an ObjectId
+        object_id = ObjectId(str_id)
+    except InvalidId:
+        return None
+    return object_id
 

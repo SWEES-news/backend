@@ -247,7 +247,7 @@ def test_create_user(mock_add):
     assert response.status_code == OK
 
 @pytest.mark.skip('Thinks that Session is a String?')
-@patch('userdata.users.verify_user', return_value=True)
+@patch('userdata.users.verify_user_by_name', return_value=True)
 @patch('userdata.users.get_user_by_name', return_value='fake_token') 
 def test_valid_credentials(mock_get, mock_verify):
     response = TEST_CLIENT.post(ep.USERS_EP + ep.LOGIN_EP, json={
@@ -256,7 +256,7 @@ def test_valid_credentials(mock_get, mock_verify):
     })
     assert response.status_code == OK
 
-@patch('userdata.users.verify_user', return_value=False)  # Mocking the verify_user function
+@patch('userdata.users.verify_user_by_name', return_value=False)  # Mocking the verify_user function
 def test_invalid_credentials(mock_verify):
     # Simulating a scenario where the credentials are invalid
 

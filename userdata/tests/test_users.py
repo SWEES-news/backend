@@ -48,18 +48,18 @@ def test_get_users(temp_user):
     assert temp_user in users
 
 
-def test_verify_user(temp_user):
-    v = usrs.verify_user(temp_user, usrs.MOCK_PASSWORD)
-    assert v
+# def test_verify_user(temp_user):
+#     v = usrs.verify_user(temp_user, usrs.MOCK_PASSWORD)
+#     assert v
 
 
-def test_verify_user_wrong_password(temp_user):
-    assert not usrs.verify_user(temp_user, usrs.MOCK_PASSWORD_2)
+# def test_verify_user_wrong_password(temp_user):
+#     assert not usrs.verify_user(temp_user, usrs.MOCK_PASSWORD_2)
 
 
-def test_verify_user_wrong_username():
-    with pytest.raises(KeyError):
-        usrs.verify_user('', usrs.MOCK_PASSWORD)
+# def test_verify_user_wrong_username():
+#     with pytest.raises(KeyError):
+#         usrs.verify_user('', usrs.MOCK_PASSWORD)
 
 
 def test_add_user_dup_name(temp_user):

@@ -7,6 +7,7 @@ from flask_restx import Api, Resource, fields, reqparse
 from flask_cors import CORS
 from http import HTTPStatus
 import werkzeug.exceptions as wz
+import userdata.extras as extras
 
 import os
 import sys
@@ -164,7 +165,7 @@ class UserAccount(Resource):
                 RETURN: MAIN_MENU_EP,
             }
         else:
-            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+            return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
 
 
 @us.route(REGISTER_EP)
@@ -190,23 +191,28 @@ class RegisterUser(Resource):
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
+password_model = api.model('PasswordModel', {
+    users.PASSWORD: fields.String(required=True, description='User password')
+})
 
 @us.route(DELETE_EP)
 class RemoveUser(Resource):
     # @jwt_required()  # ensures valid JWT is present in request headers
-    @api.expect(user_model)     # remove_user_model
+    @api.expect(password_model)     # remove_user_model
     @api.response(HTTPStatus.OK, 'Success')
-    @api.response(HTTPStatus.NOT_FOUND, 'User Not Found')
     @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
     def delete(self):
         """
         Remove/delete a user.
         """
-        username = request.json.get(users.NAME)
+        user_id = session.get('user_id', None)
+        payload = request.json
         password = request.json.get(users.PASSWORD)
         try:
-            if users.verify_user(username, password):
-                users.del_user(username)
+            object_id = extras.str_to_objectid(user_id)
+            if users.verify_user(object_id, password):
+                users.del_user_by_id(object_id)
+                session.pop('user_id')
             else:
                 raise ValueError()
         except KeyError:
@@ -214,7 +220,7 @@ class RemoveUser(Resource):
         except ValueError:
             raise wz.Unauthorized('Password incorrect.')
 
-        return {'UPDATE': 'User removed successfully.'}
+        return {DATA: 'User removed successfully.'}
 
 
 user_login_model = api.model('LoginUser', {
@@ -238,7 +244,7 @@ class UserLogin(Resource):
         username = args[users.NAME]
         password = args[users.PASSWORD]
         try:
-            if users.verify_user(username, password):
+            if users.verify_user_by_name(username, password):
                 user_id = users.get_user_by_name(username)[users.OBJECTID]
                 session['user_id'] = user_id
                 return {
@@ -357,7 +363,7 @@ class SubmittedArticles(Resource):
                 USER: users.get_user_if_logged_in(session), 
             }
         else:
-            return {'message': 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+            return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
 
 
 @ar.route('/<string:article_id>')
@@ -379,7 +385,7 @@ class ArticleById(Resource):
         if article:
             return article
         else:
-            return {'message': 'Article not found or not authorized'}, HTTPStatus.NOT_FOUND
+            return {DATA: 'Article not found or not authorized'}, HTTPStatus.NOT_FOUND
         
 
 submit_article_model = api.model('SubmitArticle', {
@@ -423,16 +429,16 @@ class SubmitArticle(Resource):
         private_article = args[articles.PRIVATE] or False
 
         if not article_link and not article_body:
-            return {'message':
+            return {DATA:
                     f"Either {articles.ARTICLE_LINK} or {articles.ARTICLE_BODY} must be provided"}, HTTPStatus.BAD_REQUEST
         if not article_link and (not article_body or len(article_body) < 100 or len(article_body) > 5000):
-            return {'message':
+            return {DATA:
                     "Article body must be between 100 and 5000 characters"}, HTTPStatus.BAD_REQUEST
         if not article_body:  # do scrape of link
             # article_body = articles.scrape_link(article_link) # replace with actual function
             article_body = "This is a placeholder for the scraped article body"
             if article_body is None:
-                return {'message': "Failed to scrape the article body"}, HTTPStatus.BAD_REQUEST
+                return {DATA: "Failed to scrape the article body"}, HTTPStatus.BAD_REQUEST
         if article_title == "":
             article_title = article_body[:25].strip().strip(punctuation_chars) + "..."
 
@@ -441,11 +447,11 @@ class SubmitArticle(Resource):
         try:
             success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link, article_body, article_preview, private_article)
             if not success:
-                return {'message': f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
+                return {DATA: f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
         except Exception as e:
             import traceback
             traceback.print_exc()
-            return {'message': str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+            return {DATA: str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
         return {
             "message": f"Article {article_title} submitted successfully",
@@ -534,7 +540,7 @@ class ChangeName(Resource):
 
         try:
             if users.get_user_by_name(new_username):
-                return {'message': 'Username already exists.'}, HTTPStatus.BAD_REQUEST
+                return {DATA: 'Username already exists.'}, HTTPStatus.BAD_REQUEST
             users.update_user_profile(old_username, password, {users.NAME: new_username})
             return {
                 DATA: 'Username changed successfully.',
@@ -548,8 +554,6 @@ class ChangeName(Resource):
 
 
 change_password_model = api.model('ChangePassword', {
-    'username': fields.String(
-        required=True, description='The username'),
     'old_password': fields.String(
         required=True, description='The current password'),
     'new_password': fields.String(
@@ -571,18 +575,19 @@ class ChangePassword(Resource):
         Update the password of a user.
         """
         response = request.json
-        username = response.get('username')
+        user_id = session.get('user_id', None)
         old_password = response.get('old_password')
         new_password = response.get('new_password')
+        confirm_new_password = response.get('confirm_new_password')
 
-        if response.get('new_password') != \
-                response.get('confirm_new_password'):
-            return {DATA: 'Passwords do not match.',
+        if new_password != confirm_new_password:
+            return {DATA: 'New passwords do not match.',
                     USER: users.get_user_if_logged_in(session),
                     }, HTTPStatus.BAD_REQUEST
 
         try:
-            users.update_user_profile(username, old_password, {users.PASSWORD: new_password})
+            user_object_id = extras.str_to_objectid(user_id)
+            users.update_user_profile(user_object_id, old_password, {users.PASSWORD: new_password})
             return {
                 DATA: 'Password changed successfully.',
                 USER: users.get_user_if_logged_in(session)

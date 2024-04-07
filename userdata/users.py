@@ -91,10 +91,19 @@ def add_user(username: str, email: str, password: str) -> str:
     return str(_id) if _id else "False"
 
 
-def verify_user(username: str, password: str) -> bool:
+def verify_user(user_id: str, password: str) -> bool:
+    dbc.connect_db()
+    if not exists_id(user_id):
+        data = dbc.fetch_all(USER_COLLECT)
+        raise KeyError(f'No user_id exists: {user_id}, {data}')
+    # Retrieve user from database using the fetch_one function
+    user = dbc.fetch_one(USER_COLLECT, {OBJECTID: user_id})
+    return bcrypt.checkpw(password.encode(), user[PASSWORD].encode())
+
+def verify_user_by_name(username: str, password: str) -> bool:
     dbc.connect_db()
     if not exists(username):
-        raise KeyError(f'No Username exists: {username}')
+        raise KeyError(f'No user exists: {username}')
     # Retrieve user from database using the fetch_one function
     user = dbc.fetch_one(USER_COLLECT, {NAME: username})
     return bcrypt.checkpw(password.encode(), user[PASSWORD].encode())
@@ -118,11 +127,22 @@ def del_user(username: str):
         return dbc.del_one(USER_COLLECT, {NAME: username})
     else:
         raise KeyError(f'User {username} not found.')
+    
+def del_user_by_id(user_id: str):    
+    dbc.connect_db()
+    if exists_id(user_id):
+        return dbc.del_one(USER_COLLECT, {OBJECTID: user_id})
+    else:
+        raise KeyError(f'User {user_id} not found.')
 
 
 def exists(name: str) -> bool:
     dbc.connect_db()
     return dbc.fetch_one(USER_COLLECT, {NAME: name})
+
+def exists_id(user_id: str) -> bool:
+    dbc.connect_db()
+    return dbc.fetch_one(USER_COLLECT, {OBJECTID: user_id})
 
 
 def get_user_by_email(email: str):
@@ -168,18 +188,19 @@ def fetch_all_with_filter(filt={}):
     return users
 
 
-def update_user_profile(username: str, password: str, update_dict: dict):
+def update_user_profile(user_id: str, password: str, update_dict: dict):
     """
     Update a user's profile in the database.
 
     :param username: The username of the user to be updated.
     :param update_dict: A dictionary containing the fields to be updated.
     """
+    
     # Connect to the database
     dbc.connect_db()
 
     # check password is correct
-    if not verify_user(username, password):
+    if not verify_user(user_id, password):
         raise ValueError('Incorrect password.')
 
     ud = update_dict
@@ -191,7 +212,7 @@ def update_user_profile(username: str, password: str, update_dict: dict):
         ud[PASSWORD] = dbc.hash_str(ud[PASSWORD])
 
     return dbc.update_doc(USER_COLLECT,
-                          {NAME: username},
+                          {OBJECTID: user_id},
                           ud)
 
 
