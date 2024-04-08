@@ -621,12 +621,13 @@ class ChangeEmail(Resource):
         Update the email of a user.
         """
         response = request.json
-        username = response.get('username')
-        password = response.get('password')
-        new_email = response.get('new_email')
+        user_id = session.get('user_id', None)
+        password = response.get(users.PASSWORD)
+        new_email = response.get(users.EMAIL)
 
         try:
-            users.update_user_profile(username, password, {users.EMAIL: new_email})
+            user_object_id = extras.str_to_objectid(user_id)
+            users.update_user_profile(user_object_id, password, {users.EMAIL: new_email})
             return {
                 DATA: 'EMAIL changed successfully.',
                 USER: users.get_user_if_logged_in(session),
