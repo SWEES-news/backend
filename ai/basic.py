@@ -7,6 +7,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
 
 PROMPT_TEMPLATE = (
@@ -52,13 +53,27 @@ PROMPT_TEMPLATE = (
 )
 
 
-def analyze_content(texts: list[str]) -> list[str]:
+def create_vector_store(texts: list[str]) -> Chroma:
     """
-    separately analyzes each text for news bias.
+    Creates a vector store for the given texts.
 
-    :param texts: the texts to analyze.
+    :param texts: The texts to create the vector store from.
 
-    returns responses: a list of analyses.
+    Returns vectorstore: the Chroma vector store.
+    """
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)  # , add_start_index=True
+    splits = [text_splitter.split_text(doc) for doc in texts]
+    vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+    return vectorstore
+
+
+def analyze_content(texts: list[str]) -> tuple[list[str], Chroma]:
+    """
+    Separately analyzes each text for news bias.
+
+    :param texts: The texts to analyze.
+
+    Returns responses: a list of analyses, and vectorstore: the Chroma vector store.
     """
     prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
     model = ChatOpenAI(model=MODEL)
@@ -68,11 +83,7 @@ def analyze_content(texts: list[str]) -> list[str]:
 
     responses = chain.batch(docs)
 
-    # Store the articles as vector embeddings in a vector store
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    splits = [text_splitter.split_text(doc) for doc in texts]
-
-    vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+    vectorstore = create_vector_store(texts)
 
     return responses, vectorstore
 
@@ -107,7 +118,6 @@ def main():
     contents = [read_content(file) for file in content_files]
     responses, vectorDB = analyze_content(contents)
 
-    # need to modify this...
     query = "Any phrase that I want to check against the vectorDB"
     docs = vectorDB.similarity_search(query)
     print(docs[0].page_content)
