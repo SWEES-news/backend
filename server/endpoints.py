@@ -538,14 +538,15 @@ class ChangeName(Resource):
         Update theusername of a user.
         """
         response = request.json
-        old_username = response.get('old_username')
-        new_username = response.get('new_username')
-        password = response.get('password')
+        user_id = session.get('user_id', None)
+        new_username = response.get(users.NAME)
+        password = response.get(users.PASSWORD)
 
         try:
             if users.get_user_by_name(new_username):
                 return {DATA: 'Username already exists.'}, HTTPStatus.BAD_REQUEST
-            users.update_user_profile(old_username, password, {users.NAME: new_username})
+            user_id_object = extras.str_to_objectid(user_id)
+            users.update_user_profile(user_id_object, password, {users.NAME: new_username})
             return {
                 DATA: 'Username changed successfully.',
                 USER: users.get_user_if_logged_in(session),
