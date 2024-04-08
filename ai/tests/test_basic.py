@@ -59,15 +59,20 @@ def test_read_content(tmpdir):
     assert content == test_content
 
 
-# def test_write_response(tmpdir):
-#     # Create a temporary file path
-#     test_file = os.path.join(tmpdir, "test_file.txt")
-#     test_response = "Test response"
+def test_write_response(tmpdir):
+    # Create a temporary file path
+    test_file = os.path.join(tmpdir, "test_file.txt")
+    test_response = "Test response"
 
-#     # Write response to the file
-#     write_response(test_file, test_response)
+    # Write response to the file
+    write_response(test_file, test_response)
 
-#     # Read content from the file and assert
-#     with open(test_file, 'r') as file:
-#         written_response = file.read()
-#     assert written_response == test_response
+    # Read content from the file and assert
+    with open(test_file, 'r') as file:
+        written_response = file.read()
+
+    # Remove newline characters from the actual response
+    written_response = written_response.strip()
+
+    # Assert that the actual response matches the expected response
+    assert written_response == test_response
