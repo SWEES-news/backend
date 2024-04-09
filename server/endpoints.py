@@ -133,9 +133,6 @@ user_model = api.model('NewUser', {
 
 @us.route('')
 class Users(Resource):
-    """
-    Get a list of all users. DEBUG REMOVE FROM PROD.
-    """
     @api.response(HTTPStatus.OK, 'Success')
     @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
     def get(self):
@@ -143,12 +140,13 @@ class Users(Resource):
         Get a list of all users. DEBUG REMOVE FROM PROD.
         """
         user_id = session.get('user_id', None)
+        print(session)
         if not user_id:
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
-        
+
         if not users.has_admin_privilege(user_id):
             return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
-    
+
         return {
             TYPE: DATA,
             TITLE: 'Current Users',
@@ -260,6 +258,7 @@ class UserLogout(Resource):
 
 @us.route(STATUS_EP)
 class LoggedIn(Resource):
+    @api.response(HTTPStatus.OK, 'Success')
     def get(self):
         """
         Check if a user is currently logged in.
@@ -354,7 +353,7 @@ class ArticleById(Resource):
             # return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
             pass  # lets say they can still view public ones
 
-        article = articles.get_article_by_id(article_id, user_id) # does the auth stuff
+        article = articles.get_article_by_id(article_id, user_id)  # does the auth stuff
         if article:
             return article
         else:
@@ -514,7 +513,7 @@ class ChangeName(Resource):
             user_id = session.get('user_id', None)
             if not user_id:
                 return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
-            
+
             response = request.json
             new_username = response.get(users.NAME)
             password = response.get(users.PASSWORD)
@@ -533,7 +532,7 @@ class ChangeName(Resource):
                     DATA: str(e),
                     USER: users.get_user_if_logged_in(session),
                     }, HTTPStatus.BAD_REQUEST
-            
+
         except Exception as e:
             return {DATA: str(e),
                     }, HTTPStatus.BAD_REQUEST
@@ -673,6 +672,7 @@ DatabaseClear = api.model('Database Name', {
     'Name': fields.String(required=True, description='Database'),
 })
 
+
 @col.route('/db')
 class Collection(Resource):
     @api.expect(DatabaseClear)
@@ -683,7 +683,7 @@ class Collection(Resource):
         user_id = session.get('user_id', None)
         if not user_id:
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
-        
+
         if not users.has_admin_privilege(user_id):
             return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
 
@@ -724,10 +724,10 @@ class UsersCollectionWipe(Resource):
         user_id = session.get('user_id', None)
         if not user_id:
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
-        
+
         if not users.has_admin_privilege(user_id):
             return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
-        
+
         try:
             data = users.clear_data('users')
             return {
@@ -750,10 +750,10 @@ class ArticlesCollectionWipe(Resource):
         user_id = session.get('user_id', None)
         if not user_id:
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
-        
+
         if not users.has_admin_privilege(user_id):
             return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
-        
+
         try:
             users.clear_data('articles')
             return {
