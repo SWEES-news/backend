@@ -252,3 +252,14 @@ def get_user_if_logged_in(session):
             return user[NAME]
         return 'None'
     return 'None'
+
+
+def has_admin_privilege(user_id):
+    """
+    Check if the user has admin privilege.
+    Check if username is ethan or admin.
+    """
+    user = get_user_by_id(user_id)
+    if user:
+        return user[NAME].lower() in ['ethan', 'admin']
+    return False

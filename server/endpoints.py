@@ -55,7 +55,7 @@ LOGOUT_EP = '/logout'
 UPDATE_USERNAME_EP = '/update/username'
 UPDATE_PASSWORD_EP = '/update/password'
 UPDATE_EMAIL_EP = '/update/email'
-DELETE_EP = '/update/DeleteAccount'
+DELETE_EP = '/update/delete'
 STATUS_EP = '/status'
 SUBMIT_EP = '/submit'
 SUBMISSIONS_EP = '/submissions'
@@ -136,17 +136,25 @@ class Users(Resource):
     """
     Get a list of all users. DEBUG REMOVE FROM PROD.
     """
-
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
     def get(self):
         """
         Get a list of all users. DEBUG REMOVE FROM PROD.
         """
+        user_id = session.get('user_id', None)
+        if not user_id:
+            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+        
+        if not users.has_admin_privilege(user_id):
+            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
+    
         return {
             TYPE: DATA,
             TITLE: 'Current Users',
             DATA: users.get_users(),
             RETURN: MAIN_MENU_EP,
-        }
+        }, HTTPStatus.OK
 
 
 @us.route(ACCOUNT_EP)
@@ -192,40 +200,6 @@ class RegisterUser(Resource):
             raise wz.NotAcceptable(f'{str(e)}')
 
 
-password_model = api.model('PasswordModel', {
-    users.PASSWORD: fields.String(required=True, description='User password')
-})
-
-
-@us.route(DELETE_EP)
-class RemoveUser(Resource):
-    # @jwt_required()  # ensures valid JWT is present in request headers
-    @api.expect(password_model)     # remove_user_model
-    @api.response(HTTPStatus.OK, 'Success')
-    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
-    def delete(self):
-        """
-        Remove/delete a user.
-        """
-        user_id = session.get('user_id', None)
-        password = request.json.get(users.PASSWORD)
-        if user_id:
-            try:
-                object_id = extras.str_to_objectid(user_id)
-                if users.verify_user(object_id, password):
-                    users.del_user_by_id(object_id)
-                    session.pop('user_id')
-                else:
-                    raise ValueError()
-            except KeyError:
-                raise wz.NotFound('User not found.')
-            except ValueError:
-                raise wz.Unauthorized('Password incorrect.')
-
-            return {DATA: 'User removed successfully.'}
-        raise wz.Unauthorized('No user logged in.')
-
-
 user_login_model = api.model('LoginUser', {
     users.NAME: fields.String(required=True, min_length=3, max_length=25, description='User Name'),
     users.PASSWORD: fields.String(required=True, min_length=4, description='Password')
@@ -266,34 +240,22 @@ class UserLogin(Resource):
 
 @us.route(LOGOUT_EP)
 class UserLogout(Resource):
+    @api.response(HTTPStatus.OK, 'Successful login')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Something went wrong')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Wrong password')
     def get(self):
-        if 'user_id' in session:
-            userid = session['user_id']
-            session.pop('user_id')
-            username = users.get_user_by_id(userid)[users.NAME]
-            return {DATA: f'Logged out {username}'}, HTTPStatus.OK
-        else:
-            msg = 'No user currently logged in'
-            print(msg)
-            return {DATA: msg}, HTTPStatus.BAD_REQUEST
-
-
-@us.route(USER_NAME_EP)
-class UserDetail(Resource):
-    """
-    Fetch details of a specific user.
-    """
-
-    def get(self, name):
-        """
-        Get details of a specific user. Remove from Prod.
-        """
-        user = users.get_user_by_name(name)
-        if user:
-            return user
-        else:
-            api.abort(HTTPStatus.NOT_FOUND, f'User w/ name \'{name}\''
-                      ' not found')
+        try:
+            if 'user_id' in session:
+                userid = session['user_id']
+                session.pop('user_id')
+                username = users.get_user_by_id(userid)[users.NAME]
+                return {DATA: f'Logged out {username}'}, HTTPStatus.OK
+            else:
+                msg = 'No user currently logged in'
+                print(msg)
+                return {DATA: msg}, HTTPStatus.BAD_REUNAUTHORIZEDQUEST
+        except Exception as e:
+            return {DATA: str(e)}, HTTPStatus.BAD_REQUEST
 
 
 @us.route(STATUS_EP)
@@ -305,11 +267,12 @@ class LoggedIn(Resource):
         if 'user_id' in session:
             print(session)
             return {
+                DATA: 'User is currently logged in.',
                 USER: users.get_user_if_logged_in(session)
                 }, HTTPStatus.OK
         else:
             return {
-                DATA: 'No user currently logged in',
+                DATA: 'No user currently logged in.',
                 USER: 'None'
                 }, HTTPStatus.UNAUTHORIZED
 
@@ -346,29 +309,34 @@ class Articles(Resource):
 
 @ar.route(SUBMISSIONS_EP)
 class SubmittedArticles(Resource):
+    @api.response(HTTPStatus.OK, 'Article submitted successfully')
     @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Invalid request')
     @api.expect(article_query_parser)
     def get(self):
         """
         Get all news article links and name submitted by the logged in user.
         """
-        if 'user_id' in session:
-            user_id = session['user_id']
-            article_query_parser.parse_args()
-            title_keyword = request.args.get('title_keyword', None)
-            return {
-                TYPE: DATA,
-                TITLE: 'Stored Articles',
-                DATA: articles.fetch_with_combined_filter(
-                    and_filter={articles.SUBMITTER_ID_FIELD: user_id},
-                    or_filter={},
-                    remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
-                    title_keyword=title_keyword
-                ),
-                USER: users.get_user_if_logged_in(session),
-            }
-        else:
-            return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+        try:
+            if 'user_id' in session:
+                user_id = session['user_id']
+                article_query_parser.parse_args()
+                title_keyword = request.args.get('title_keyword', None)
+                return {
+                    TYPE: DATA,
+                    TITLE: 'Stored Articles',
+                    DATA: articles.fetch_with_combined_filter(
+                        and_filter={articles.SUBMITTER_ID_FIELD: user_id},
+                        or_filter={},
+                        remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
+                        title_keyword=title_keyword
+                    ),
+                    USER: users.get_user_if_logged_in(session),
+                }
+            else:
+                return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+        except Exception as e:
+            return {DATA: str(e)}, HTTPStatus.BAD_REQUEST
 
 
 @ar.route('/<string:article_id>')
@@ -386,7 +354,7 @@ class ArticleById(Resource):
             # return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
             pass  # lets say they can still view public ones
 
-        article = articles.get_article_by_id(article_id, user_id)
+        article = articles.get_article_by_id(article_id, user_id) # does the auth stuff
         if article:
             return article
         else:
@@ -535,29 +503,40 @@ class ChangeName(Resource):
     """
 
     @api.expect(change_username_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Bad Request')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
     def put(self):
         """
-        Update theusername of a user.
+        Update the username of a user.
         """
-        response = request.json
-        user_id = session.get('user_id', None)
-        new_username = response.get(users.NAME)
-        password = response.get(users.PASSWORD)
-
         try:
-            if users.get_user_by_name(new_username):
-                return {DATA: 'Username already exists.'}, HTTPStatus.BAD_REQUEST
-            user_id_object = extras.str_to_objectid(user_id)
-            users.update_user_profile(user_id_object, password, {users.NAME: new_username})
-            return {
-                DATA: 'Username changed successfully.',
-                USER: users.get_user_if_logged_in(session),
-                }, HTTPStatus.OK
+            user_id = session.get('user_id', None)
+            if not user_id:
+                return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+            
+            response = request.json
+            new_username = response.get(users.NAME)
+            password = response.get(users.PASSWORD)
+
+            try:
+                if users.get_user_by_name(new_username):
+                    return {DATA: 'Username already exists.'}, HTTPStatus.BAD_REQUEST
+                user_id_object = extras.str_to_objectid(user_id)
+                users.update_user_profile(user_id_object, password, {users.NAME: new_username})
+                return {
+                    DATA: 'Username changed successfully.',
+                    USER: users.get_user_if_logged_in(session),
+                    }, HTTPStatus.OK
+            except Exception as e:
+                return {
+                    DATA: str(e),
+                    USER: users.get_user_if_logged_in(session),
+                    }, HTTPStatus.BAD_REQUEST
+            
         except Exception as e:
-            return {
-                DATA: str(e),
-                USER: users.get_user_if_logged_in(session),
-                }, HTTPStatus.BAD_REQUEST
+            return {DATA: str(e),
+                    }, HTTPStatus.BAD_REQUEST
 
 
 change_password_model = api.model('ChangePassword', {
@@ -577,12 +556,20 @@ class ChangePassword(Resource):
     """
 
     @api.expect(change_password_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Bad Request')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
     def put(self):
         """
         Update the password of a user.
         """
-        response = request.json
         user_id = session.get('user_id', None)
+        if not user_id:
+            return {DATA: 'No user currently logged in.',
+                    USER: users.get_user_if_logged_in(session),
+                    }, HTTPStatus.UNAUTHORIZED
+
+        response = request.json
         old_password = response.get('old_password')
         new_password = response.get('new_password')
         confirm_new_password = response.get('confirm_new_password')
@@ -619,12 +606,20 @@ class ChangeEmail(Resource):
     """
 
     @api.expect(change_email_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Bad Request')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
     def put(self):
         """
         Update the email of a user.
         """
-        response = request.json
         user_id = session.get('user_id', None)
+        if not user_id:
+            return {DATA: 'No user currently logged in.',
+                    USER: users.get_user_if_logged_in(session),
+                    }, HTTPStatus.UNAUTHORIZED
+
+        response = request.json
         password = response.get(users.PASSWORD)
         new_email = response.get(users.EMAIL)
 
@@ -641,10 +636,42 @@ class ChangeEmail(Resource):
                     }, HTTPStatus.BAD_REQUEST
 
 
+password_model = api.model('PasswordModel', {
+    users.PASSWORD: fields.String(required=True, description='User password')
+})
+
+
+@us.route(DELETE_EP)
+class RemoveUser(Resource):
+    @api.expect(password_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized')
+    def delete(self):
+        """
+        Remove/delete a user.
+        """
+        user_id = session.get('user_id', None)
+        password = request.json.get(users.PASSWORD)
+        if user_id:
+            try:
+                object_id = extras.str_to_objectid(user_id)
+                if users.verify_user(object_id, password):
+                    users.del_user_by_id(object_id)
+                    session.pop('user_id')
+                else:
+                    raise ValueError()
+            except KeyError:
+                raise wz.NotFound('User not found.')
+            except ValueError:
+                raise wz.Unauthorized('Password incorrect.')
+
+            return {DATA: 'User removed successfully.'}
+        raise wz.Unauthorized('No user logged in.')
+
+
 DatabaseClear = api.model('Database Name', {
     'Name': fields.String(required=True, description='Database'),
 })
-
 
 @col.route('/db')
 class Collection(Resource):
@@ -653,6 +680,13 @@ class Collection(Resource):
         """
         Clears the specified Database.
         """
+        user_id = session.get('user_id', None)
+        if not user_id:
+            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+        
+        if not users.has_admin_privilege(user_id):
+            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
+
         response = request.json
         name = response.get('Name')
 
@@ -687,6 +721,13 @@ class UsersCollectionWipe(Resource):
         """
         Clears the users Database.
         """
+        user_id = session.get('user_id', None)
+        if not user_id:
+            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+        
+        if not users.has_admin_privilege(user_id):
+            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
+        
         try:
             data = users.clear_data('users')
             return {
@@ -706,7 +747,13 @@ class ArticlesCollectionWipe(Resource):
         """
         Clears the articles Database.
         """
-        print("hello")
+        user_id = session.get('user_id', None)
+        if not user_id:
+            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+        
+        if not users.has_admin_privilege(user_id):
+            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
+        
         try:
             users.clear_data('articles')
             return {
