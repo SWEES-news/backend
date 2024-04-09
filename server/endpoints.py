@@ -209,19 +209,21 @@ class RemoveUser(Resource):
         """
         user_id = session.get('user_id', None)
         password = request.json.get(users.PASSWORD)
-        try:
-            object_id = extras.str_to_objectid(user_id)
-            if users.verify_user(object_id, password):
-                users.del_user_by_id(object_id)
-                session.pop('user_id')
-            else:
-                raise ValueError()
-        except KeyError:
-            raise wz.NotFound('User not found.')
-        except ValueError:
-            raise wz.Unauthorized('Password incorrect.')
+        if user_id:
+            try:
+                object_id = extras.str_to_objectid(user_id)
+                if users.verify_user(object_id, password):
+                    users.del_user_by_id(object_id)
+                    session.pop('user_id')
+                else:
+                    raise ValueError()
+            except KeyError:
+                raise wz.NotFound('User not found.')
+            except ValueError:
+                raise wz.Unauthorized('Password incorrect.')
 
-        return {DATA: 'User removed successfully.'}
+            return {DATA: 'User removed successfully.'}
+        raise wz.Unauthorized('No user logged in.')
 
 
 user_login_model = api.model('LoginUser', {
