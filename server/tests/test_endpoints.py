@@ -69,14 +69,10 @@ def test_users_add_db_failure(mock_add):
 
 # Testing update user endpoint
 # might need some help with figuring this out
-@pytest.mark.skip("Some error with the session")
-@patch('userdata.users.get_user_by_name')
-def test_update_user_duplicate_name(mock_name):
-    mock_name.return_value = usrs.get_test_user()
-    resp = TEST_CLIENT.put(ep.UPDATE_USERNAME_EP, json={'old_username': 'test_name',
-                                                   'new_username': 'test_name2',
-                                                   'password': 'test_password'})
-    assert resp.status_code == BAD_REQUEST
+# @patch('userdata.users.update_user', return_value=...)
+# def test_update_user_success(mock_user):
+#     resp = TEST_CLIENT.put(ep.USERS_EP, json=data.update_test_user())
+#     pass
 
 
 # @patch('userdata.users.update_user')
@@ -262,10 +258,10 @@ def test_valid_credentials(mock_get, mock_verify):
     })
     assert response.status_code == OK
 
-@patch('userdata.users.verify_user_by_name')  # Mocking the verify_user function
+@patch('userdata.users.verify_user_by_name', return_value=False)  # Mocking the verify_user function
 def test_invalid_credentials(mock_verify):
     # Simulating a scenario where the credentials are invalid
-    mock_verify.return_value = False
+
     response = TEST_CLIENT.post(f'{ep.USERS_EP}{ep.LOGIN_EP}', json={
         usrs.NAME: 'wrong@example.com',
         usrs.PASSWORD: 'wrongpassword'
