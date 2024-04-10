@@ -539,12 +539,11 @@ class ChangeName(Resource):
         """
         response = request.json
         user_id = session.get('user_id', None)
-        new_username = response.get(users.NAME)
-        password = response.get(users.PASSWORD)
-
+        new_username = response.get('new_username')
+        password = response.get('password')
+        if users.get_user_by_name(new_username):
+            raise wz.BadRequest(f'{new_username} already exists')
         try:
-            if users.get_user_by_name(new_username):
-                return {DATA: 'Username already exists.'}, HTTPStatus.BAD_REQUEST
             user_id_object = extras.str_to_objectid(user_id)
             users.update_user_profile(user_id_object, password, {users.NAME: new_username})
             return {
@@ -555,7 +554,7 @@ class ChangeName(Resource):
             return {
                 DATA: str(e),
                 USER: users.get_user_if_logged_in(session),
-                }, HTTPStatus.BAD_REQUEST
+                }, HTTPStatus.FORBIDDEN
 
 
 change_password_model = api.model('ChangePassword', {
