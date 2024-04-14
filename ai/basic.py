@@ -54,17 +54,17 @@ PROMPT_TEMPLATE = (
 
 
 def create_vector_store(texts: list[str]) -> Chroma:
-    """
-    Creates a vector store for the given texts.
-
-    :param texts: The texts to create the vector store from.
-
-    Returns vectorstore: the Chroma vector store.
-    """
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)  # , add_start_index=True
-    splits = [text_splitter.split_text(doc) for doc in texts]
-    vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
-    return vectorstore
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    try:
+        splits = [text_splitter.split_text(doc) for doc in texts if doc]
+        if not splits:
+            logging.error("No valid splits were created from the provided texts.")
+            return None
+        vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+        return vectorstore
+    except Exception as e:
+        logging.error(f"Failed to create vector store: {e}")
+        return None
 
 
 def analyze_content(texts: list[str]) -> tuple[list[str], Chroma]:
