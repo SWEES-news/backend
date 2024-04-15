@@ -12,17 +12,17 @@ import userdata.extras as extras
 import os
 import sys
 import inspect
+
+import userdata.users as users
+import userdata.articles as articles
+import string
+from ai.basic import analyze_content
+
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
-
-import userdata.users as users
-import userdata.articles as articles
-import string
-
-from ai.basic import analyze_content  # Import the relevant function from basic.py
 
 
 app = Flask(__name__)
