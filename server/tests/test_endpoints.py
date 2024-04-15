@@ -9,7 +9,7 @@ from http.client import (
 )
 from http import HTTPStatus
 
-from unittest.mock import patch
+from unittest.mock import patch  #, MagicMock
 
 import pytest
 
@@ -273,3 +273,35 @@ def test_invalid_credentials(mock_verify):
 # def test_clearDBAfterTest():
 #     response = TEST_CLIENT.delete(f'{ep.COLLECTIONS_EP}{ep.CLEAR_EP}', json={'Name': 'test_collect'})
 #     assert response.status_code == OK or response.status_code == BAD_REQUEST
+
+@patch('basic.analyze_content')
+@patch('userdata.articles.get_article_by_id')
+def test_analyze_bias(mock_get_article_by_id, mock_analyze_content):
+    """
+    Test the AnalyzeBias endpoint with valid input.
+    """
+    # Mocking the get_article_by_id function to return a test article
+    # mock_article = MagicMock()
+    # mock_article.get.return_value = "This is a test article."
+    # mock_get_article_by_id.return_value = mock_article
+
+    mock_get_article_by_id.return_value = {
+        'article_title': 'Sample Article',
+        'article_body': 'This is a sample article for testing purposes.'
+    }
+
+    # Mocking the analyze_content function to return a predefined analysis result and vector store
+    mock_analyze_content.return_value = (["This is a bias analysis result"], None)
+
+    # Sending a POST request to the endpoint
+    response = TEST_CLIENT.post(f'{ep.ANALYSIS_EP}{ep.ARTICLE_ID_EP}', json={'article_id': 'test_article_id'})
+
+    # Asserting the response status code
+    assert response.status_code == HTTPStatus.OK
+
+    # Asserting the response data
+    data = response.json()
+    assert 'article_id' in data
+    assert 'analysis_result' in data
+    assert data['article_id'] == 'test_article_id'
+    assert data['analysis_result'] == ["This is a bias analysis result"]
