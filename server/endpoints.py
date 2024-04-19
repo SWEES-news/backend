@@ -8,6 +8,7 @@ from flask_cors import CORS
 from http import HTTPStatus
 import werkzeug.exceptions as wz
 import userdata.extras as extras
+import userdata.comments as comments
 
 import os
 import sys
@@ -809,12 +810,12 @@ class UserSurvey(Resource):
         return ff.get_form(), HTTPStatus.OK
 
 
-import userdata.comments as comments
-
 comment_model = api.model('Comment', {
     comments.TEXT_FIELD: fields.String(required=True, description='The content of the comment', example="This is a great article!"),
-    comments.PARENT_ID_FIELD: fields.String(required=False, description='The ID of the parent comment if this is a reply', example="5f2b88e8f0c1711a1a0e96f4")
+    comments.PARENT_ID_FIELD: fields.String(required=False, description='The ID of the parent comment if this is a reply',
+                                            example="5f2b88e8f0c1711a1a0e96f4")
 })
+
 
 @com.route("/articles/<string:article_id>/comments")
 class ArticleComments(Resource):
@@ -842,6 +843,8 @@ class ArticleComments(Resource):
         except Exception as e:
             return {DATA: str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
+
+
 @api.route("/comments/<string:comment_id>")
 class Comment(Resource):
     @api.response(HTTPStatus.OK, 'Comment deleted successfully')
@@ -859,5 +862,5 @@ class Comment(Resource):
             return {DATA: str(pe)}, HTTPStatus.FORBIDDEN
         except ValueError as ve:
             return {DATA: str(ve)}, HTTPStatus.BAD_REQUEST
-        except Exception as e:
+        except Exception:
             return {DATA: 'Comment not found'}, HTTPStatus.NOT_FOUND
