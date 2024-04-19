@@ -9,21 +9,31 @@ from examples.form_filler import FLD_NM  # for tests
 USERNAME = 'username'
 PASSWORD = 'password'
 
-LOGIN_FORM_FLDS = [
+PARTY = 'party'
+COUNTRY = 'country'
+AGE = 'age'
+
+SURVEY_FORM_FLDS = [
     {
         FLD_NM: 'Instructions',
-        ff.QSTN: 'Enter your username and password.',
+        ff.QSTN: 'Enter your political party and country of residence',
         ff.INSTRUCTIONS: True,
     },
     {
-        FLD_NM: USERNAME,
-        ff.QSTN: 'User name:',
+        FLD_NM: PARTY,
+        ff.QSTN: 'Political Party:',
         ff.PARAM_TYPE: ff.QUERY_STR,
         ff.OPT: False,
     },
     {
-        FLD_NM: PASSWORD,
-        ff.QSTN: 'Password:',
+        FLD_NM: COUNTRY,
+        ff.QSTN: 'Country:',
+        ff.PARAM_TYPE: ff.QUERY_STR,
+        ff.OPT: False,
+    },
+    {
+        FLD_NM: AGE,
+        ff.QSTN: 'Age: ',
         ff.PARAM_TYPE: ff.QUERY_STR,
         ff.OPT: False,
     },
@@ -31,18 +41,18 @@ LOGIN_FORM_FLDS = [
 
 
 def get_form() -> list:
-    return LOGIN_FORM_FLDS
+    return SURVEY_FORM_FLDS
 
 
 def get_form_descr() -> dict:
     """
     For Swagger!
     """
-    return ff.get_form_descr(LOGIN_FORM_FLDS)
+    return ff.get_form_descr(SURVEY_FORM_FLDS)
 
 
 def get_fld_names() -> list:
-    return ff.get_fld_names(LOGIN_FORM_FLDS)
+    return ff.get_fld_names(SURVEY_FORM_FLDS)
 
 
 def main():

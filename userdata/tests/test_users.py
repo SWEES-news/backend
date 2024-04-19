@@ -93,6 +93,7 @@ def test_add_user():
     ret = usrs.add_user(new_user, usrs.MOCK_EMAIL, usrs.MOCK_PASSWORD)
     assert usrs.exists(new_user)
     assert ret is not None
+    usrs.del_user(new_user)
 
 
 def test_update_user(temp_user):
