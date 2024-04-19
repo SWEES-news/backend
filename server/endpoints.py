@@ -15,6 +15,7 @@ import inspect
 import userdata.users as users
 import userdata.articles as articles
 import string
+import examples.form as ff
 
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
@@ -62,6 +63,7 @@ SUBMISSIONS_EP = '/submissions'
 ANALYSIS_EP = '/submissions/analysis'
 ENDPOINTS_EP = '/endpoints'
 ALL_EP = '/all'
+SURVEY_EP = '/survey'
 
 MAIN_MENU_EP = '/MainMenu'
 CLEAR_EP = '/clear'
@@ -765,3 +767,12 @@ class ArticlesCollectionWipe(Resource):
                 DATA: str(e),
                 USER: users.get_user_if_logged_in(session),
                 }, HTTPStatus.BAD_REQUEST
+
+
+@us.route(SURVEY_EP)
+class UserSurvey(Resource):
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.doc(param=ff.get_form())
+    def get(self):
+        # args = request.json.get()
+        return ff.get_form(), HTTPStatus.OK
