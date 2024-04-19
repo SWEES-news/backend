@@ -12,16 +12,19 @@ import userdata.extras as extras
 import os
 import sys
 import inspect
+
 import userdata.users as users
 import userdata.articles as articles
 import string
 import examples.form as ff
+from ai.basic import analyze_content
 
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'h-J_l62fxF1uDXqKjHS3EQ')  # secure asf
@@ -454,37 +457,63 @@ class AnalyzeBias(Resource):
         """
         Analyze the bias in a submitted article.
         """
-        # data = request.json
-        # analysis_parameters = data.get('analysis_parameters', {})
-
         # Use the provided function to retrieve the article by its ID
-        article = users.get_article_by_id(article_id)  # this needs to be secure and use user_id MUST
+        article = articles.get_article_by_id(article_id)  # this needs to be secure and use user_id MUST
         if not article:
-            api.abort(HTTPStatus.NOT_FOUND,
-                      f'Article with ID {article_id} not found')
+            api.abort(HTTPStatus.NOT_FOUND, f'Article with ID {article_id} not found')
 
-        # Perform bias analysis (pseudo-code)
+        # Retrieve the article content from the article object
+        article_body = article.get('article_body', '')
+
+        # Perform bias analysis
         try:
-            # analysis_result = analyze_article_bias(article,
-            # analysis_parameters)
-            pass
+            analysis_result, vector_store = analyze_content([article_body])
         except Exception as e:
-            api.abort(HTTPStatus.BAD_REQUEST,
-                      f'Article with ID {article_id} could not be analyzed'
-                      f' due to error: {e}')
+            api.abort(HTTPStatus.BAD_REQUEST, f'Article with ID {article_id} could not be analyzed due to error: {e}')
 
-        # For demonstration, we'll return a dummy response
-        analysis_result = {
-            'bias_level': 'moderate',
-            'bias_type': ['political', 'emotional'],
-            'detailed_analysis': '...'
-        }  # should send this in get, not post, once we clean up
-
-        return {
+        # Construct the response
+        response_data = {
             'article_id': article_id,
             'analysis_result': analysis_result,
             USER: users.get_user_if_logged_in(session),
-        }, HTTPStatus.OK
+        }
+
+        return response_data, HTTPStatus.OK
+    # def post(self, article_id):
+    #     """
+    #     Analyze the bias in a submitted article.
+    #     """
+    #     # data = request.json
+    #     # analysis_parameters = data.get('analysis_parameters', {})
+
+    #     # Use the provided function to retrieve the article by its ID
+    #     article = users.get_article_by_id(article_id)  # this needs to be secure and use user_id MUST
+    #     if not article:
+    #         api.abort(HTTPStatus.NOT_FOUND,
+    #                   f'Article with ID {article_id} not found')
+
+    #     # Perform bias analysis (pseudo-code)
+    #     try:
+    #         # analysis_result = analyze_article_bias(article,
+    #         # analysis_parameters)
+    #         pass
+    #     except Exception as e:
+    #         api.abort(HTTPStatus.BAD_REQUEST,
+    #                   f'Article with ID {article_id} could not be analyzed'
+    #                   f' due to error: {e}')
+
+    #     # For demonstration, we'll return a dummy response
+    #     analysis_result = {
+    #         'bias_level': 'moderate',
+    #         'bias_type': ['political', 'emotional'],
+    #         'detailed_analysis': '...'
+    #     }  # should send this in get, not post, once we clean up
+
+    #     return {
+    #         'article_id': article_id,
+    #         'analysis_result': analysis_result,
+    #         USER: users.get_user_if_logged_in(session),
+    #     }, HTTPStatus.OK
 
 
 change_username_model = api.model('ChangeUsername', {

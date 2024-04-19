@@ -54,35 +54,47 @@ PROMPT_TEMPLATE = (
 
 
 def create_vector_store(texts: list[str]) -> Chroma:
-    """
-    Creates a vector store for the given texts.
-
-    :param texts: The texts to create the vector store from.
-
-    Returns vectorstore: the Chroma vector store.
-    """
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)  # , add_start_index=True
-    splits = [text_splitter.split_text(doc) for doc in texts]
-    vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
-    return vectorstore
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    try:
+        splits = [text_splitter.split_text(doc) for doc in texts if doc]
+        if not splits:
+            logging.error("No valid splits were created from the provided texts.")
+            return None
+        vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+        return vectorstore
+    except Exception as e:
+        logging.error(f"Failed to create vector store: {e}")
+        return None
 
 
 def analyze_content(texts: list[str]) -> tuple[list[str], Chroma]:
     """
-    Separately analyzes each text for news bias.
+    Analyzes each text for news bias, creates a vector store from the texts, and returns both the analyses and the vector store.
 
-    :param texts: The texts to analyze.
+    :param texts: List of text documents to analyze.
+    :returns: A tuple containing:
+              - list of analyses (str): Detailed responses based on the analysis of each text.
+              - Chroma vector store: A vector store built from the texts for further similarity searches or analysis.
 
-    Returns responses: a list of analyses, and vectorstore: the Chroma vector store.
+    The function will return `None` for the vector store if there's an error in creating it.
     """
+    # Check if there are texts to process, return None early if not
+    if not texts:
+        logging.error("No texts provided for analysis.")
+        return [], None
+
+    # Prepare the prompt template and model for analysis
     prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
     model = ChatOpenAI(model=MODEL)
     chain = prompt | model | StrOutputParser()
 
-    docs = [{'content': doc} for doc in texts]
+    # Prepare documents for the analysis
+    docs = [{'content': doc} for doc in texts if doc.strip()]
 
+    # Execute batch processing with the chain of transformations
     responses = chain.batch(docs)
 
+    # Create a vector store from the texts
     vectorstore = create_vector_store(texts)
 
     return responses, vectorstore
