@@ -1,5 +1,6 @@
 import userdata.db_connect as dbc
-from datetime import datetime
+# from datetime import datetime
+import userdata.extras as extras
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 
@@ -12,19 +13,24 @@ PARENT_ID_FIELD = 'parent_id'
 TIMESTAMP_FIELD = 'timestamp'
 OBJECTID = "_id"
 
+
 def post_comment(article_id, user_id, text, parent_id=None):
     """
     Post a new comment or reply to an article. Assumes all user checks are performed upstream.
+    Validates and sanitizes input to avoid XSS and check for profanity.
     """
+    sanitized_text = extras.sanitize_text(text)
+
     comment = {
         ARTICLE_ID_FIELD: article_id,
         USER_ID_FIELD: user_id,
-        TEXT_FIELD: text,
+        TEXT_FIELD: sanitized_text,
         PARENT_ID_FIELD: parent_id,
-        # TIMESTAMP_FIELD: '11:11'
+        # TIMESTAMP_FIELD: datetime.utcnow()
     }
     inserted_id = dbc.insert_one(COMMENT_COLLECTION, comment)
     return inserted_id
+
 
 def get_comments_by_article(article_id):
     """
@@ -34,6 +40,7 @@ def get_comments_by_article(article_id):
     comments = dbc.fetch_all_with_filter(COMMENT_COLLECTION, filt)
     return comments
 
+
 def get_reply_comments(parent_id):
     """
     Retrieve all replies to a specific comment.
@@ -41,6 +48,7 @@ def get_reply_comments(parent_id):
     filt = {PARENT_ID_FIELD: parent_id}
     replies = dbc.fetch_all_with_filter(COMMENT_COLLECTION, filt)
     return replies
+
 
 def delete_comment(comment_id, user_id):
     """

@@ -4,6 +4,7 @@ At first, it will just contain stubs that return fake data.
 Gradually, we will fill in actual calls to our datastore.
 """
 import userdata.db_connect as dbc  # userdata.
+from better_profanity import profanity
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -17,14 +18,12 @@ ARTICLE_LINK = "article_link"
 ARTICLE_TITLE = "article_title"
 ARTICLE_BODY = "article_body"
 
-# ------ DB fields ------ #
-NAME = 'Username'
-EMAIL = 'Email'
-PASSWORD = 'Password'
 
-# ------ DB rules ------ #
-ID_LEN = 24
-BIG_NUM = 100000000000000000000
+def sanitize_text(text):
+    """
+    Check if the text contains profanity.
+    """
+    return profanity.censor(text)
 
 
 def fetch_all_with_filter(collection, filt={}, projection={}, db=dbc.USER_DB):
