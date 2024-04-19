@@ -844,7 +844,6 @@ class ArticleComments(Resource):
             return {DATA: str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-
 @api.route("/comments/<string:comment_id>")
 class Comment(Resource):
     @api.response(HTTPStatus.OK, 'Comment deleted successfully')
