@@ -42,6 +42,8 @@ ar = api.namespace('articles',
 an = api.namespace('analysis',
                    description="operations for analyzing article bias")
 col = api.namespace('collections', description="generic operations for data in collections")
+com = api.namespace('comments',
+                    description="operations for user comments")
 # ns = api.Namespace('basic stuff', description="this is basic stuff")
 # use ns.route instead of api.route
 
@@ -794,3 +796,57 @@ class ArticlesCollectionWipe(Resource):
                 DATA: str(e),
                 USER: users.get_user_if_logged_in(session),
                 }, HTTPStatus.BAD_REQUEST
+
+
+import userdata.comments as comments
+
+comment_model = api.model('Comment', {
+    comments.TEXT_FIELD: fields.String(required=True, description='The content of the comment', example="This is a great article!"),
+    comments.PARENT_ID_FIELD: fields.String(required=False, description='The ID of the parent comment if this is a reply', example="5f2b88e8f0c1711a1a0e96f4")
+})
+
+@com.route("/articles/<string:article_id>/comments")
+class ArticleComments(Resource):
+    @api.expect(comment_model)
+    @api.response(HTTPStatus.OK, 'Comment posted successfully')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
+    def post(self, article_id):
+        if 'user_id' not in session:
+            return {DATA: 'Unauthorized access'}, HTTPStatus.UNAUTHORIZED
+        user_id = session['user_id']
+        text = request.json.get(comments.TEXT_FIELD)
+        parent_id = request.json.get(comments.PARENT_ID_FIELD, None)
+        try:
+            comment_id = comments.post_comment(article_id, user_id, text, parent_id)
+            print(text)
+            return {DATA: str(comment_id)}, HTTPStatus.OK
+        except Exception as e:
+            return {DATA: str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+    @api.response(HTTPStatus.OK, 'Comments retrieved successfully')
+    def get(self, article_id):
+        try:
+            comments_list = comments.get_comments_by_article(article_id)
+            return {DATA: comments_list}, HTTPStatus.OK
+        except Exception as e:
+            return {DATA: str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
+
+@api.route("/comments/<string:comment_id>")
+class Comment(Resource):
+    @api.response(HTTPStatus.OK, 'Comment deleted successfully')
+    @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
+    @api.response(HTTPStatus.NOT_FOUND, 'Comment not found')
+    @api.response(HTTPStatus.FORBIDDEN, 'Cannot delete someone else\'s comment')
+    def delete(self, comment_id):
+        if 'user_id' not in session:
+            return {DATA: 'Unauthorized access'}, HTTPStatus.UNAUTHORIZED
+        user_id = session['user_id']
+        try:
+            comments.delete_comment(comment_id, user_id)
+            return {DATA: 'Comment deleted successfully'}, HTTPStatus.OK
+        except PermissionError as pe:
+            return {DATA: str(pe)}, HTTPStatus.FORBIDDEN
+        except ValueError as ve:
+            return {DATA: str(ve)}, HTTPStatus.BAD_REQUEST
+        except Exception as e:
+            return {DATA: 'Comment not found'}, HTTPStatus.NOT_FOUND
