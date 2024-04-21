@@ -4,7 +4,7 @@ At first, it will just contain stubs that return fake data.
 Gradually, we will fill in actual calls to our datastore.
 """
 import random
-import userdata.db_connect as dbc  # userdata.
+import userdata.db_connect as dbc
 import bcrypt
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -21,6 +21,8 @@ OBJECTID = '_id'
 NAME = 'Username'
 EMAIL = 'Email'
 PASSWORD = 'Password'
+FIRSTNAME = 'FirstName'
+LASTNAME = 'LastName'
 
 
 # ------ DB rules ------ #
@@ -80,14 +82,16 @@ def get_users() -> dict:
     return dbc.fetch_all_as_dict(NAME, USER_COLLECT)
 
 
-def add_user(username: str, email: str, password: str) -> str:
+def add_user(firstname: str, lastname: str, username: str, email: str, password: str) -> str:
     if exists(username):
         raise ValueError(f'Duplicate Username: {username=}')
-    if get_user_by_email(email):
-        raise ValueError(f'Duplicate Username: {email=}')
+    if email_exists(email): # not the right function to check for email
+        raise ValueError(f'Duplicate email: {email=}')
     if not username:
         raise ValueError('username may not be blank')
     user = {}
+    user[FIRSTNAME] = firstname
+    user[LASTNAME] = lastname
     user[NAME] = username
     user[EMAIL] = email
     user[PASSWORD] = dbc.hash_str(password)  # need to hash!
@@ -153,7 +157,14 @@ def del_user_by_email(user_email: str):
 
 def exists(name: str) -> bool:
     dbc.connect_db()
-    return dbc.fetch_one(USER_COLLECT, {NAME: name})
+    name = name.lower()
+    return dbc.fetch_one(USER_COLLECT, {NAME: name}, False)
+
+
+def email_exists(email: str) -> bool:
+    dbc.connect_db()
+    email = email.lower()
+    return dbc.fetch_one(USER_COLLECT, {EMAIL: email}, False)
 
 
 def exists_id(user_id: str) -> bool:
@@ -269,10 +280,13 @@ def get_user_if_logged_in(session):
 
 def has_admin_privilege(user_id):
     """
-    Check if the user has admin privilege.
-    Check if username is ethan or admin.
+    Check if the user has admin privilege based on a list of whitelisted emails.
     """
     user = get_user_by_id(user_id)
     if user:
-        return user[NAME].lower() in ['ethan', 'admin']
+        admin_emails = [
+            'ethanb@nyu.edu',
+            'ethandb2024@gmail.com'
+        ]
+        return user[EMAIL] in admin_emails
     return False
