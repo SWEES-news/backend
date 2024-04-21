@@ -152,7 +152,7 @@ verify_email_model = api.model('verify_email_model', {
 
 
 @us.route(START_REGISTRATION_EP)
-class RegisterUser(Resource):
+class RegisterUserBegin(Resource):
     @api.expect(verify_email_model)
     @api.response(HTTPStatus.OK, 'Success')
     @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
@@ -164,7 +164,7 @@ class RegisterUser(Resource):
             email = request.json[users.EMAIL]
             if users.email_exists(email):
                 return {DATA: 'Email already exists.'}, HTTPStatus.NOT_ACCEPTABLE
-            
+
             emails.send_verification_email(email)
             session['email'] = email
             return {DATA: 'Verification email sent.'}, HTTPStatus.OK
@@ -187,7 +187,7 @@ class VerifyEmail(Resource):
         email = session.get('email', None)
         if email is None:
             return {DATA: 'No email address found in session'}, HTTPStatus.BAD_REQUEST
-        
+
         submitted_code = request.json['verification_code']
         if not submitted_code or len(submitted_code) != 6:
             return {DATA: 'Invalid verification code'}, HTTPStatus.NOT_ACCEPTABLE
@@ -230,8 +230,14 @@ class RegisterUser(Resource):
         username = response.get(users.NAME, None)
         password = response.get(users.PASSWORD, None)
         confirm_password = response.get('confirm_password', None)
-        print(response.items())
-        print(f"expecting items: {users.FIRSTNAME}, {users.LASTNAME}, {users.NAME}, {users.PASSWORD}, confirm_password")
+
+        if not firstname or not lastname or not username or not password or not confirm_password:
+            return {DATA: 'Missing required fields'}, HTTPStatus.NOT_ACCEPTABLE
+
+        if password != confirm_password:
+            return {DATA: 'Passwords do not match'}, HTTPStatus.NOT_ACCEPTABLE
+        # print(response.items())
+        # print(f"expecting items: {users.FIRSTNAME}, {users.LASTNAME}, {users.NAME}, {users.PASSWORD}, confirm_password")
         try:
             is_verified = emails.check_email_verification(email)
             if not is_verified:
@@ -241,7 +247,7 @@ class RegisterUser(Resource):
                 return {DATA: 'Failed to add user. A issue with our database occurred.'}, HTTPStatus.NOT_ACCEPTABLE
 
             return {users.OBJECTID: user_id}, HTTPStatus.OK
-            
+
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
@@ -703,7 +709,7 @@ class ChangeEmail(Resource):
         try:
             if users.email_exists(new_email):
                 return {DATA: 'Email already exists.'}, HTTPStatus.NOT_ACCEPTABLE
-            
+
             user_object_id = extras.str_to_objectid(user_id)
             users.update_user_profile(user_object_id, password, {users.EMAIL: new_email})
             return {
