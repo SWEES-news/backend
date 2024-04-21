@@ -53,6 +53,11 @@ def _get_random_name():
     return str(random.randint(0, BIG_NUM))
 
 
+# returns a randomly generated mock email
+def _get_random_email():
+    return str(random.randint(0, BIG_NUM - 10)) + EMAIL_TAIL
+
+
 # gets a user with a random gmail address
 def get_rand_test_user():
     rand_part = _get_random_name()
@@ -78,7 +83,7 @@ def get_users() -> dict:
 def add_user(username: str, email: str, password: str) -> str:
     if exists(username):
         raise ValueError(f'Duplicate Username: {username=}')
-    if exists(email):
+    if get_user_by_email(email):
         raise ValueError(f'Duplicate Username: {email=}')
     if not username:
         raise ValueError('username may not be blank')
@@ -136,6 +141,14 @@ def del_user_by_id(user_id: str):
         return dbc.del_one(USER_COLLECT, {OBJECTID: user_id})
     else:
         raise KeyError(f'User {user_id} not found.')
+
+
+def del_user_by_email(user_email: str):
+    dbc.connect_db()
+    if get_user_by_email(user_email):
+        return dbc.del_many(USER_COLLECT, {EMAIL: user_email})
+    else:
+        raise KeyError(f'User {user_email} not found.')
 
 
 def exists(name: str) -> bool:

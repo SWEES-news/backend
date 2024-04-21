@@ -73,6 +73,10 @@ def del_one(collection, filt, db=USER_DB):
     return client[db][collection].delete_one(filt)
 
 
+def del_many(collection, filt, db=USER_DB):
+    return client[db][collection].delete_many(filt)
+
+
 def del_first(collection, db=USER_DB):
     """
     Deletes first element it finds.

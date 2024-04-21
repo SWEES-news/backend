@@ -69,6 +69,17 @@ def test_add_user_dup_name(temp_user):
     dup_name = temp_user
     with pytest.raises(ValueError):
         usrs.add_user(dup_name, usrs.MOCK_NAME, usrs.MOCK_PASSWORD)
+    usrs.del_user(dup_name)
+
+def test_add_user_dup_email(temp_user):
+    """
+    Make sure a duplicate user email raises a ValueError.
+    """
+    dup_name = temp_user
+    # print(usrs.del_user_by_email(usrs.MOCK_EMAIL))
+    with pytest.raises(ValueError):
+        usrs.add_user(usrs.MOCK_NAME, usrs.MOCK_EMAIL, usrs.MOCK_PASSWORD)
+    usrs.del_user(dup_name)
 
 def test_clear_collection_wrong_name():
     """
@@ -82,7 +93,7 @@ def test_add_user_blank_name():
     Make sure a blank game name raises a ValueError.
     """
     with pytest.raises(ValueError):
-        usrs.add_user('', usrs.MOCK_EMAIL, usrs.MOCK_PASSWORD)
+        usrs.add_user('', usrs._get_random_email(), usrs.MOCK_PASSWORD)
 
 
 ADD_NAME = 'newuser'
@@ -90,7 +101,7 @@ ADD_NAME = 'newuser'
 
 def test_add_user():
     new_user = usrs._get_random_name()
-    ret = usrs.add_user(new_user, usrs.MOCK_EMAIL, usrs.MOCK_PASSWORD)
+    ret = usrs.add_user(new_user, usrs._get_random_email(), usrs.MOCK_PASSWORD)
     assert usrs.exists(new_user)
     assert ret is not None
     usrs.del_user(new_user)

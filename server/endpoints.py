@@ -655,7 +655,11 @@ class ChangeEmail(Resource):
         response = request.json
         password = response.get(users.PASSWORD)
         new_email = response.get(users.EMAIL)
-
+        if users.get_user_by_email(new_email):
+            return {
+                DATA: 'Duplicate Email' + new_email,
+                USER: users.get_user_if_logged_in(session),
+            }, HTTPStatus.BAD_REQUEST
         try:
             user_object_id = extras.str_to_objectid(user_id)
             users.update_user_profile(user_object_id, password, {users.EMAIL: new_email})
