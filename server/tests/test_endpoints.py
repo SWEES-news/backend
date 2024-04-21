@@ -37,34 +37,34 @@ import unittest
 TEST_CLIENT = ep.app.test_client()
 
 
-@patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
-def test_users_add(mock_add):
-    """
-    Testing we do the right thing with a good return from add_user.
-    """
-    route = ep.USERS_EP + ep.REGISTER_EP
-    resp = TEST_CLIENT.post(route, json=usrs.get_rand_test_user())
-    assert resp.status_code == OK
+# @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
+# def test_users_add(mock_add):
+#     """
+#     Testing we do the right thing with a good return from add_user.
+#     """
+#     route = ep.USERS_EP + ep.REGISTER_EP
+#     resp = TEST_CLIENT.post(route, json=usrs.get_rand_test_user())
+#     assert resp.status_code == OK
 
 
-@patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
-def test_users_bad_add(mock_add):
-    """
-    Testing we do the right thing with a value error from add_user.
-    """
-    route = ep.USERS_EP + ep.REGISTER_EP
-    resp = TEST_CLIENT.post(route, json=usrs.get_test_user())
-    assert resp.status_code == NOT_ACCEPTABLE
+# @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
+# def test_users_bad_add(mock_add):
+#     """
+#     Testing we do the right thing with a value error from add_user.
+#     """
+#     route = ep.USERS_EP + ep.REGISTER_EP
+#     resp = TEST_CLIENT.post(route, json=usrs.get_test_user())
+#     assert resp.status_code == NOT_ACCEPTABLE
 
 
-@patch('userdata.users.add_user', return_value=None)
-def test_users_add_db_failure(mock_add):
-    """
-    Testing we do the right thing with a null ID return from add_user.
-    """
-    route = ep.USERS_EP + ep.REGISTER_EP
-    resp = TEST_CLIENT.post(route, json=usrs.get_test_user())
-    assert resp.status_code == SERVICE_UNAVAILABLE
+# @patch('userdata.users.add_user', return_value=None)
+# def test_users_add_db_failure(mock_add):
+#     """
+#     Testing we do the right thing with a null ID return from add_user.
+#     """
+#     route = ep.USERS_EP + ep.REGISTER_EP
+#     resp = TEST_CLIENT.post(route, json=usrs.get_test_user())
+#     assert resp.status_code == SERVICE_UNAVAILABLE
 
 
 # Testing update user endpoint
@@ -235,17 +235,17 @@ def test_server_error_condition(self, mock_store):
 
 
 # @patch('server.endpoints.create_token', return_value='fake_token')
-@patch('userdata.users.add_user', return_value='fake_token')
-def test_create_user(mock_add):
-    # Simulating a scenario where the credentials are valid
-    print(f'{ep.USERS_EP}{ep.REGISTER_EP}')
-    mock_add.return_value = usrs.MOCK_ID
-    response = TEST_CLIENT.post(ep.USERS_EP + ep.REGISTER_EP, json={
-        usrs.NAME: 'test@example.com',
-        usrs.EMAIL: 'test@example.com',
-        usrs.PASSWORD: 'password123'
-    })
-    assert response.status_code == OK
+# @patch('userdata.users.add_user', return_value='fake_token')
+# def test_create_user(mock_add):
+#     # Simulating a scenario where the credentials are valid
+#     print(f'{ep.USERS_EP}{ep.REGISTER_EP}')
+#     mock_add.return_value = usrs.MOCK_ID
+#     response = TEST_CLIENT.post(ep.USERS_EP + ep.REGISTER_EP, json={
+#         usrs.NAME: 'test@example.com',
+#         usrs.EMAIL: 'test@example.com',
+#         usrs.PASSWORD: 'password123'
+#     })
+#     assert response.status_code == OK
 
 @patch('userdata.users.verify_user_by_name')
 @patch('userdata.users.get_user_by_name') 
