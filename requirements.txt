@@ -14,3 +14,5 @@ langchain-core
 langchain-openai
 pymongo
 werkzeug
+python-dateutil
+python-dotenv

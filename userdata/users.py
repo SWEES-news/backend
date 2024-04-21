@@ -85,7 +85,7 @@ def get_users() -> dict:
 def add_user(firstname: str, lastname: str, username: str, email: str, password: str) -> str:
     if exists(username):
         raise ValueError(f'Duplicate Username: {username=}')
-    if email_exists(email): # not the right function to check for email
+    if email_exists(email):
         raise ValueError(f'Duplicate email: {email=}')
     if not username:
         raise ValueError('username may not be blank')

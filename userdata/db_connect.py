@@ -58,25 +58,24 @@ def insert_one(collection, doc, db=USER_DB):
 def fetch_one(collection, filt, case_sensitive=False, db=USER_DB):
     """
     Find with a filter and return the first doc found.
-    
+
     Parameters:
         collection (str): The name of the collection to search in.
         filt (dict): The filter to apply to the search.
         case_sensitive (bool, optional): Whether the search should be case-sensitive. Default is False.
         db (str, optional): The name of the database to search in. Default is USER_DB.
-        
+
     Returns:
         dict: The first document found matching the filter.
     """
     if not case_sensitive:
         filt = {key: {'$regex': pattern, '$options': 'i'} if isinstance(pattern, str) else pattern for key, pattern in filt.items()}
-    
+
     for doc in client[db][collection].find(filt):
         if MONGO_ID in doc:
             # Convert mongo ID to a string so it works as JSON
             doc[MONGO_ID] = str(doc[MONGO_ID])
         return doc
-
 
 
 def del_one(collection, filt, db=USER_DB):

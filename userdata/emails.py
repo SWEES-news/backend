@@ -3,21 +3,23 @@ import random
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
-load_dotenv()  # This will load environment variables from a .env file
 import os
 import userdata.db_connect as dbc
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import dateutil.parser
+load_dotenv()  # This will load environment variables from a .env file
 
 COLLECTION = "verification_codes"
 TIMESTAMP_FIELD = 'timestamp'
 TIMEZONE = ZoneInfo('America/New_York')
 TIMEOUT = 10 * 60  # 10 minutes
 
+
 def get_time_as_string():
     current_time = datetime.now(TIMEZONE)
     return current_time.strftime("%Y-%m-%d %H:%M:%S %z")
+
 
 def compare_times(time_str1, time_str2):
     datetime1 = dateutil.parser.parse(time_str1)
@@ -26,8 +28,10 @@ def compare_times(time_str1, time_str2):
     print(timedelta.total_seconds())
     return abs(timedelta.total_seconds()) < TIMEOUT
 
+
 def generate_verification_code():
     return f"{random.randint(100000, 999999)}"
+
 
 def send_verification_email(to_address):
     EMAIL = os.getenv('EMAIL_EMAIL')
@@ -98,8 +102,13 @@ def send_verification_email(to_address):
             server.send_message(msg)
             dbc.connect_db()
             time = get_time_as_string()
-            submission_id = dbc.insert_one(COLLECTION, {"email": to_address, "code": verification_code, "is_verified": False, TIMESTAMP_FIELD: time}, )
+            submission_id = dbc.insert_one(COLLECTION,
+                                           {"email": to_address,
+                                            "code": verification_code,
+                                            "is_verified": False,
+                                            TIMESTAMP_FIELD: time})
             print("Verification email sent.")
+            print(submission_id)
             print(f"Verification code: {verification_code}")
             res = dbc.fetch_all(COLLECTION)
             print(res)
