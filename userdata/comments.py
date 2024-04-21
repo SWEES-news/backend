@@ -3,6 +3,7 @@ import userdata.db_connect as dbc
 import userdata.extras as extras
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
+from datetime import datetime
 
 # Constants
 COMMENT_COLLECTION = 'comments'
@@ -10,8 +11,9 @@ ARTICLE_ID_FIELD = 'article_id'
 USER_ID_FIELD = 'user_id'
 TEXT_FIELD = 'text'
 PARENT_ID_FIELD = 'parent_id'
-TIMESTAMP_FIELD = 'timestamp'
 OBJECTID = "_id"
+TIMESTAMP_FIELD = 'timestamp'
+TIMEZONE = 'America/New_York'
 
 
 def post_comment(article_id, user_id, text, parent_id=None):
@@ -26,7 +28,7 @@ def post_comment(article_id, user_id, text, parent_id=None):
         USER_ID_FIELD: user_id,
         TEXT_FIELD: sanitized_text,
         PARENT_ID_FIELD: parent_id,
-        # TIMESTAMP_FIELD: datetime.utcnow()
+        TIMESTAMP_FIELD: datetime.now(TIMEZONE)
     }
     inserted_id = dbc.insert_one(COMMENT_COLLECTION, comment)
     return inserted_id
@@ -50,7 +52,7 @@ def get_reply_comments(parent_id):
     return replies
 
 
-def delete_comment(comment_id, user_id):
+def delete_comment(comment_id, user_id, admin=False):
     """
     Allow a user to delete their own comment. Validates user ownership.
     This function safely handles invalid ID formats and authorization.
@@ -64,7 +66,7 @@ def delete_comment(comment_id, user_id):
     if not comment:
         raise Exception("Comment not found")
 
-    if comment[USER_ID_FIELD] != user_id:
+    if comment[USER_ID_FIELD] != user_id or not admin:
         raise PermissionError("Unauthorized to delete this comment")
 
     result = dbc.del_one(COMMENT_COLLECTION, {OBJECTID: object_id})
