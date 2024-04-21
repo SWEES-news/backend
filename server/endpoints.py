@@ -9,6 +9,8 @@ from http import HTTPStatus
 import werkzeug.exceptions as wz
 import userdata.extras as extras
 import userdata.comments as comments
+import userdata.emails as emails
+import userdata.db_connect as dbc
 
 import os
 import sys
@@ -19,13 +21,14 @@ import userdata.articles as articles
 import string
 import examples.form as ff
 from ai.basic import analyze_content
+from dotenv import load_dotenv
+load_dotenv()
 
 # Modifying sys.path to include parent directory for local imports
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'h-J_l62fxF1uDXqKjHS3EQ')  # secure asf
@@ -56,7 +59,8 @@ COLLECTIONS_EP = f'/{col.name}'
 
 # ------ Endpoint names ------ #
 ACCOUNT_EP = '/account'
-REGISTER_EP = '/register'
+REGISTER_EP = '/register/finish'
+START_REGISTRATION_EP = '/register/start'
 LOGIN_EP = '/login'
 LOGOUT_EP = '/logout'
 UPDATE_USERNAME_EP = '/update/username'
@@ -75,11 +79,7 @@ MAIN_MENU_EP = '/MainMenu'
 CLEAR_EP = '/clear'
 USER_NAME_EP = '/<string:name>'
 ARTICLE_ID_EP = '/<string:article_id>'
-
-"""
-Add endpoint to delete articles
-Only delete article if Link was not provided
-"""
+COMMENT_ID_EP = '/<string:comment_id>'
 
 # ------ Additional strings ------ #
 NUM = 0
@@ -94,42 +94,6 @@ USER = 'User'
 RETURN = 'Return'
 
 punctuation_chars = string.punctuation
-
-
-@api.route(ENDPOINTS_EP)
-class Endpoints(Resource):
-    """
-    This class will serve as live, fetchable documentation of what endpoints
-    are available in the system.
-    """
-    def get(self):
-        """
-        The `get()` method will return a list of available endpoints.
-        """
-        endpoints = sorted(rule.rule for rule in api.app.url_map.iter_rules())
-        return {"Available endpoints": endpoints}
-
-
-@api.route('/', f'{MAIN_MENU_EP}')
-class MainMenu(Resource):
-    """
-    This will deliver our main menu.
-    """
-    def get(self):
-        """
-        Gets the main game menu.
-        """
-        return {'Title': MAIN_MENU_NM,
-                'Default': 2,
-                'Choices': {
-                    '1': {'url': '/', 'method': 'get',
-                          'text': 'List Available Characters'},
-                    '2': {'url': '/',
-                          'method': 'get', 'text': 'List Active Games'},
-                    '3': {'url': f'/{USERS}',
-                          'method': 'get', 'text': 'List Users'},
-                    'X': {'text': 'Exit'},
-                }}
 
 
 user_model = api.model('NewUser', {
@@ -153,7 +117,7 @@ class Users(Resource):
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
 
         if not users.has_admin_privilege(user_id):
-            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
+            return {DATA: 'You are not authorized to view the database.'}, HTTPStatus.UNAUTHORIZED
 
         return {
             TYPE: DATA,
@@ -182,26 +146,102 @@ class UserAccount(Resource):
             return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
 
 
+verify_email_model = api.model('verify_email_model', {
+    users.EMAIL: fields.String,
+})
+
+
+@us.route(START_REGISTRATION_EP)
+class RegisterUser(Resource):
+    @api.expect(verify_email_model)
+    @api.response(HTTPStatus.OK, 'Success')
+    @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
+    def post(self):
+        """
+        Begin adding a user.
+        """
+        try:
+            email = request.json[users.EMAIL]
+            if users.email_exists(email):
+                return {DATA: 'Email already exists.'}, HTTPStatus.NOT_ACCEPTABLE
+            
+            emails.send_verification_email(email)
+            session['email'] = email
+            return {DATA: 'Verification email sent.'}, HTTPStatus.OK
+        except ValueError as e:
+            raise wz.NotAcceptable(f'{str(e)}')
+
+
+@us.route('/verify-email')
+class VerifyEmail(Resource):
+    @api.expect(api.model('EmailVerification', {
+        'verification_code': fields.String(required=True)
+    }))
+    @api.response(HTTPStatus.OK, 'User successfully registered')
+    @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Invalid or expired verification code')
+    @api.response(HTTPStatus.BAD_REQUEST, 'No email address found in session')
+    def post(self):
+        """
+        Verify the submitted verification code and complete the user registration.
+        """
+        email = session.get('email', None)
+        if email is None:
+            return {DATA: 'No email address found in session'}, HTTPStatus.BAD_REQUEST
+        
+        submitted_code = request.json['verification_code']
+        if not submitted_code or len(submitted_code) != 6:
+            return {DATA: 'Invalid verification code'}, HTTPStatus.NOT_ACCEPTABLE
+
+        try:
+            if emails.verify_email(email, submitted_code):
+                return {
+                    DATA: 'Email successfully verified.'
+                    }, HTTPStatus.OK
+            else:
+                return {DATA: 'Invalid or expired verification code'}, HTTPStatus.NOT_ACCEPTABLE
+        except Exception as e:
+            raise wz.NotAcceptable(f'Ooh {str(e)}')
+
+
+user_register_model = api.model('user_register_model', {
+    users.NAME: fields.String(required=True, min_length=3, max_length=25, description='User Name'),
+    users.PASSWORD: fields.String(required=True, min_length=4, description='Password'),
+    'confirm_password': fields.String(required=True, min_length=4, description='Confirm Password'),
+    users.FIRSTNAME: fields.String(required=True, min_length=2, max_length=25, description='First Name'),
+    users.LASTNAME: fields.String(required=True, min_length=2, max_length=25, description='Last Name'),
+})
+
+
 @us.route(REGISTER_EP)
 class RegisterUser(Resource):
-    @api.expect(user_model)
+    @api.expect(user_register_model)
     @api.response(HTTPStatus.OK, 'Success')
     @api.response(HTTPStatus.NOT_ACCEPTABLE, 'Not Acceptable')
     def post(self):
         """
         Add a user.
         """
-        name = request.json[users.NAME]
-        email = request.json[users.EMAIL]
-        password = request.json[users.PASSWORD]
-
+        email = session.get('email', None)
+        if email is None:
+            return {DATA: 'No email address found in session'}, HTTPStatus.BAD_REQUEST
+        response = request.json
+        firstname = response.get(users.FIRSTNAME, None)
+        lastname = response.get(users.LASTNAME, None)
+        username = response.get(users.NAME, None)
+        password = response.get(users.PASSWORD, None)
+        confirm_password = response.get('confirm_password', None)
+        print(response.items())
+        print(f"expecting items: {users.FIRSTNAME}, {users.LASTNAME}, {users.NAME}, {users.PASSWORD}, confirm_password")
         try:
-            new_id = users.add_user(name, email, password)
-            if new_id is None:
-                raise wz.ServiceUnavailable('We have a technical problem.')
+            is_verified = emails.check_email_verification(email)
+            if not is_verified:
+                return {DATA: 'Email not verified'}, HTTPStatus.NOT_ACCEPTABLE
+            user_id = users.add_user(firstname, lastname, username, email, password)
+            if user_id is None:
+                return {DATA: 'Failed to add user. A issue with our database occurred.'}, HTTPStatus.NOT_ACCEPTABLE
 
-            return {users.OBJECTID: new_id}
-
+            return {users.OBJECTID: user_id}, HTTPStatus.OK
+            
         except ValueError as e:
             raise wz.NotAcceptable(f'{str(e)}')
 
@@ -661,6 +701,9 @@ class ChangeEmail(Resource):
                 USER: users.get_user_if_logged_in(session),
             }, HTTPStatus.BAD_REQUEST
         try:
+            if users.email_exists(new_email):
+                return {DATA: 'Email already exists.'}, HTTPStatus.NOT_ACCEPTABLE
+            
             user_object_id = extras.str_to_objectid(user_id)
             users.update_user_profile(user_object_id, password, {users.EMAIL: new_email})
             return {
@@ -730,6 +773,9 @@ class Collection(Resource):
 
         try:
             users.clear_data(name)
+            if name == 'users':
+                session.pop('user_id')
+                session.pop('email')
             return {
                 DATA: 'Database Cleared',
                 USER: users.get_user_if_logged_in(session),
@@ -768,6 +814,8 @@ class UsersCollectionWipe(Resource):
 
         try:
             data = users.clear_data('users')
+            session.pop('user_id')
+            session.pop('email')
             return {
                 DATA: 'Users Database Cleared: ' + data,
                 USER: users.get_user_if_logged_in(session),
@@ -805,6 +853,36 @@ class ArticlesCollectionWipe(Resource):
                 }, HTTPStatus.BAD_REQUEST
 
 
+@col.route("")
+class CollectionView(Resource):
+    def get(self):
+        """
+        Get all data from the specified collection.
+        """
+        user_id = session.get('user_id', None)
+        if not user_id:
+            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+
+        if not users.has_admin_privilege(user_id):
+            return {DATA: 'You are not authorized to view the database.'}, HTTPStatus.UNAUTHORIZED
+
+        try:
+            collections = users.get_all_collection()
+            ret = {}
+            for collection in collections:
+                data = dbc.fetch_all(collection)
+                ret[collection] = data
+            return {
+                DATA: ret,
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.OK
+        except Exception as e:
+            return {
+                DATA: str(e),
+                USER: users.get_user_if_logged_in(session),
+                }, HTTPStatus.BAD_REQUEST
+
+
 @us.route(SURVEY_EP)
 class UserSurvey(Resource):
     @api.response(HTTPStatus.OK, 'Success')
@@ -821,7 +899,7 @@ comment_model = api.model('Comment', {
 })
 
 
-@com.route("/articles/<string:article_id>/comments")
+@com.route("/articles/<string:article_id>")
 class ArticleComments(Resource):
     @api.expect(comment_model)
     @api.response(HTTPStatus.OK, 'Comment posted successfully')
@@ -848,7 +926,7 @@ class ArticleComments(Resource):
             return {DATA: str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@api.route("/comments/<string:comment_id>")
+@com.route(COMMENT_ID_EP)
 class Comment(Resource):
     @api.response(HTTPStatus.OK, 'Comment deleted successfully')
     @api.response(HTTPStatus.UNAUTHORIZED, 'Unauthorized access')
@@ -859,7 +937,8 @@ class Comment(Resource):
             return {DATA: 'Unauthorized access'}, HTTPStatus.UNAUTHORIZED
         user_id = session['user_id']
         try:
-            comments.delete_comment(comment_id, user_id)
+            isAdmin = users.has_admin_privilege(user_id)
+            comments.delete_comment(comment_id, user_id, isAdmin)
             return {DATA: 'Comment deleted successfully'}, HTTPStatus.OK
         except PermissionError as pe:
             return {DATA: str(pe)}, HTTPStatus.FORBIDDEN
