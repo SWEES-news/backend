@@ -146,7 +146,7 @@ def main():
     contents = [read_content(file) for file in content_files]
     print(contents)
     responses = [read_content(file) for file in response_files]
-    print(contents)
+    print(responses)
 
     query = "Any phrase that I want to check against the vectorDB"
     # docs = [{'content': doc} for doc in responses if doc.strip()]
