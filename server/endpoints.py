@@ -305,9 +305,9 @@ class UserLogout(Resource):
             else:
                 msg = 'No user currently logged in'
                 print(msg)
-                return {DATA: msg}, HTTPStatus.BAD_REUNAUTHORIZEDQUEST
+                return {DATA: msg}, HTTPStatus.BAD_REQUEST
         except Exception as e:
-            return {DATA: str(e)}, HTTPStatus.BAD_REQUEST
+            return {DATA: "exception occured: " + str(e)}, HTTPStatus.BAD_REQUEST
 
 
 @us.route(STATUS_EP)
