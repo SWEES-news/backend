@@ -9,6 +9,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
+OPENAI_API_KEY = ''
 
 PROMPT_TEMPLATE = (
     'Hello! You are a bias-finding analyst who has been tasked with '
@@ -60,7 +61,7 @@ def create_vector_store(texts: list[str]) -> Chroma:
         if not splits:
             logging.error("No valid splits were created from the provided texts.")
             return None
-        vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+        vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings(OPENAI_API_KEY))
         return vectorstore
     except Exception as e:
         logging.error(f"Failed to create vector store: {e}")
@@ -85,7 +86,7 @@ def analyze_content(texts: list[str]) -> tuple[list[str], Chroma]:
 
     # Prepare the prompt template and model for analysis
     prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
-    model = ChatOpenAI(model=MODEL)
+    model = ChatOpenAI(model=MODEL, openai_api_key=OPENAI_API_KEY)
     chain = prompt | model | StrOutputParser()
 
     # Prepare documents for the analysis
