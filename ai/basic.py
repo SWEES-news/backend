@@ -3,7 +3,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
-from langchain_community.vectorstores import Chroma
+from langchain.vectorstores.chroma import Chroma  # from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -61,6 +61,7 @@ def create_vector_store(texts: list[str]) -> Chroma:
             logging.error("No valid splits were created from the provided texts.")
             return None
         vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+        print(vectorstore)
         return vectorstore
     except Exception as e:
         logging.error(f"Failed to create vector store: {e}")
@@ -95,7 +96,7 @@ def analyze_content(texts: list[str]) -> tuple[list[str], Chroma]:
     responses = chain.batch(docs)
 
     # Create a vector store from the texts
-    vectorstore = create_vector_store(texts)
+    vectorstore = ""  # create_vector_store(docs) #texts
 
     return responses, vectorstore
 
@@ -127,15 +128,47 @@ def main():
     content_files = ['ai/test_article.txt', 'ai/test_article_2.txt']
     response_files = ['ai/test_response.md', 'ai/test_response_2.md']
 
+    # contents = [read_content(file) for file in content_files]
+    # responses, vectorDB = analyze_content(contents)
+
+    # query = "Any phrase that I want to check against the vectorDB"
+    # docs = vectorDB.similarity_search(query)
+    # print(docs[0].page_content)
+
+    # for response, file in zip(responses, response_files):
+    #     write_response(file, response)
+
     contents = [read_content(file) for file in content_files]
-    responses, vectorDB = analyze_content(contents)
+    print(contents)
+    responses = [read_content(file) for file in response_files]
 
     query = "Any phrase that I want to check against the vectorDB"
+    # docs = [{'content': doc} for doc in responses if doc.strip()]
+    vectorDB = create_vector_store(contents)
+
     docs = vectorDB.similarity_search(query)
     print(docs[0].page_content)
 
-    for response, file in zip(responses, response_files):
-        write_response(file, response)
+    # # Generate embeddings and store in MongoDB
+    # for file_path in content_files:
+    #     with open(file_path, 'r') as file:
+    #         content = file.read()
+
+    #     # Generate embeddings using OpenAI's API
+    #     response = openai.Embed.create(
+    #         model="text-davinci-003",  # Adjust the model according to your needs
+    #         documents=[content]
+    #     )
+
+    #     # Extract embeddings from the response
+    #     embeddings = response['data']['embeddings']
+
+    #     # Store embeddings in MongoDB Atlas
+    #     document = {
+    #         'content': content,  # Optional: Store the content text for reference
+    #         'embedding': embeddings[0]  # Assuming only one document per file
+    #     }
+    #     collection.insert_one(document)
 
 
 if __name__ == "__main__":
