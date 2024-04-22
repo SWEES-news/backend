@@ -8,8 +8,12 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
+# OPEN_API_KEY is used to authenticate requests to the OpenAI API for accessing
+# advanced AI models like GPT-4. 
+# This key is kept confidential. Please add your own while testing.
+# Access reqires purchasing tokens from OPENAI API website.
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
-OPENAI_API_KEY = ''
+OPENAI_API_KEY = 'Insert_the_OpenAI_API_access_key_here'
 
 PROMPT_TEMPLATE = (
     'Hello! You are a bias-finding analyst who has been tasked with '
