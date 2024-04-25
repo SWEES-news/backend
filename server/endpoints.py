@@ -146,8 +146,14 @@ class UserAccount(Resource):
             return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
 
 
+class LowercaseString(fields.Raw):
+    '''used for emails'''
+    def format(self, value):
+        return value.lower()
+
+
 verify_email_model = api.model('verify_email_model', {
-    users.EMAIL: fields.String,
+    users.EMAIL: LowercaseString,
 })
 
 
@@ -161,7 +167,8 @@ class RegisterUserBegin(Resource):
         Begin adding a user.
         """
         try:
-            email = request.json[users.EMAIL]
+            # important! lowercase before putting into DB
+            email: str = request.json[users.EMAIL]
             if users.email_exists(email):
                 return {DATA: 'Email already exists.'}, HTTPStatus.NOT_ACCEPTABLE
 
@@ -201,7 +208,7 @@ class VerifyEmail(Resource):
             else:
                 return {DATA: 'Invalid or expired verification code'}, HTTPStatus.NOT_ACCEPTABLE
         except Exception as e:
-            raise wz.NotAcceptable(f'Ooh {str(e)}')
+            raise wz.NotAcceptable(f'Ooh {e}')
 
 
 user_register_model = api.model('user_register_model', {
@@ -675,7 +682,7 @@ class ChangePassword(Resource):
 change_email_model = api.model('ChangeEmail', {
     'username': fields.String(required=True, description='The username'),
     'password': fields.String(required=True, description='current password'),
-    'new_email': fields.String(required=True, description='new email')
+    'new_email': LowercaseString(required=True, description='new email')
 })
 
 

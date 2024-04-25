@@ -134,7 +134,7 @@ def send_verification_email(to_address):
 
 def verify_email(email, code):
     dbc.connect_db()
-    verification = dbc.fetch_one(COLLECTION, {"email": email})
+    verification = dbc.fetch_one(COLLECTION, {"email": email}, case_sensitive=True)
     print(verification)
     if verification and 'code' in verification:
         if verification['code'] == code:
@@ -155,7 +155,7 @@ def verify_email(email, code):
 
 def check_email_verification(email):
     dbc.connect_db()
-    verification = dbc.fetch_one(COLLECTION, {"email": email})
+    verification = dbc.fetch_one(COLLECTION, {"email": email}, case_sensitive=True)
     if verification and 'is_verified' in verification:
         return verification['is_verified']
     return False
