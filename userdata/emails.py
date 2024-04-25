@@ -120,7 +120,7 @@ def send_verification_email(to_address):
                 print(f"Inserted new document with submission ID: {submission_id}")
             else:
                 print("Updated existing document.")
-            
+
             print(f"Verification code: {verification_code}")
             res = dbc.fetch_all(COLLECTION)
             pretty_json = json.dumps(res, indent=4)
