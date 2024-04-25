@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+
 import logging
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
@@ -7,13 +10,14 @@ from langchain.vectorstores.chroma import Chroma  # from langchain_community.vec
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+load_dotenv()
 
 # OPEN_API_KEY is used to authenticate requests to the OpenAI API for accessing
 # advanced AI models like GPT-4.
 # This key is kept confidential. Please add your own while testing.
 # Access reqires purchasing tokens from OPENAI API website.
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
-OPENAI_API_KEY = 'Insert_the_OpenAI_API_access_key_here'
+OPENAI_API_KEY = 'OPENAI_API_KEY'
 
 PROMPT_TEMPLATE = (
     'Hello! You are a bias-finding analyst who has been tasked with '
@@ -65,7 +69,7 @@ def create_vector_store(texts: list[str]) -> Chroma:
         if not splits:
             logging.error("No valid splits were created from the provided texts.")
             return None
-        vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings(OPENAI_API_KEY))
+        vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings(os.environ.get(OPENAI_API_KEY)))
         print(vectorstore)
         return vectorstore
     except Exception as e:
@@ -91,7 +95,7 @@ def analyze_content(texts: list[str]) -> tuple[list[str], Chroma]:
 
     # Prepare the prompt template and model for analysis
     prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
-    model = ChatOpenAI(model=MODEL, openai_api_key=OPENAI_API_KEY)
+    model = ChatOpenAI(model=MODEL, openai_api_key=os.environ.get(OPENAI_API_KEY))
     chain = prompt | model | StrOutputParser()
 
     # Prepare documents for the analysis
