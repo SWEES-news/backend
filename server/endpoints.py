@@ -835,7 +835,7 @@ class UsersCollectionWipe(Resource):
         try:
             data = users.clear_data('users')
             user_id = session.pop('user_id', None)
-            email = session.pop('email', None)
+            session.pop('email', None)
             return {
                 DATA: 'Users Database Cleared: ' + data,
                 USER: users.get_user_if_logged_in(session),
