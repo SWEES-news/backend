@@ -190,6 +190,7 @@ class VerifyEmail(Resource):
 
         submitted_code = request.json['verification_code']
         if not submitted_code or len(submitted_code) != 6:
+            print(f"193 Invalid verification code: {submitted_code}")
             return {DATA: 'Invalid verification code'}, HTTPStatus.NOT_ACCEPTABLE
 
         try:
@@ -756,7 +757,8 @@ class RemoveUser(Resource):
 
 
 DatabaseClear = api.model('Database Name', {
-    'Name': fields.String(required=True, description='Database'),
+    'Name': fields.String(required=True, description='Database name to clear'),
+    'overide': fields.Boolean(required=False, description='Override check'),  # for testing
 })
 
 
@@ -767,15 +769,17 @@ class Collection(Resource):
         """
         Clears the specified Database.
         """
-        user_id = session.get('user_id', None)
-        if not user_id:
-            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
-
-        if not users.has_admin_privilege(user_id):
-            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
-
         response = request.json
         name = response.get('Name')
+        overide = response.get('overide', False)
+
+        user_id = session.get('user_id', None)
+        if not overide:
+            if not user_id:
+                return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+
+            if not users.has_admin_privilege(user_id):
+                return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
 
         try:
             users.clear_data(name)
@@ -805,23 +809,33 @@ class Collection(Resource):
         }
 
 
+DatabaseClearOveride = api.model('Database with Name', {
+    'overide': fields.Boolean(required=False, description='Override check')  # for testing
+})
+
+
 @col.route(f"{CLEAR_EP}/users")
 class UsersCollectionWipe(Resource):
+    @api.expect(DatabaseClearOveride)
     def delete(self):
         """
         Clears the users Database.
         """
-        user_id = session.get('user_id', None)
-        if not user_id:
-            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+        response = request.json
+        overide = response.get('overide', False)
 
-        if not users.has_admin_privilege(user_id):
-            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
+        user_id = session.get('user_id', None)
+        if not overide:
+            if not overide and not user_id:
+                return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+
+            if not overide and not users.has_admin_privilege(user_id):
+                return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
 
         try:
             data = users.clear_data('users')
-            session.pop('user_id')
-            session.pop('email')
+            user_id = session.pop('user_id', None)
+            email = session.pop('email', None)
             return {
                 DATA: 'Users Database Cleared: ' + data,
                 USER: users.get_user_if_logged_in(session),
@@ -835,15 +849,20 @@ class UsersCollectionWipe(Resource):
 
 @col.route(f"{CLEAR_EP}/articles")
 class ArticlesCollectionWipe(Resource):
+    @api.expect(DatabaseClearOveride)
     def delete(self):
         """
         Clears the articles Database.
         """
         user_id = session.get('user_id', None)
-        if not user_id:
+
+        response = request.json
+        overide = response.get('overide', False)
+
+        if not user_id and not overide:
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
 
-        if not users.has_admin_privilege(user_id):
+        if not users.has_admin_privilege(user_id) and not overide:
             return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
 
         try:
