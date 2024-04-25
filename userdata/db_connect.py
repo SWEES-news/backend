@@ -163,3 +163,30 @@ def hash_str(password: str) -> str:
 # returns collection names
 def fetch_collection_name(db=USER_DB):
     return client[db].list_collection_names()
+
+
+def update_or_insert_one(collection, filt, update_dict, db=USER_DB):
+    """
+    Update an existing document or insert a new one if it doesn't exist.
+
+    Parameters:
+        collection (str): The name of the collection to perform the operation in.
+        filt (dict): The filter to match the document to update.
+        update_dict (dict): The dictionary with fields to update or insert.
+        db (str, optional): The name of the database to perform the operation in. Default is USER_DB.
+
+    Returns:
+        pymongo.results.UpdateResult: The result of the update operation.
+    """
+    try:
+        # The $set operator replaces the value of a field with the specified value.
+        # The upsert=True option creates a new document if no document matches the filter.
+        result = client[db][collection].update_one(filt, {'$set': update_dict}, upsert=True)
+        if result.upserted_id:
+            print("Inserted a new document with ID:", result.upserted_id)
+        else:
+            print("Updated existing document(s). Matched:", result.matched_count)
+        return result
+    except pm.PyMongoError as e:
+        pm.logging.error(f"Error in update_or_insert operation for {db}.{collection}: {e}")
+        return None
