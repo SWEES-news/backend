@@ -23,7 +23,7 @@ EMAIL = 'Email'
 PASSWORD = 'Password'
 FIRSTNAME = 'FirstName'
 LASTNAME = 'LastName'
-
+CONFIRM_PASSWORD = 'confirm_password'
 
 # ------ DB rules ------ #
 ID_LEN = 24
@@ -63,7 +63,7 @@ def _get_random_email():
 # gets a user with a random gmail address
 def get_rand_test_user():
     rand_part = _get_random_name()
-    return {NAME: rand_part, EMAIL: MOCK_EMAIL, PASSWORD: MOCK_PASSWORD}
+    return {NAME: rand_part, PASSWORD: MOCK_PASSWORD, FIRSTNAME: 'John', LASTNAME: 'Doe', CONFIRM_PASSWORD: MOCK_PASSWORD}
 
 
 def update_test_user():

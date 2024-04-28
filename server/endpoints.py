@@ -232,7 +232,7 @@ class RegisterUser(Resource):
         """
         email = session.get('email', None)
         if email is None:
-            return {DATA: 'No email address found in session'}, HTTPStatus.BAD_REQUEST
+            return {DATA: 'No email address found in session'}, HTTPStatus.NOT_ACCEPTABLE
         response = request.json
         firstname = response.get(users.FIRSTNAME, None)
         lastname = response.get(users.LASTNAME, None)
