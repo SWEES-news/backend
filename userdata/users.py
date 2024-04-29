@@ -10,6 +10,11 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 
 
+ADMIN_EMAILS = [
+    'ethanb@nyu.edu',
+    'ethandb2024@gmail.com'
+]
+
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
 ARTICLE_COLLECTION = 'articles'
@@ -284,9 +289,5 @@ def has_admin_privilege(user_id):
     """
     user = get_user_by_id(user_id)
     if user:
-        admin_emails = [
-            'ethanb@nyu.edu',
-            'ethandb2024@gmail.com'
-        ]
-        return user[EMAIL] in admin_emails
+        return user[EMAIL] in ADMIN_EMAILS
     return False
