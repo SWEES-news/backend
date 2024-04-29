@@ -76,6 +76,13 @@ class TestSession(unittest.TestCase):
         resp = TEST_CLIENT.post(route, json=temp)
         assert resp.status_code == NOT_ACCEPTABLE
 
+    @patch('userdata.emails.check_email_verification', return_value=True, autospec=True)
+    @patch('userdata.users.add_user', return_value=None, autospec=True)
+    def test_add_user_add_fail(self, mock_verify, mock_get):
+        temp = usrs.get_rand_test_user()
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        assert resp.status_code == NOT_ACCEPTABLE
 
 
 
