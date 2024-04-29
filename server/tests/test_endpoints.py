@@ -39,7 +39,7 @@ TEST_CLIENT = ep.app.test_client()
 class TestSession(unittest.TestCase):
     @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
     @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
-    def test_mocked_session(self, mock_verify, mock_get):
+    def test_add_user_success(self, mock_verify, mock_get):
         with TEST_CLIENT.session_transaction() as session:
             session['email'] =  usrs._get_random_email()
         temp = usrs.get_rand_test_user()
@@ -47,13 +47,36 @@ class TestSession(unittest.TestCase):
         resp = TEST_CLIENT.post(route, json=temp)
         print(temp)
         assert resp.status_code == OK
-
-
-# def test_users_add(mock_add, mock_verify, mock_get):
-#     """
-#     Testing we do the right thing with a good return from add_user.
-#     """
     
+    @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
+    @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
+    def test_add_user_wrong_password(self, mock_verify, mock_get):
+        with TEST_CLIENT.session_transaction() as session:
+            session['email'] =  usrs._get_random_email()
+        temp = usrs.get_rand_test_user()
+        temp[usrs.CONFIRM_PASSWORD] = 'not the password'
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        assert resp.status_code == NOT_ACCEPTABLE
+
+    @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
+    @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
+    def test_add_user_no_email(self, mock_verify, mock_get):
+        temp = usrs.get_rand_test_user()
+        temp[usrs.CONFIRM_PASSWORD] = 'not the password'
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        assert resp.status_code == NOT_ACCEPTABLE
+
+    @patch('userdata.emails.check_email_verification', return_value=False, autospec=True)
+    @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
+    def test_add_user_email_verification_fail(self, mock_verify, mock_get):
+        temp = usrs.get_rand_test_user()
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        assert resp.status_code == NOT_ACCEPTABLE
+
+
 
 
 # @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
