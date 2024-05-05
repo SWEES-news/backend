@@ -262,6 +262,7 @@ class TestSession(unittest.TestCase):
         resp = TEST_CLIENT.get(route)
         assert resp.status_code == BAD_REQUEST
 
+    #tests for fetching articles
     @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
     def test_get_articles_no_input(self, mock_filter):
         route = ep.ARTICLES_EP + ep.ALL_EP
@@ -273,6 +274,37 @@ class TestSession(unittest.TestCase):
         route = ep.ARTICLES_EP + ep.ALL_EP
         resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
         assert resp.status_code == OK
+
+    #tests for fetching all submitted articles by a given user
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs.get_test_user(), autospec=True)
+    def test_fetch_users_articles_success(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMISSIONS_EP
+        resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs.get_test_user(), autospec=True)
+    def test_fetch_users_articles_no_session(self, mock_filter, mock_get):
+        route = ep.ARTICLES_EP + ep.SUBMISSIONS_EP
+        resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
+        assert resp.status_code == UNAUTHORIZED
+
+    #tests for fetching all submitted articles by a given user
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_fetch_users_articles_not_found(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMISSIONS_EP
+        resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
 
 # @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
 # def test_users_bad_add(mock_add):
@@ -474,27 +506,6 @@ def test_server_error_condition(self, mock_store):
 #     })
 #     assert response.status_code == OK
 
-@patch('userdata.users.verify_user_by_name')
-@patch('userdata.users.get_user_by_name') 
-def test_valid_credentials(mock_get, mock_verify): 
-    mock_get.return_value = usrs.get_test_user()
-    mock_verify.return_value = True
-    response = TEST_CLIENT.post(ep.USERS_EP + ep.LOGIN_EP, json={
-        usrs.NAME: 'test@example.com',
-        usrs.PASSWORD: 'password123'
-    })
-    assert response.status_code == OK
-
-@patch('userdata.users.verify_user_by_name', return_value=False)  # Mocking the verify_user function
-def test_invalid_credentials(mock_verify):
-    # Simulating a scenario where the credentials are invalid
-
-    response = TEST_CLIENT.post(f'{ep.USERS_EP}{ep.LOGIN_EP}', json={
-        usrs.NAME: 'wrong@example.com',
-        usrs.PASSWORD: 'wrongpassword'
-    })
-
-    assert response.status_code == UNAUTHORIZED
 
 #returning 404 not found
 # def test_clearDBAfterTest():

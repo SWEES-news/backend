@@ -397,6 +397,9 @@ class SubmittedArticles(Resource):
                 user_id = session['user_id']
                 article_query_parser.parse_args()
                 title_keyword = request.args.get('title_keyword', None)
+                user = users.get_user_if_logged_in(session)
+                if user is None:
+                    return {DATA: 'Could not find user'}, HTTPStatus.BAD_REQUEST
                 return {
                     TYPE: DATA,
                     TITLE: 'Stored Articles',
@@ -406,7 +409,7 @@ class SubmittedArticles(Resource):
                         remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
                         title_keyword=title_keyword
                     ),
-                    USER: users.get_user_if_logged_in(session),
+                    USER: user
                 }
             else:
                 return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED

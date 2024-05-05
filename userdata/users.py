@@ -280,8 +280,8 @@ def get_user_if_logged_in(session):
         user = get_user_by_id(session['user_id'])
         if user:
             return user[NAME]
-        return 'None'
-    return 'None'
+        return None
+    return None
 
 
 def has_admin_privilege(user_id):
