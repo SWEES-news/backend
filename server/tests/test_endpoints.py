@@ -139,7 +139,42 @@ class TestSession(unittest.TestCase):
         resp = TEST_CLIENT.post(route, json=temp)
         assert resp.status_code == NOT_ACCEPTABLE
 
+    # for email verification 
+    @patch('userdata.emails.verify_email', return_value=True, autospec=True)
+    def test_verify_email_success(self, mock_verify):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
+        route = ep.USERS_EP + '/verify-email'
+        resp = TEST_CLIENT.post(route, json={'verification_code' : '123456'})
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
 
+    @patch('userdata.emails.verify_email', return_value=False, autospec=True)
+    def test_verify_email_failure(self, mock_verify):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
+        route = ep.USERS_EP + '/verify-email'
+        resp = TEST_CLIENT.post(route, json={'verification_code' : '123456'})
+        assert resp.status_code == NOT_ACCEPTABLE
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
+
+    @patch('userdata.emails.verify_email', return_value=False, autospec=True)
+    def test_verify_email_code_len_wrong(self, mock_verify):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
+        route = ep.USERS_EP + '/verify-email'
+        resp = TEST_CLIENT.post(route, json={'verification_code' : '123456789'})
+        assert resp.status_code == NOT_ACCEPTABLE
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
+
+    @patch('userdata.emails.verify_email', return_value=False, autospec=True)
+    def test_verify_email_code_no_email(self, mock_verify):
+        route = ep.USERS_EP + '/verify-email'
+        resp = TEST_CLIENT.post(route, json={'verification_code' : '123456789'})
+        assert resp.status_code == BAD_REQUEST
 
 # @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
 # def test_users_bad_add(mock_add):
