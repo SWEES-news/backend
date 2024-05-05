@@ -288,22 +288,27 @@ class UserLogin(Resource):
         print(args.items())
         username = args[users.NAME]
         password = args[users.PASSWORD]
+        print("Fields: ", username, password)
         try:
             if users.verify_user_by_name(username, password):
-                user_id = users.get_user_by_name(username)[users.OBJECTID]
+                user = users.get_user_by_name(username)
+                if user is None:
+                    return {DATA: 'Could not find user'}, HTTPStatus.NOT_FOUND
+                user_id = user[users.OBJECTID]
                 session['user_id'] = user_id
                 data = users.get_user_if_logged_in(session)
                 if data is None:
-                    raise wz.NotFound('Problem with login')
+                    print("data was none")
+                    return {DATA: 'Problem with login'}, HTTPStatus.NOT_FOUND
                 return {
                     DATA: 'Login successful',
                     USER: data,
                     }, HTTPStatus.OK
             else:
-                raise wz.Unauthorized('Falled to login')
+                return {DATA: 'Failed to Login'}, HTTPStatus.UNAUTHORIZED
         except (ValueError, KeyError) as e:
-            print(str(e))
-            raise wz.BadRequest(f'{str(e)} Something Went Really Wrong')
+            print("Serious Error Here: " + str(e))
+            return {DATA: f'{str(e)} Something Went Really Wrong'}, HTTPStatus.NOT_FOUND
 
 
 @us.route(LOGOUT_EP)

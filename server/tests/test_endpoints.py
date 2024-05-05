@@ -176,6 +176,51 @@ class TestSession(unittest.TestCase):
         resp = TEST_CLIENT.post(route, json={'verification_code' : '123456789'})
         assert resp.status_code == BAD_REQUEST
 
+    #user login tests
+    @patch('userdata.users.verify_user_by_name', return_value=True, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    @patch('userdata.users.get_user_by_name', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_login_success(self, mock_verify, mock_login, mock_name):
+        route = ep.USERS_EP + ep.LOGIN_EP
+        json={usrs.NAME: usrs._get_random_name(), usrs.PASSWORD: usrs._gen_id()}
+        print("json: ", json)
+        resp = TEST_CLIENT.post(route, json=json)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.users.verify_user_by_name', return_value=False, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    @patch('userdata.users.get_user_by_name', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_login_verify_failed(self, mock_verify, mock_login, mock_name):
+        route = ep.USERS_EP + ep.LOGIN_EP
+        json={usrs.NAME: usrs._get_random_name(), usrs.PASSWORD: usrs._gen_id()}
+        print("json: ", json)
+        resp = TEST_CLIENT.post(route, json=json)
+        assert resp.status_code == UNAUTHORIZED
+
+    @patch('userdata.users.verify_user_by_name', return_value=True, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    @patch('userdata.users.get_user_by_name', return_value=None, autospec=True)
+    def test_user_login_user_not_found(self, mock_verify, mock_login, mock_name):
+        route = ep.USERS_EP + ep.LOGIN_EP
+        json={usrs.NAME: usrs._get_random_name(), usrs.PASSWORD: usrs._gen_id()}
+        print("json: ", json)
+        resp = TEST_CLIENT.post(route, json=json)
+        assert resp.status_code == NOT_FOUND
+
+    @patch('userdata.users.verify_user_by_name', return_value=True, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    @patch('userdata.users.get_user_by_name', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_login_session_data_not_found(self, mock_verify, mock_login, mock_name):
+        route = ep.USERS_EP + ep.LOGIN_EP
+        json={usrs.NAME: usrs._get_random_name(), usrs.PASSWORD: usrs._gen_id()}
+        print("json: ", json)
+        resp = TEST_CLIENT.post(route, json=json)
+        assert resp.status_code == NOT_FOUND
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+            
 # @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
 # def test_users_bad_add(mock_add):
 #     """
