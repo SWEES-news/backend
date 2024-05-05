@@ -36,28 +36,83 @@ import unittest
 
 TEST_CLIENT = ep.app.test_client()
 
+# for tests that require values from session
 class TestSession(unittest.TestCase):
+    @patch('userdata.users.has_admin_privilege', return_value=True, autospec=True)
+    def test_get_user_sucess(self, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] =  usrs._gen_id()
+        route = ep.USERS_EP + ''
+        resp = TEST_CLIENT.get(route)
+        print(resp)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+    
+    @patch('userdata.users.has_admin_privilege', return_value=False, autospec=True)
+    def test_get_user_not_admin(self, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] =  usrs._gen_id()
+        route = ep.USERS_EP + ''
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == UNAUTHORIZED
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.users.has_admin_privilege', return_value=True, autospec=True)
+    def test_get_user_no_session(self, mock_get):
+        route = ep.USERS_EP + ''
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == UNAUTHORIZED
+
+    # tests for getting user account information
+    @patch('userdata.users.get_user_by_id', return_value=usrs.get_test_user(), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    def test_get_user_account_success(self, mock_get, mock_login):
+        user = usrs._gen_id()
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] =  user
+        route = ep.USERS_EP + ep.ACCOUNT_EP
+        resp = TEST_CLIENT.get(route)
+        print(resp)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+    
+    @patch('userdata.users.get_user_by_id', return_value=usrs.get_test_user(), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    def test_get_user_account_not_login(self, mock_get, mock_login):
+        with TEST_CLIENT.session_transaction() as test_session:
+            route = ep.USERS_EP + ep.ACCOUNT_EP
+            resp = TEST_CLIENT.get(route)
+            assert resp.status_code == UNAUTHORIZED
+
+    # tests for adding user
     @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
     @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
     def test_add_user_success(self, mock_verify, mock_get):
-        with TEST_CLIENT.session_transaction() as session:
-            session['email'] =  usrs._get_random_email()
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
         temp = usrs.get_rand_test_user()
         route = ep.USERS_EP + ep.REGISTER_EP
         resp = TEST_CLIENT.post(route, json=temp)
-        print(temp)
+        print('this is our test email: ', test_session.get('email', None))
         assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
     
     @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
     @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
     def test_add_user_wrong_password(self, mock_verify, mock_get):
-        with TEST_CLIENT.session_transaction() as session:
-            session['email'] =  usrs._get_random_email()
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
         temp = usrs.get_rand_test_user()
         temp[usrs.CONFIRM_PASSWORD] = 'not the password'
         route = ep.USERS_EP + ep.REGISTER_EP
         resp = TEST_CLIENT.post(route, json=temp)
         assert resp.status_code == NOT_ACCEPTABLE
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
 
     @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
     @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)

@@ -113,8 +113,8 @@ class Users(Resource):
         Get a list of all users. DEBUG REMOVE FROM PROD.
         """
         user_id = session.get('user_id', None)
-        print(session)
-        if not user_id:
+        print("This is the current session: ", session)
+        if user_id is None:
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
 
         if not users.has_admin_privilege(user_id):
@@ -231,7 +231,9 @@ class RegisterUser(Resource):
         Add a user.
         """
         email = session.get('email', None)
+        print('this is our endpoint email: ', email)
         if email is None:
+            print("No Email: ", email)
             return {DATA: 'No email address found in session'}, HTTPStatus.NOT_ACCEPTABLE
         response = request.json
         firstname = response.get(users.FIRSTNAME, None)
@@ -240,24 +242,29 @@ class RegisterUser(Resource):
         password = response.get(users.PASSWORD, None)
         confirm_password = response.get('confirm_password', None)
 
-        if not firstname or not lastname or not username or not password or not confirm_password:
+        if firstname is None or lastname is None or username is None or password is None or confirm_password is None:
+            print("Missing Info")
             return {DATA: 'Missing required fields'}, HTTPStatus.NOT_ACCEPTABLE
 
         if password != confirm_password:
+            print("Passwords don't match")
             return {DATA: 'Passwords do not match'}, HTTPStatus.NOT_ACCEPTABLE
         # print(response.items())
         # print(f"expecting items: {users.FIRSTNAME}, {users.LASTNAME}, {users.NAME}, {users.PASSWORD}, confirm_password")
         try:
             is_verified = emails.check_email_verification(email)
             if not is_verified:
+                print("Email not verified")
                 return {DATA: 'Email not verified'}, HTTPStatus.NOT_ACCEPTABLE
             user_id = users.add_user(firstname, lastname, username, email, password)
             if user_id is None:
+                print("could not add user")
                 return {DATA: 'Failed to add user. A issue with our database occurred.'}, HTTPStatus.NOT_ACCEPTABLE
 
             return {users.OBJECTID: user_id}, HTTPStatus.OK
 
         except ValueError as e:
+            print("crashed somehow")
             raise wz.NotAcceptable(f'{str(e)}')
 
 
