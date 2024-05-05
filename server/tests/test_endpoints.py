@@ -239,6 +239,21 @@ class TestSession(unittest.TestCase):
         with TEST_CLIENT.session_transaction() as test_session:
             assert test_session.get('user_id', None) is None
 
+    # tests for user status
+    def test_user_logged_in(self):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.USERS_EP + ep.STATUS_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    def test_user_not_logged_in(self):
+        route = ep.USERS_EP + ep.STATUS_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == UNAUTHORIZED
+
     @patch('userdata.users.get_user_by_id', return_value=None, autospec=True)
     def test_user_logout_user_not_found(self, mock_user):
         with TEST_CLIENT.session_transaction() as test_session:
@@ -246,6 +261,18 @@ class TestSession(unittest.TestCase):
         route = ep.USERS_EP + ep.LOGOUT_EP
         resp = TEST_CLIENT.get(route)
         assert resp.status_code == BAD_REQUEST
+
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    def test_get_articles_no_input(self, mock_filter):
+        route = ep.ARTICLES_EP + ep.ALL_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == OK
+
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    def test_get_articles_with_input(self, mock_filter):
+        route = ep.ARTICLES_EP + ep.ALL_EP
+        resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
+        assert resp.status_code == OK
 
 # @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
 # def test_users_bad_add(mock_add):

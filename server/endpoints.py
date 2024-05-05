@@ -379,7 +379,7 @@ class Articles(Resource):
                 title_keyword=title_keyword
                 ),
             RETURN: MAIN_MENU_EP,
-        }
+        }, HTTPStatus.OK
 
 
 @ar.route(SUBMISSIONS_EP)
