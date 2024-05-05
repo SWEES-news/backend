@@ -220,7 +220,33 @@ class TestSession(unittest.TestCase):
         assert resp.status_code == NOT_FOUND
         with TEST_CLIENT.session_transaction() as test_session:
             test_session.pop('user_id')
-            
+    
+    @patch('userdata.users.get_user_by_id', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_logout_success(self, mock_user):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.USERS_EP + ep.LOGOUT_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            assert test_session.get('user_id', None) is None
+
+    @patch('userdata.users.get_user_by_id', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_logout_no_session(self, mock_user):
+        route = ep.USERS_EP + ep.LOGOUT_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            assert test_session.get('user_id', None) is None
+
+    @patch('userdata.users.get_user_by_id', return_value=None, autospec=True)
+    def test_user_logout_user_not_found(self, mock_user):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.USERS_EP + ep.LOGOUT_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == BAD_REQUEST
+
 # @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
 # def test_users_bad_add(mock_add):
 #     """

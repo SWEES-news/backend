@@ -321,6 +321,7 @@ class UserLogout(Resource):
             if 'user_id' in session:
                 userid = session['user_id']
                 session.pop('user_id')
+                print(session)
                 username = users.get_user_by_id(userid)[users.NAME]
                 return {DATA: f'Logged out {username}'}, HTTPStatus.OK
             else:
