@@ -119,6 +119,23 @@ def get_article_and_embedding_by_id(article_id, user_id=None):
         return None
 
 
+def get_context_articles_by_ids(article_ids):
+    """
+    For retrieving a group of relevant articles after performing vector search.
+    Retrieve articles based on provided IDs. Can access all articles in database
+    regardless of current user.
+    """
+    try:
+        # MUST convert the string ID to an ObjectId
+        object_ids = [ObjectId(id) for id in article_ids]
+    except InvalidId:
+        return None
+
+    dbc.connect_db()
+    articles = [dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: id_}) for id_ in object_ids]
+    return articles
+
+
 def fetch_all_with_filter(filt={}, projection={}, constrained=False, title_keyword=None, submitter_id=None):
     """
     Find with a filter and return all matching docs.
