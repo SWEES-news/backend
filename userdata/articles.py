@@ -96,6 +96,29 @@ def get_article_by_id(article_id, user_id=None):
         return None
 
 
+def get_article_and_embedding_by_id(article_id, user_id=None):
+    """
+    Fetches an article and its embedding from the database.
+    """
+    try:
+        # MUST convert the string ID to an ObjectId
+        object_id = ObjectId(article_id)
+    except InvalidId:
+        return None
+
+    dbc.connect_db()
+    filter = {OBJECTID: object_id}
+    article = dbc.fetch_one(ARTICLE_COLLECTION, filter)
+
+    # to ret the article only if it belongs to the user or its public:
+    # ...and (article[SUBMITTER_ID_FIELD] == user_id or article[PRIVATE] == "False")
+    if article:
+        vector = dbc.fetch_one(VECTOR_COLLECTION, filter, db=dbc.VECTOR_DB)
+        return article, vector
+    else:
+        return None
+
+
 def fetch_all_with_filter(filt={}, projection={}, constrained=False, title_keyword=None, submitter_id=None):
     """
     Find with a filter and return all matching docs.
