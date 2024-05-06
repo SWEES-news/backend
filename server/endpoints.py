@@ -20,7 +20,7 @@ import userdata.users as users
 import userdata.articles as articles
 import string
 import examples.form as ff
-from ai.basic import analyze_content
+from ai.basic import analyze_content, generate_embedding
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -475,6 +475,15 @@ class SubmitArticle(Resource):
                                                                        article_body, article_preview, private_article)
             if not success:
                 return {DATA: f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
+            
+            # Generate embedding from article body
+            # ??? Since embeddings cost money to generate, should we add a security measure ???
+            article_embedding = generate_embedding(article_body)
+
+            # Store the embedding
+            success, _ = articles.store_article_embedding(submitter_id, submission_id, article_embedding)
+            if not success:
+                return {"data": "Failed to store article embedding"}, HTTPStatus.INTERNAL_SERVER_ERROR
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -506,8 +515,12 @@ class AnalyzeBias(Resource):
         """
         Analyze the bias in a submitted article.
         """
+        user_id = session.get('user_id', None)
+        if not user_id:
+            return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+
         # Use the provided function to retrieve the article by its ID
-        article = articles.get_article_by_id(article_id)  # this needs to be secure and use user_id MUST
+        article, embedding = articles.get_article_and_embedding_by_id(article_id, user_id)
         if not article:
             api.abort(HTTPStatus.NOT_FOUND, f'Article with ID {article_id} not found')
 
@@ -516,7 +529,7 @@ class AnalyzeBias(Resource):
 
         # Perform bias analysis
         try:
-            analysis_result, vector_store = analyze_content([article_body])
+            analysis_result = analyze_content(article_body, embedding)
         except Exception as e:
             api.abort(HTTPStatus.BAD_REQUEST, f'Article with ID {article_id} could not be analyzed due to error: {e}')
 
@@ -528,41 +541,6 @@ class AnalyzeBias(Resource):
         }
 
         return response_data, HTTPStatus.OK
-    # def post(self, article_id):
-    #     """
-    #     Analyze the bias in a submitted article.
-    #     """
-    #     # data = request.json
-    #     # analysis_parameters = data.get('analysis_parameters', {})
-
-    #     # Use the provided function to retrieve the article by its ID
-    #     article = users.get_article_by_id(article_id)  # this needs to be secure and use user_id MUST
-    #     if not article:
-    #         api.abort(HTTPStatus.NOT_FOUND,
-    #                   f'Article with ID {article_id} not found')
-
-    #     # Perform bias analysis (pseudo-code)
-    #     try:
-    #         # analysis_result = analyze_article_bias(article,
-    #         # analysis_parameters)
-    #         pass
-    #     except Exception as e:
-    #         api.abort(HTTPStatus.BAD_REQUEST,
-    #                   f'Article with ID {article_id} could not be analyzed'
-    #                   f' due to error: {e}')
-
-    #     # For demonstration, we'll return a dummy response
-    #     analysis_result = {
-    #         'bias_level': 'moderate',
-    #         'bias_type': ['political', 'emotional'],
-    #         'detailed_analysis': '...'
-    #     }  # should send this in get, not post, once we clean up
-
-    #     return {
-    #         'article_id': article_id,
-    #         'analysis_result': analysis_result,
-    #         USER: users.get_user_if_logged_in(session),
-    #     }, HTTPStatus.OK
 
 
 change_username_model = api.model('ChangeUsername', {
