@@ -479,7 +479,7 @@ class SubmitArticle(Resource):
         article_body = args[articles.ARTICLE_BODY]
         article_title = args[articles.ARTICLE_TITLE]
         # print(args[articles.PRIVATE])
-        private_article = args[articles.PRIVATE] or False
+        # private_article = args[articles.PRIVATE] or False
         print("Checking arguements")
         if not article_link and not article_body:
             return {DATA:
@@ -495,11 +495,10 @@ class SubmitArticle(Resource):
         if article_title == "":
             article_title = article_body[:25].strip().strip(punctuation_chars) + "..."
 
-        article_preview = article_body[:150].strip().strip(punctuation_chars) + "..."
+        # article_preview = article_body[:150].strip().strip(punctuation_chars) + "..."
 
         try:
-            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link,
-                                                                       article_body, article_preview, private_article)
+            success, submission_id = articles.store_article_submission(submitter_id, article_link)
             if not success:
                 return {DATA: f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
         except Exception as e:

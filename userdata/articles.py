@@ -59,7 +59,7 @@ def extract_content(html_content):
     return title, wrapped_text
 
 
-def store_article_submission(submitter_id: str, article_url: str) -> (bool, str):
+def store_article_submission(submitter_id: str, article_url: str) -> (bool, str):  # type: ignore
     """
     Store the submitted article content fetched from a URL.
     """
