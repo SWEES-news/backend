@@ -57,44 +57,43 @@ def extract_content(html_content):
     return title, article_text
 
 
-def store_article_submission(submitter_id: str, article_title: str, article_link: str = "",
-                             article_body: str = "", article_preview: str = "", private_article: bool = False) -> (bool, str):
+def store_article_submission(submitter_id: str, article_url: str) -> (bool, str):
     """
-    Store the submitted article for review.
+    Store the submitted article content fetched from a URL.
     """
     user = users.get_user_by_id(submitter_id)
     if not user:
         return False, f"User with {submitter_id} NOT found"
 
-    # Create a new article submission record
-    submission_record = {
-        ARTICLE_LINK: article_link,
-        ARTICLE_TITLE: article_title,
-        ARTICLE_BODY: article_body,
-        ARTICLE_PREVIEW: article_preview,
-        SUBMITTER_ID_FIELD: user[OBJECTID],
-        PRIVATE: private_article
-    }
+    html_content = fetch_article_content(article_url)
+    if not html_content:
+        return False, "Failed to fetch article content"
 
+    article_title, article_text = extract_content(html_content)
+    if not article_text:
+        return False, "Failed to extract article content"
+
+    submission_record = {
+        ARTICLE_LINK: article_url,
+        ARTICLE_TITLE: article_title,
+        ARTICLE_BODY: article_text,
+        SUBMITTER_ID_FIELD: user[OBJECTID],
+        PRIVATE: False
+    }
     dbc.connect_db()
     submission_id = dbc.insert_one(ARTICLE_COLLECTION, submission_record)
     return True, submission_id
 
 
 def get_article_by_id(article_id, user_id=None):
-    """
-    Fetches an article from the database by their ID.
-    """
     try:
-        # MUST convert the string ID to an ObjectId
         object_id = ObjectId(article_id)
     except InvalidId:
         return None
 
-    # ret the article only if it belongs to the user or its public
     dbc.connect_db()
     article = dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: object_id})
-    if article and (article[SUBMITTER_ID_FIELD] == user_id or article[PRIVATE] == "False"):
+    if article and (article[SUBMITTER_ID_FIELD] == user_id or not article[PRIVATE]):
         return article
     else:
         return None
