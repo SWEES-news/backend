@@ -96,7 +96,36 @@ def perform_vector_search(query_embedding, k=3):
     Returns:
         list of ObjectIds: A list of ObjectIds for the top 'k' similar articles.
     """
-    return []
+    try:
+        dbc.connect_db()
+        vector_db = dbc.client_vector[dbc.VECTOR_DB]
+        vector_collection = vector_db[articles.VECTOR_COLLECTION]
+
+        # Construct the search query using MongoDB Atlas's vector search capabilities
+        search_query = {
+            "$vectorSearch": {
+                "index": articles.ATLAS_VECTOR_SEARCH_INDEX_NAME,
+                "path": articles.EMBEDDING_FIELD_NAME,
+                "queryVector": query_embedding,
+                "numCandidates": 100,  # Recommended to be higher than 'k' for accuracy
+                "limit": k
+            }
+        }
+
+        # Execute the search and retrieve the document IDs
+        results = vector_collection.aggregate([
+            search_query,
+            {"$project": {articles.OBJECTID: 1}}  # Only return the _id field of the documents
+        ])
+
+        # Extract the IDs from the results
+        article_ids = [result[articles.OBJECTID] for result in results]
+        print(f'{article_ids=}')
+        return article_ids
+
+    except Exception as e:
+        logging.error(f"Error during vector search: {str(e)}")
+        return []
 
 
 def analyze_content(article_text: str, article_embedding: list[float] = None):
