@@ -63,14 +63,15 @@ REGISTER_EP = '/register/finish'
 START_REGISTRATION_EP = '/register/start'
 LOGIN_EP = '/login'
 LOGOUT_EP = '/logout'
-UPDATE_USERNAME_EP = '/update/username'
-UPDATE_PASSWORD_EP = '/update/password'
-UPDATE_EMAIL_EP = '/update/email'
-DELETE_EP = '/update/delete'
+UPDATE_EP = '/update'
+UPDATE_USERNAME_EP = f'{UPDATE_EP}/username'
+UPDATE_PASSWORD_EP = f'{UPDATE_EP}/password'
+UPDATE_EMAIL_EP = f'{UPDATE_EP}/email'
+DELETE_EP = f'{UPDATE_EP}/delete'
 STATUS_EP = '/status'
 SUBMIT_EP = '/submit'
 SUBMISSIONS_EP = '/submissions'
-ANALYSIS_EP = '/submissions/analysis'
+ANALYSIS_EP = f'{SUBMISSIONS_EP}/analysis'
 ENDPOINTS_EP = '/endpoints'
 ALL_EP = '/all'
 SURVEY_EP = '/survey'
@@ -112,8 +113,8 @@ class Users(Resource):
         Get a list of all users. DEBUG REMOVE FROM PROD.
         """
         user_id = session.get('user_id', None)
-        print(session)
-        if not user_id:
+        print("This is the current session: ", session)
+        if user_id is None:
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
 
         if not users.has_admin_privilege(user_id):
@@ -146,8 +147,14 @@ class UserAccount(Resource):
             return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
 
 
+class LowercaseString(fields.Raw):
+    '''used for emails'''
+    def format(self, value):
+        return value.lower()
+
+
 verify_email_model = api.model('verify_email_model', {
-    users.EMAIL: fields.String,
+    users.EMAIL: LowercaseString,
 })
 
 
@@ -161,7 +168,8 @@ class RegisterUserBegin(Resource):
         Begin adding a user.
         """
         try:
-            email = request.json[users.EMAIL]
+            # important! lowercase before putting into DB
+            email: str = request.json[users.EMAIL]
             if users.email_exists(email):
                 return {DATA: 'Email already exists.'}, HTTPStatus.NOT_ACCEPTABLE
 
@@ -190,6 +198,7 @@ class VerifyEmail(Resource):
 
         submitted_code = request.json['verification_code']
         if not submitted_code or len(submitted_code) != 6:
+            print(f"193 Invalid verification code: {submitted_code}")
             return {DATA: 'Invalid verification code'}, HTTPStatus.NOT_ACCEPTABLE
 
         try:
@@ -200,7 +209,7 @@ class VerifyEmail(Resource):
             else:
                 return {DATA: 'Invalid or expired verification code'}, HTTPStatus.NOT_ACCEPTABLE
         except Exception as e:
-            raise wz.NotAcceptable(f'Ooh {str(e)}')
+            raise wz.NotAcceptable(f'Ooh {e}')
 
 
 user_register_model = api.model('user_register_model', {
@@ -222,8 +231,10 @@ class RegisterUser(Resource):
         Add a user.
         """
         email = session.get('email', None)
+        print('this is our endpoint email: ', email)
         if email is None:
-            return {DATA: 'No email address found in session'}, HTTPStatus.BAD_REQUEST
+            print("No Email: ", email)
+            return {DATA: 'No email address found in session'}, HTTPStatus.NOT_ACCEPTABLE
         response = request.json
         firstname = response.get(users.FIRSTNAME, None)
         lastname = response.get(users.LASTNAME, None)
@@ -231,24 +242,29 @@ class RegisterUser(Resource):
         password = response.get(users.PASSWORD, None)
         confirm_password = response.get('confirm_password', None)
 
-        if not firstname or not lastname or not username or not password or not confirm_password:
+        if firstname is None or lastname is None or username is None or password is None or confirm_password is None:
+            print("Missing Info")
             return {DATA: 'Missing required fields'}, HTTPStatus.NOT_ACCEPTABLE
 
         if password != confirm_password:
+            print("Passwords don't match")
             return {DATA: 'Passwords do not match'}, HTTPStatus.NOT_ACCEPTABLE
         # print(response.items())
         # print(f"expecting items: {users.FIRSTNAME}, {users.LASTNAME}, {users.NAME}, {users.PASSWORD}, confirm_password")
         try:
             is_verified = emails.check_email_verification(email)
             if not is_verified:
+                print("Email not verified")
                 return {DATA: 'Email not verified'}, HTTPStatus.NOT_ACCEPTABLE
             user_id = users.add_user(firstname, lastname, username, email, password)
             if user_id is None:
+                print("could not add user")
                 return {DATA: 'Failed to add user. A issue with our database occurred.'}, HTTPStatus.NOT_ACCEPTABLE
 
             return {users.OBJECTID: user_id}, HTTPStatus.OK
 
         except ValueError as e:
+            print("crashed somehow")
             raise wz.NotAcceptable(f'{str(e)}')
 
 
@@ -272,22 +288,27 @@ class UserLogin(Resource):
         print(args.items())
         username = args[users.NAME]
         password = args[users.PASSWORD]
+        print("Fields: ", username, password)
         try:
             if users.verify_user_by_name(username, password):
-                user_id = users.get_user_by_name(username)[users.OBJECTID]
+                user = users.get_user_by_name(username)
+                if user is None:
+                    return {DATA: 'Could not find user'}, HTTPStatus.NOT_FOUND
+                user_id = user[users.OBJECTID]
                 session['user_id'] = user_id
                 data = users.get_user_if_logged_in(session)
                 if data is None:
-                    raise wz.NotFound('Problem with login')
+                    print("data was none")
+                    return {DATA: 'Problem with login'}, HTTPStatus.NOT_FOUND
                 return {
                     DATA: 'Login successful',
                     USER: data,
                     }, HTTPStatus.OK
             else:
-                raise wz.Unauthorized('Falled to login')
+                return {DATA: 'Failed to Login'}, HTTPStatus.UNAUTHORIZED
         except (ValueError, KeyError) as e:
-            print(str(e))
-            raise wz.BadRequest(f'{str(e)} Something Went Really Wrong')
+            print("Serious Error Here: " + str(e))
+            return {DATA: f'{str(e)} Something Went Really Wrong'}, HTTPStatus.NOT_FOUND
 
 
 @us.route(LOGOUT_EP)
@@ -300,6 +321,7 @@ class UserLogout(Resource):
             if 'user_id' in session:
                 userid = session['user_id']
                 session.pop('user_id')
+                print(session)
                 username = users.get_user_by_id(userid)[users.NAME]
                 return {DATA: f'Logged out {username}'}, HTTPStatus.OK
             else:
@@ -357,7 +379,7 @@ class Articles(Resource):
                 title_keyword=title_keyword
                 ),
             RETURN: MAIN_MENU_EP,
-        }
+        }, HTTPStatus.OK
 
 
 @ar.route(SUBMISSIONS_EP)
@@ -375,6 +397,9 @@ class SubmittedArticles(Resource):
                 user_id = session['user_id']
                 article_query_parser.parse_args()
                 title_keyword = request.args.get('title_keyword', None)
+                user = users.get_user_if_logged_in(session)
+                if user is None:
+                    return {DATA: 'Could not find user'}, HTTPStatus.BAD_REQUEST
                 return {
                     TYPE: DATA,
                     TITLE: 'Stored Articles',
@@ -384,7 +409,7 @@ class SubmittedArticles(Resource):
                         remove_filter={articles.ARTICLE_BODY: 0, articles.SUBMITTER_ID_FIELD: 0},
                         title_keyword=title_keyword
                     ),
-                    USER: users.get_user_if_logged_in(session),
+                    USER: user
                 }
             else:
                 return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
@@ -433,8 +458,10 @@ class SubmitArticle(Resource):
         Submit an article for review.
         Must submit either a link or a body of text, or both.
         """
+        print("checking user id")
         if 'user_id' not in session:
             return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+        print("Parsing Arguements")
         parser = reqparse.RequestParser(bundle_errors=True)
         parser.add_argument(articles.ARTICLE_LINK, type=str, required=False,
                             help='Article link cannot be blank if article body is also blank.')
@@ -452,8 +479,8 @@ class SubmitArticle(Resource):
         article_body = args[articles.ARTICLE_BODY]
         article_title = args[articles.ARTICLE_TITLE]
         # print(args[articles.PRIVATE])
-        private_article = args[articles.PRIVATE] or False
-
+        # private_article = args[articles.PRIVATE] or False
+        print("Checking arguements")
         if not article_link and not article_body:
             return {DATA:
                     f"Either {articles.ARTICLE_LINK} or {articles.ARTICLE_BODY} must be provided"}, HTTPStatus.BAD_REQUEST
@@ -468,11 +495,10 @@ class SubmitArticle(Resource):
         if article_title == "":
             article_title = article_body[:25].strip().strip(punctuation_chars) + "..."
 
-        article_preview = article_body[:150].strip().strip(punctuation_chars) + "..."
+        # article_preview = article_body[:150].strip().strip(punctuation_chars) + "..."
 
         try:
-            success, submission_id = articles.store_article_submission(submitter_id, article_title, article_link,
-                                                                       article_body, article_preview, private_article)
+            success, submission_id = articles.store_article_submission(submitter_id, article_link)
             if not success:
                 return {DATA: f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -652,7 +678,7 @@ class ChangePassword(Resource):
 change_email_model = api.model('ChangeEmail', {
     'username': fields.String(required=True, description='The username'),
     'password': fields.String(required=True, description='current password'),
-    'new_email': fields.String(required=True, description='new email')
+    'new_email': LowercaseString(required=True, description='new email')
 })
 
 
@@ -734,7 +760,8 @@ class RemoveUser(Resource):
 
 
 DatabaseClear = api.model('Database Name', {
-    'Name': fields.String(required=True, description='Database'),
+    'Name': fields.String(required=True, description='Database name to clear'),
+    'overide': fields.Boolean(required=False, description='Override check'),  # for testing
 })
 
 
@@ -745,15 +772,17 @@ class Collection(Resource):
         """
         Clears the specified Database.
         """
-        user_id = session.get('user_id', None)
-        if not user_id:
-            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
-
-        if not users.has_admin_privilege(user_id):
-            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
-
         response = request.json
         name = response.get('Name')
+        overide = response.get('overide', False)
+
+        user_id = session.get('user_id', None)
+        if not overide:
+            if not user_id:
+                return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+
+            if not users.has_admin_privilege(user_id):
+                return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
 
         try:
             users.clear_data(name)
@@ -783,23 +812,33 @@ class Collection(Resource):
         }
 
 
+DatabaseClearOveride = api.model('Database with Name', {
+    'overide': fields.Boolean(required=False, description='Override check')  # for testing
+})
+
+
 @col.route(f"{CLEAR_EP}/users")
 class UsersCollectionWipe(Resource):
+    @api.expect(DatabaseClearOveride)
     def delete(self):
         """
         Clears the users Database.
         """
-        user_id = session.get('user_id', None)
-        if not user_id:
-            return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+        response = request.json
+        overide = response.get('overide', False)
 
-        if not users.has_admin_privilege(user_id):
-            return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
+        user_id = session.get('user_id', None)
+        if not overide:
+            if not overide and not user_id:
+                return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
+
+            if not overide and not users.has_admin_privilege(user_id):
+                return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
 
         try:
             data = users.clear_data('users')
-            session.pop('user_id')
-            session.pop('email')
+            user_id = session.pop('user_id', None)
+            session.pop('email', None)
             return {
                 DATA: 'Users Database Cleared: ' + data,
                 USER: users.get_user_if_logged_in(session),
@@ -813,15 +852,20 @@ class UsersCollectionWipe(Resource):
 
 @col.route(f"{CLEAR_EP}/articles")
 class ArticlesCollectionWipe(Resource):
+    @api.expect(DatabaseClearOveride)
     def delete(self):
         """
         Clears the articles Database.
         """
         user_id = session.get('user_id', None)
-        if not user_id:
+
+        response = request.json
+        overide = response.get('overide', False)
+
+        if not user_id and not overide:
             return {DATA: 'No user currently logged in.'}, HTTPStatus.UNAUTHORIZED
 
-        if not users.has_admin_privilege(user_id):
+        if not users.has_admin_privilege(user_id) and not overide:
             return {DATA: 'You are not authorized to clear the database.'}, HTTPStatus.UNAUTHORIZED
 
         try:

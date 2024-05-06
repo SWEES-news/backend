@@ -8,9 +8,9 @@ from http.client import (
     UNAUTHORIZED
 )
 from http import HTTPStatus
-
+import unittest
 from unittest.mock import patch  #, MagicMock
-
+from requests import Session
 import pytest
 
 import os
@@ -36,17 +36,357 @@ import unittest
 
 TEST_CLIENT = ep.app.test_client()
 
+# for tests that require values from session
+class TestSession(unittest.TestCase):
+    @patch('userdata.users.has_admin_privilege', return_value=True, autospec=True)
+    def test_get_user_sucess(self, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] =  usrs._gen_id()
+        route = ep.USERS_EP + ''
+        resp = TEST_CLIENT.get(route)
+        print(resp)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+    
+    @patch('userdata.users.has_admin_privilege', return_value=False, autospec=True)
+    def test_get_user_not_admin(self, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] =  usrs._gen_id()
+        route = ep.USERS_EP + ''
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == UNAUTHORIZED
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
 
-# @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
-# def test_users_add(mock_add):
-#     """
-#     Testing we do the right thing with a good return from add_user.
-#     """
-#     route = ep.USERS_EP + ep.REGISTER_EP
-#     resp = TEST_CLIENT.post(route, json=usrs.get_rand_test_user())
-#     assert resp.status_code == OK
+    @patch('userdata.users.has_admin_privilege', return_value=True, autospec=True)
+    def test_get_user_no_session(self, mock_get):
+        route = ep.USERS_EP + ''
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == UNAUTHORIZED
+
+    # tests for getting user account information
+    @patch('userdata.users.get_user_by_id', return_value=usrs.get_test_user(), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    def test_get_user_account_success(self, mock_get, mock_login):
+        user = usrs._gen_id()
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] =  user
+        route = ep.USERS_EP + ep.ACCOUNT_EP
+        resp = TEST_CLIENT.get(route)
+        print(resp)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+    
+    @patch('userdata.users.get_user_by_id', return_value=usrs.get_test_user(), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    def test_get_user_account_not_login(self, mock_get, mock_login):
+        with TEST_CLIENT.session_transaction() as test_session:
+            route = ep.USERS_EP + ep.ACCOUNT_EP
+            resp = TEST_CLIENT.get(route)
+            assert resp.status_code == UNAUTHORIZED
+
+    # tests for adding user
+    @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
+    @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
+    def test_add_user_success(self, mock_verify, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
+        temp = usrs.get_rand_test_user()
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        print('this is our test email: ', test_session.get('email', None))
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
+    
+    @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
+    @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
+    def test_add_user_wrong_password(self, mock_verify, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
+        temp = usrs.get_rand_test_user()
+        temp[usrs.CONFIRM_PASSWORD] = 'not the password'
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        assert resp.status_code == NOT_ACCEPTABLE
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
+
+    @patch('userdata.emails.check_email_verification', return_value=usrs.MOCK_EMAIL, autospec=True)
+    @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
+    def test_add_user_no_email(self, mock_verify, mock_get):
+        temp = usrs.get_rand_test_user()
+        temp[usrs.CONFIRM_PASSWORD] = 'not the password'
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        assert resp.status_code == NOT_ACCEPTABLE
+
+    @patch('userdata.emails.check_email_verification', return_value=False, autospec=True)
+    @patch('userdata.users.add_user', return_value=usrs.MOCK_ID, autospec=True)
+    def test_add_user_email_verification_fail(self, mock_verify, mock_get):
+        temp = usrs.get_rand_test_user()
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        assert resp.status_code == NOT_ACCEPTABLE
+
+    @patch('userdata.emails.check_email_verification', return_value=True, autospec=True)
+    @patch('userdata.users.add_user', return_value=None, autospec=True)
+    def test_add_user_add_fail(self, mock_verify, mock_get):
+        temp = usrs.get_rand_test_user()
+        route = ep.USERS_EP + ep.REGISTER_EP
+        resp = TEST_CLIENT.post(route, json=temp)
+        assert resp.status_code == NOT_ACCEPTABLE
+
+    # for email verification 
+    @patch('userdata.emails.verify_email', return_value=True, autospec=True)
+    def test_verify_email_success(self, mock_verify):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
+        route = ep.USERS_EP + '/verify-email'
+        resp = TEST_CLIENT.post(route, json={'verification_code' : '123456'})
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
+
+    @patch('userdata.emails.verify_email', return_value=False, autospec=True)
+    def test_verify_email_failure(self, mock_verify):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
+        route = ep.USERS_EP + '/verify-email'
+        resp = TEST_CLIENT.post(route, json={'verification_code' : '123456'})
+        assert resp.status_code == NOT_ACCEPTABLE
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
+
+    @patch('userdata.emails.verify_email', return_value=False, autospec=True)
+    def test_verify_email_code_len_wrong(self, mock_verify):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['email'] =  usrs._get_random_email()
+        route = ep.USERS_EP + '/verify-email'
+        resp = TEST_CLIENT.post(route, json={'verification_code' : '123456789'})
+        assert resp.status_code == NOT_ACCEPTABLE
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('email')
+
+    @patch('userdata.emails.verify_email', return_value=False, autospec=True)
+    def test_verify_email_code_no_email(self, mock_verify):
+        route = ep.USERS_EP + '/verify-email'
+        resp = TEST_CLIENT.post(route, json={'verification_code' : '123456789'})
+        assert resp.status_code == BAD_REQUEST
+
+    #user login tests
+    @patch('userdata.users.verify_user_by_name', return_value=True, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    @patch('userdata.users.get_user_by_name', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_login_success(self, mock_verify, mock_login, mock_name):
+        route = ep.USERS_EP + ep.LOGIN_EP
+        json={usrs.NAME: usrs._get_random_name(), usrs.PASSWORD: usrs._gen_id()}
+        print("json: ", json)
+        resp = TEST_CLIENT.post(route, json=json)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.users.verify_user_by_name', return_value=False, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    @patch('userdata.users.get_user_by_name', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_login_verify_failed(self, mock_verify, mock_login, mock_name):
+        route = ep.USERS_EP + ep.LOGIN_EP
+        json={usrs.NAME: usrs._get_random_name(), usrs.PASSWORD: usrs._gen_id()}
+        print("json: ", json)
+        resp = TEST_CLIENT.post(route, json=json)
+        assert resp.status_code == UNAUTHORIZED
+
+    @patch('userdata.users.verify_user_by_name', return_value=True, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs._get_random_name(), autospec=True)
+    @patch('userdata.users.get_user_by_name', return_value=None, autospec=True)
+    def test_user_login_user_not_found(self, mock_verify, mock_login, mock_name):
+        route = ep.USERS_EP + ep.LOGIN_EP
+        json={usrs.NAME: usrs._get_random_name(), usrs.PASSWORD: usrs._gen_id()}
+        print("json: ", json)
+        resp = TEST_CLIENT.post(route, json=json)
+        assert resp.status_code == NOT_FOUND
+
+    @patch('userdata.users.verify_user_by_name', return_value=True, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    @patch('userdata.users.get_user_by_name', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_login_session_data_not_found(self, mock_verify, mock_login, mock_name):
+        route = ep.USERS_EP + ep.LOGIN_EP
+        json={usrs.NAME: usrs._get_random_name(), usrs.PASSWORD: usrs._gen_id()}
+        print("json: ", json)
+        resp = TEST_CLIENT.post(route, json=json)
+        assert resp.status_code == NOT_FOUND
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+    
+    @patch('userdata.users.get_user_by_id', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_logout_success(self, mock_user):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.USERS_EP + ep.LOGOUT_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            assert test_session.get('user_id', None) is None
+
+    @patch('userdata.users.get_user_by_id', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_logout_no_session(self, mock_user):
+        route = ep.USERS_EP + ep.LOGOUT_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            assert test_session.get('user_id', None) is None
+
+    # tests for user status
+    def test_user_logged_in(self):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.USERS_EP + ep.STATUS_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    def test_user_not_logged_in(self):
+        route = ep.USERS_EP + ep.STATUS_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == UNAUTHORIZED
+
+    @patch('userdata.users.get_user_by_id', return_value=None, autospec=True)
+    def test_user_logout_user_not_found(self, mock_user):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.USERS_EP + ep.LOGOUT_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == BAD_REQUEST
+
+    #tests for fetching articles
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    def test_get_articles_no_input(self, mock_filter):
+        route = ep.ARTICLES_EP + ep.ALL_EP
+        resp = TEST_CLIENT.get(route)
+        assert resp.status_code == OK
+
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    def test_get_articles_with_input(self, mock_filter):
+        route = ep.ARTICLES_EP + ep.ALL_EP
+        resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
+        assert resp.status_code == OK
+
+    #tests for fetching all submitted articles by a given user
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs.get_test_user(), autospec=True)
+    def test_fetch_users_articles_success(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMISSIONS_EP
+        resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs.get_test_user(), autospec=True)
+    def test_fetch_users_articles_no_session(self, mock_filter, mock_get):
+        route = ep.ARTICLES_EP + ep.SUBMISSIONS_EP
+        resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
+        assert resp.status_code == UNAUTHORIZED
+
+    #tests for fetching all submitted articles by a given user
+    @patch('userdata.articles.fetch_with_combined_filter', return_value={}, autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_fetch_users_articles_not_found(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMISSIONS_EP
+        resp = TEST_CLIENT.get(route, json = {'title_keyword': 'keyword'})
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    #tests for fetching all submitted articles by a given user
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_success(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: 'link.com',
+        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_not_login(self, mock_filter, mock_get):
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: 'link.com',
+        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == UNAUTHORIZED
+
+    @patch('userdata.articles.store_article_submission', return_value=(False, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_submission_failure(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: 'link.com',
+        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_body_too_short(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_blank_submission(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+        articles.ARTICLE_BODY: '', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
 
 
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_success_only_body(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+        articles.ARTICLE_BODY: '1' * 1000, articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_success_body_too_long(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+        articles.ARTICLE_BODY: '1' * 6000, articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
 # @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
 # def test_users_bad_add(mock_add):
 #     """
@@ -247,27 +587,6 @@ def test_server_error_condition(self, mock_store):
 #     })
 #     assert response.status_code == OK
 
-@patch('userdata.users.verify_user_by_name')
-@patch('userdata.users.get_user_by_name') 
-def test_valid_credentials(mock_get, mock_verify): 
-    mock_get.return_value = usrs.get_test_user()
-    mock_verify.return_value = True
-    response = TEST_CLIENT.post(ep.USERS_EP + ep.LOGIN_EP, json={
-        usrs.NAME: 'test@example.com',
-        usrs.PASSWORD: 'password123'
-    })
-    assert response.status_code == OK
-
-@patch('userdata.users.verify_user_by_name', return_value=False)  # Mocking the verify_user function
-def test_invalid_credentials(mock_verify):
-    # Simulating a scenario where the credentials are invalid
-
-    response = TEST_CLIENT.post(f'{ep.USERS_EP}{ep.LOGIN_EP}', json={
-        usrs.NAME: 'wrong@example.com',
-        usrs.PASSWORD: 'wrongpassword'
-    })
-
-    assert response.status_code == UNAUTHORIZED
 
 #returning 404 not found
 # def test_clearDBAfterTest():

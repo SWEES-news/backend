@@ -8,6 +8,7 @@ import userdata.db_connect as dbc
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import dateutil.parser
+import json
 load_dotenv()  # This will load environment variables from a .env file
 
 COLLECTION = "verification_codes"
@@ -100,18 +101,30 @@ def send_verification_email(to_address):
             msg['Subject'] = subject
             msg.attach(MIMEText(body, 'html'))
             server.send_message(msg)
+            print("Verification email sent.")
+
             dbc.connect_db()
             time = get_time_as_string()
-            submission_id = dbc.insert_one(COLLECTION,
-                                           {"email": to_address,
-                                            "code": verification_code,
-                                            "is_verified": False,
-                                            TIMESTAMP_FIELD: time})
-            print("Verification email sent.")
-            print(submission_id)
+            filter_dict = {"email": to_address}
+            update_dict = {
+                "email": to_address,
+                "code": verification_code,
+                "is_verified": False,
+                TIMESTAMP_FIELD: time
+            }
+            submission_result = dbc.update_or_insert_one(COLLECTION, filter_dict, update_dict)
+
+            # Check the result of the operation and retrieve the ID if needed
+            if submission_result.upserted_id is not None:
+                submission_id = submission_result.upserted_id
+                print(f"Inserted new document with submission ID: {submission_id}")
+            else:
+                print("Updated existing document.")
+
             print(f"Verification code: {verification_code}")
             res = dbc.fetch_all(COLLECTION)
-            print(res)
+            pretty_json = json.dumps(res, indent=4)
+            print(pretty_json)
     except Exception as e:
         print("Failed to connect or send email:", e)
     finally:
@@ -121,7 +134,7 @@ def send_verification_email(to_address):
 
 def verify_email(email, code):
     dbc.connect_db()
-    verification = dbc.fetch_one(COLLECTION, {"email": email})
+    verification = dbc.fetch_one(COLLECTION, {"email": email}, case_sensitive=True)
     print(verification)
     if verification and 'code' in verification:
         if verification['code'] == code:
@@ -133,13 +146,16 @@ def verify_email(email, code):
             else:
                 dbc.del_one(COLLECTION, {"email": email})
                 print("Verification code expired")
+        print("Verification code does not match")
+        print(f"Expected: {verification['code']}, Received: {code}")
         return False
+    print("No verification code found")
     return False
 
 
 def check_email_verification(email):
     dbc.connect_db()
-    verification = dbc.fetch_one(COLLECTION, {"email": email})
+    verification = dbc.fetch_one(COLLECTION, {"email": email}, case_sensitive=True)
     if verification and 'is_verified' in verification:
         return verification['is_verified']
     return False

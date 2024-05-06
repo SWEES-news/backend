@@ -10,6 +10,11 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 
 
+ADMIN_EMAILS = [
+    'ethanb@nyu.edu',
+    'ethandb2024@gmail.com'
+]
+
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
 ARTICLE_COLLECTION = 'articles'
@@ -23,7 +28,7 @@ EMAIL = 'Email'
 PASSWORD = 'Password'
 FIRSTNAME = 'FirstName'
 LASTNAME = 'LastName'
-
+CONFIRM_PASSWORD = 'confirm_password'
 
 # ------ DB rules ------ #
 ID_LEN = 24
@@ -63,7 +68,8 @@ def _get_random_email():
 # gets a user with a random gmail address
 def get_rand_test_user():
     rand_part = _get_random_name()
-    return {NAME: rand_part, EMAIL: MOCK_EMAIL, PASSWORD: MOCK_PASSWORD}
+    return {OBJECTID: _gen_id(), NAME: rand_part, PASSWORD: MOCK_PASSWORD, EMAIL: _get_random_email(),
+            FIRSTNAME: 'John', LASTNAME: 'Doe', CONFIRM_PASSWORD: MOCK_PASSWORD}
 
 
 def update_test_user():
@@ -274,8 +280,8 @@ def get_user_if_logged_in(session):
         user = get_user_by_id(session['user_id'])
         if user:
             return user[NAME]
-        return 'None'
-    return 'None'
+        return None
+    return None
 
 
 def has_admin_privilege(user_id):
@@ -284,9 +290,5 @@ def has_admin_privilege(user_id):
     """
     user = get_user_by_id(user_id)
     if user:
-        admin_emails = [
-            'ethanb@nyu.edu',
-            'ethandb2024@gmail.com'
-        ]
-        return user[EMAIL] in admin_emails
+        return user[EMAIL] in ADMIN_EMAILS
     return False

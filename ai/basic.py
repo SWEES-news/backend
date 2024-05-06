@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+
 import logging
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
@@ -22,6 +25,7 @@ COLLECTION_NAME = articles.ARTICLE_COLLECTION
 ATLAS_VECTOR_SEARCH_INDEX_NAME = articles.ATLAS_VECTOR_SEARCH_INDEX_NAME
 EMBEDDING_FIELD_NAME = articles.EMBEDDING_FIELD_NAME
 
+load_dotenv()
 
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
