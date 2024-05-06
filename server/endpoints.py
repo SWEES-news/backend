@@ -475,7 +475,7 @@ class SubmitArticle(Resource):
                                                                        article_body, article_preview, private_article)
             if not success:
                 return {DATA: f"Failed to store the article submission {submission_id}"}, HTTPStatus.INTERNAL_SERVER_ERROR
-            
+
             # Generate embedding from article body
             # ??? Since embeddings cost money to generate, should we add a security measure ???
             article_embedding = generate_embedding(article_body)
