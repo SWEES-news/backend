@@ -2,18 +2,34 @@ import logging
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
+# from langchain_openai import OpenAIEmbeddings
+from langchain_openai.embeddings.base import OpenAIEmbeddings
 
-from langchain.vectorstores.chroma import Chroma  # from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+import os
+import sys
+import inspect
+
+# Modifying sys.path to include parent directory for local imports
+currentdir = os.path.dirname(os.path.abspath(
+    inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+import userdata.db_connect as dbc
+import userdata.articles as articles
+DB_NAME = dbc.VECTOR_DB
+COLLECTION_NAME = articles.ARTICLE_COLLECTION
+ATLAS_VECTOR_SEARCH_INDEX_NAME = articles.ATLAS_VECTOR_SEARCH_INDEX_NAME
+EMBEDDING_FIELD_NAME = articles.EMBEDDING_FIELD_NAME
 
 
-# OPEN_API_KEY is used to authenticate requests to the OpenAI API for accessing
-# advanced AI models like GPT-4.
-# This key is kept confidential. Please add your own while testing.
-# Access reqires purchasing tokens from OPENAI API website.
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
-OPENAI_API_KEY = 'Insert_the_OpenAI_API_access_key_here'
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+embedding_generator = OpenAIEmbeddings(disallowed_special=(), 
+                                       openai_api_key=OPENAI_API_KEY, 
+                                       model="text-embedding-3-small",
+                                       dimensions=1536)  # model="text-embedding-3-large"
+
 
 PROMPT_TEMPLATE = (
     'Hello! You are a bias-finding analyst who has been tasked with '
@@ -51,6 +67,8 @@ PROMPT_TEMPLATE = (
 
     # TODO in future: retrieve additional articles based on
     # ...their analyses and similarity to the input text
+    'Context from related articles is provided below:\n\n'
+    '"""{context}"""\n\n'
 
     'Here is the news article to analyze, delimited by triple quotes ("""):'
     '\n\n"""{content}"""\n\n'
@@ -58,52 +76,64 @@ PROMPT_TEMPLATE = (
 )
 
 
-def create_vector_store(texts: list[str]) -> Chroma:
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+def generate_embedding(text):
     try:
-        splits = [text_splitter.split_text(doc) for doc in texts if doc]
-        if not splits:
-            logging.error("No valid splits were created from the provided texts.")
-            return None
-        vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings(OPENAI_API_KEY))
-        print(vectorstore)
-        return vectorstore
+        embedding = embedding_generator.embed_query(text)
+        return embedding
     except Exception as e:
-        logging.error(f"Failed to create vector store: {e}")
+        print(f"An error occurred while generating an embedding: {e}")
         return None
 
 
-def analyze_content(texts: list[str]) -> tuple[list[str], Chroma]:
+def perform_vector_search(query_embedding, k=3):
     """
-    Analyzes each text for news bias, creates a vector store from the texts, and returns both the analyses and the vector store.
+    Perform a vector similarity search to find the top 'k' similar articles based on the embedding.
+    
+    Args:
+        query_embedding (list of float): The embedding vector of the query.
+        k (int): The number of similar articles to retrieve.
 
-    :param texts: List of text documents to analyze.
-    :returns: A tuple containing:
-              - list of analyses (str): Detailed responses based on the analysis of each text.
-              - Chroma vector store: A vector store built from the texts for further similarity searches or analysis.
-
-    The function will return `None` for the vector store if there's an error in creating it.
+    Returns:
+        list of ObjectIds: A list of ObjectIds for the top 'k' similar articles.
     """
-    # Check if there are texts to process, return None early if not
-    if not texts:
-        logging.error("No texts provided for analysis.")
-        return [], None
+    return []
 
-    # Prepare the prompt template and model for analysis
-    prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
-    model = ChatOpenAI(model=MODEL, openai_api_key=OPENAI_API_KEY)
-    chain = prompt | model | StrOutputParser()
 
-    # Prepare documents for the analysis
-    docs = [{'content': doc} for doc in texts if doc.strip()]
-
-    # Execute batch processing with the chain of transformations
-    responses = chain.batch(docs)
-
-    # Create a vector store from the texts
-    vectorstore = ""  # create_vector_store(docs) #texts
-
-    return responses, vectorstore
+def analyze_content(article_text: str, article_embedding: list[float] = None):
+    """
+    Analyzes the article text for bias using related articles as context.
+    """
+    try:
+        # might remove this, existing articles in DB should already have embedding ---
+        if not article_embedding:
+            article_embedding = generate_embedding(article_text)
+        
+        # Perform vector search to find + retrieve similar articles
+        similar_article_ids = perform_vector_search(article_embedding, k=3)
+        similar_articles = articles.get_context_articles_by_ids(similar_article_ids)
+        similar_articles_texts = [art[articles.ARTICLE_BODY] for art in similar_articles if art is not None]
+        
+        # Prepare the context by combining the content of similar articles
+        if similar_articles_texts:
+            context = " ".join(similar_articles_texts)
+        else:
+            context = ""
+        
+        # Prepare the prompt with the original article and the context
+        formatted_prompt = PROMPT_TEMPLATE.format(content=article_text, context=context)
+        prompt = ChatPromptTemplate.from_template(formatted_prompt)
+        
+        # Set up the OpenAI API call
+        model = ChatOpenAI(model=MODEL, openai_api_key=OPENAI_API_KEY)
+        chain = prompt | model | StrOutputParser()
+        
+        # Execute the analysis
+        response = chain.invoke({"content": article_text})
+        return response
+    
+    except Exception as e:
+        logging.error(f"An error occurred: {str(e)}")
+        return None
 
 
 def read_content(file_path: str) -> str:
@@ -129,53 +159,26 @@ def write_response(file_path: str, response: str):
 
 
 def main():
-    """Example of how to analyze content."""
-    content_files = ['ai/test_article.txt', 'ai/test_article_2.txt']
-    response_files = ['ai/test_response.md', 'ai/test_response_2.md']
+    content_file = 'ai/test_article_2.txt'
+    response_file = 'ai/test_response_2.md'
+    
+    content = read_content(content_file)
+    embedding = generate_embedding(content)
 
-    # contents = [read_content(file) for file in content_files]
-    # responses, vectorDB = analyze_content(contents)
+    # # update DB
+    # submitterID = 'existing id'
+    # success, mongoID = articles.store_article_submission(submitterID, 
+    #     "Mercedes-Benz Walks Back", article_body=content)
+    # if success:
+    #     print("Successfully stored article!")
+    #     success, _ = articles.store_article_embedding(submitterID, mongoID, embedding)
+    #     print("Successfully stored article embedding!")
+    #     print(embedding[:4])
 
-    # query = "Any phrase that I want to check against the vectorDB"
-    # docs = vectorDB.similarity_search(query)
-    # print(docs[0].page_content)
 
-    # for response, file in zip(responses, response_files):
-    #     write_response(file, response)
-
-    contents = [read_content(file) for file in content_files]
-    print(contents)
-    responses = [read_content(file) for file in response_files]
-    print(responses)
-
-    query = "Any phrase that I want to check against the vectorDB"
-    # docs = [{'content': doc} for doc in responses if doc.strip()]
-    vectorDB = create_vector_store(contents)
-
-    docs = vectorDB.similarity_search(query)
-    print(docs)
-    # print(docs[0].page_content)
-
-    # # Generate embeddings and store in MongoDB
-    # for file_path in content_files:
-    #     with open(file_path, 'r') as file:
-    #         content = file.read()
-
-    #     # Generate embeddings using OpenAI's API
-    #     response = openai.Embed.create(
-    #         model="text-davinci-003",  # Adjust the model according to your needs
-    #         documents=[content]
-    #     )
-
-    #     # Extract embeddings from the response
-    #     embeddings = response['data']['embeddings']
-
-    #     # Store embeddings in MongoDB Atlas
-    #     document = {
-    #         'content': content,  # Optional: Store the content text for reference
-    #         'embedding': embeddings[0]  # Assuming only one document per file
-    #     }
-    #     collection.insert_one(document)
+    response = analyze_content(content, embedding)
+    write_response(response_file, response)
+    print(response[:75])
 
 
 if __name__ == "__main__":
