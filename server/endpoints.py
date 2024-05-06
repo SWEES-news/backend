@@ -7,15 +7,20 @@ from flask_restx import Api, Resource, fields, reqparse
 from flask_cors import CORS
 from http import HTTPStatus
 import werkzeug.exceptions as wz
-import userdata.extras as extras
-import userdata.comments as comments
-import userdata.emails as emails
-import userdata.db_connect as dbc
 
 import os
 import sys
 import inspect
 
+# Modifying sys.path to include parent directory for local imports
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+import userdata.extras as extras
+import userdata.comments as comments
+import userdata.emails as emails
+import userdata.db_connect as dbc
 import userdata.users as users
 import userdata.articles as articles
 import string
@@ -24,11 +29,11 @@ from ai.basic import analyze_content, generate_embedding
 from dotenv import load_dotenv
 load_dotenv()
 
-# Modifying sys.path to include parent directory for local imports
-currentdir = os.path.dirname(os.path.abspath(
-    inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
+# # Modifying sys.path to include parent directory for local imports
+# currentdir = os.path.dirname(os.path.abspath(
+#     inspect.getfile(inspect.currentframe())))
+# parentdir = os.path.dirname(currentdir)
+# sys.path.insert(0, parentdir)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'h-J_l62fxF1uDXqKjHS3EQ')  # secure asf

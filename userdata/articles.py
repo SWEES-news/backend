@@ -91,8 +91,8 @@ def store_article_submission(submitter_id: str, article_url: str) -> (bool, str)
     return True, submission_id
 
 
-def store_article_embedding(submitter_id: str, article_id: str, 
-                             article_embedding: list[float]) -> (bool, str):
+def store_article_embedding(submitter_id: str, article_id: str,
+                            article_embedding: list[float]) -> (bool, str):
     """
     Store the submitted article for review. Stores article in userDB, and embedding in vectorDB.
     """

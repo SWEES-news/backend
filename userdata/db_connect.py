@@ -37,8 +37,7 @@ def connect_db():
             password = os.environ.get("MONGODB_PASSWORD")
             vector_password = os.environ.get("MONGODB_PASSWORD")
             if not password and vector_password:
-                raise ValueError('You must set both passwords '
-                                 + 'to use Mongo in the cloud.')
+                raise ValueError('You must set both passwords to use Mongo in the cloud.')
             print("Connecting to Mongo in the cloud.")
             client_existing = pm.MongoClient(URI_FRONT + password + URI_BACK)
             client_vector = pm.MongoClient(
@@ -47,10 +46,9 @@ def connect_db():
             print("Connecting to Mongo locally.")
             vector_password = os.environ.get("MONGODB_PASSWORD")
             if not vector_password:
-                raise ValueError('Missing MongoDB vector '
-                                 + 'database password.')
+                raise ValueError('Missing MongoDB vector database password.')
             client_existing = pm.MongoClient()
-            
+
             # vector search can only be performed on Atlas, not locally
             client_vector = pm.MongoClient(
                 URI_FRONT + vector_password + URI_VECTOR_BACK)
@@ -204,6 +202,7 @@ def update_or_insert_one(collection, filt, update_dict, db=USER_DB):
         pymongo.results.UpdateResult: The result of the update operation.
     """
     try:
+        client = client_existing if db == USER_DB else client_vector
         # The $set operator replaces the value of a field with the specified value.
         # The upsert=True option creates a new document if no document matches the filter.
         result = client[db][collection].update_one(filt, {'$set': update_dict}, upsert=True)

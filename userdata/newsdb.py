@@ -98,7 +98,7 @@ def get_clean_text_from_article_link(link: str):
     soup = BeautifulSoup(page.text, 'lxml')
     title = soup.find('title')
     print(title.get_text())
-    author = soup.find('small',  itemprop="author")
+    author = soup.find('small', itemprop="author")
     # container = soup.find('div',
     # class_=['entry-content', 'entry-content-read-more'])
     # articletext = container.find_all('p')

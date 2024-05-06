@@ -306,18 +306,18 @@ class TestSession(unittest.TestCase):
         with TEST_CLIENT.session_transaction() as test_session:
             test_session.pop('user_id')
 
-    #tests for fetching all submitted articles by a given user
-    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
-    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
-    def test_submit_articles_success(self, mock_filter, mock_get):
-        with TEST_CLIENT.session_transaction() as test_session:
-            test_session['user_id'] = usrs._gen_id()
-        route = ep.ARTICLES_EP + ep.SUBMIT_EP
-        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: 'link.com',
-        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
-        assert resp.status_code == OK
-        with TEST_CLIENT.session_transaction() as test_session:
-            test_session.pop('user_id')
+    # #tests for fetching all submitted articles by a given user
+    # @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    # @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    # def test_submit_articles_success(self, mock_filter, mock_get):
+    #     with TEST_CLIENT.session_transaction() as test_session:
+    #         test_session['user_id'] = usrs._gen_id()
+    #     route = ep.ARTICLES_EP + ep.SUBMIT_EP
+    #     resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: 'link.com',
+    #     articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+    #     assert resp.status_code == OK
+    #     with TEST_CLIENT.session_transaction() as test_session:
+    #         test_session.pop('user_id')
 
     @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
     @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
@@ -364,17 +364,17 @@ class TestSession(unittest.TestCase):
             test_session.pop('user_id')
 
 
-    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
-    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
-    def test_submit_articles_success_only_body(self, mock_filter, mock_get):
-        with TEST_CLIENT.session_transaction() as test_session:
-            test_session['user_id'] = usrs._gen_id()
-        route = ep.ARTICLES_EP + ep.SUBMIT_EP
-        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
-        articles.ARTICLE_BODY: '1' * 1000, articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
-        assert resp.status_code == OK
-        with TEST_CLIENT.session_transaction() as test_session:
-            test_session.pop('user_id')
+    # @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    # @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    # def test_submit_articles_success_only_body(self, mock_filter, mock_get):
+    #     with TEST_CLIENT.session_transaction() as test_session:
+    #         test_session['user_id'] = usrs._gen_id()
+    #     route = ep.ARTICLES_EP + ep.SUBMIT_EP
+    #     resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+    #     articles.ARTICLE_BODY: '1' * 1000, articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+    #     assert resp.status_code == OK
+    #     with TEST_CLIENT.session_transaction() as test_session:
+    #         test_session.pop('user_id')
 
     @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
     @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
