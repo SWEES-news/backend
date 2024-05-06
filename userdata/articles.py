@@ -12,6 +12,7 @@ from bson.errors import InvalidId
 import userdata.extras as extras
 import userdata.users as users  # articles depends on user, avoid circular import!
 import re
+import textwrap
 
 
 # ------ configuration for MongoDB ------ #
@@ -54,7 +55,8 @@ def extract_content(html_content):
         logging.warning("Article tag not found.")
         return None
     article_text = article.get_text(strip=True)
-    return title, article_text
+    wrapped_text = textwrap.fill(article_text, width=85)  # Wrap text to 85 characters per line
+    return title, wrapped_text
 
 
 def store_article_submission(submitter_id: str, article_url: str) -> (bool, str):
