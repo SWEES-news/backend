@@ -23,10 +23,10 @@ UPDATE = 'update'
 def temp_rec():
     temp = dbc.connect_db()
     name = TEST_NAME
-    dbc.client[TEST_DB][TEST_COLLECT].insert_one({TEST_NAME: TEST_NAME})
+    dbc.client_existing[TEST_DB][TEST_COLLECT].insert_one({TEST_NAME: TEST_NAME})
     # yield to our test function
     yield name
-    dbc.client[TEST_DB][TEST_COLLECT].delete_one({TEST_NAME: TEST_NAME})
+    dbc.client_existing[TEST_DB][TEST_COLLECT].delete_one({TEST_NAME: TEST_NAME})
 
 # this fails when fetching string with '.' character in
 def test_fetch_one(temp_rec):
@@ -42,4 +42,4 @@ def test_update_doc(temp_rec):
     dbc.update_doc(TEST_COLLECT, {TEST_NAME: temp_rec}, {TEST_NAME: UPDATE})
     ret = dbc.fetch_one(TEST_COLLECT, {TEST_NAME: UPDATE})
     assert ret is not None
-    dbc.client[TEST_DB][TEST_COLLECT].delete_one({TEST_NAME: UPDATE})
+    dbc.client_existing[TEST_DB][TEST_COLLECT].delete_one({TEST_NAME: UPDATE})
