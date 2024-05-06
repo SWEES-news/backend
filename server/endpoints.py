@@ -458,8 +458,10 @@ class SubmitArticle(Resource):
         Submit an article for review.
         Must submit either a link or a body of text, or both.
         """
+        print("checking user id")
         if 'user_id' not in session:
             return {DATA: 'No user currently logged in'}, HTTPStatus.UNAUTHORIZED
+        print("Parsing Arguements")
         parser = reqparse.RequestParser(bundle_errors=True)
         parser.add_argument(articles.ARTICLE_LINK, type=str, required=False,
                             help='Article link cannot be blank if article body is also blank.')
@@ -478,7 +480,7 @@ class SubmitArticle(Resource):
         article_title = args[articles.ARTICLE_TITLE]
         # print(args[articles.PRIVATE])
         private_article = args[articles.PRIVATE] or False
-
+        print("Checking arguements")
         if not article_link and not article_body:
             return {DATA:
                     f"Either {articles.ARTICLE_LINK} or {articles.ARTICLE_BODY} must be provided"}, HTTPStatus.BAD_REQUEST

@@ -306,6 +306,87 @@ class TestSession(unittest.TestCase):
         with TEST_CLIENT.session_transaction() as test_session:
             test_session.pop('user_id')
 
+    #tests for fetching all submitted articles by a given user
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_success(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: 'link.com',
+        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_not_login(self, mock_filter, mock_get):
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: 'link.com',
+        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == UNAUTHORIZED
+
+    @patch('userdata.articles.store_article_submission', return_value=(False, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_submission_failure(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: 'link.com',
+        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_body_too_short(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+        articles.ARTICLE_BODY: 'body', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_blank_submission(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+        articles.ARTICLE_BODY: '', articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_success_only_body(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+        articles.ARTICLE_BODY: '1' * 1000, articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == OK
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
+
+    @patch('userdata.articles.store_article_submission', return_value=(True, usrs._gen_id()), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=None, autospec=True)
+    def test_submit_articles_success_body_too_long(self, mock_filter, mock_get):
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session['user_id'] = usrs._gen_id()
+        route = ep.ARTICLES_EP + ep.SUBMIT_EP
+        resp = TEST_CLIENT.post(route, json = { articles.ARTICLE_LINK: '',
+        articles.ARTICLE_BODY: '1' * 6000, articles.ARTICLE_TITLE: 'title', articles.PRIVATE: 'True'})
+        assert resp.status_code == BAD_REQUEST
+        with TEST_CLIENT.session_transaction() as test_session:
+            test_session.pop('user_id')
 # @patch('userdata.users.add_user', side_effect=ValueError(), autospec=True) 
 # def test_users_bad_add(mock_add):
 #     """
