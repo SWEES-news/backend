@@ -6,16 +6,19 @@ LOCAL = "0"
 CLOUD = "1"
 
 USER_DB = 'userDB'
-
+VECTOR_DB = 'vectorDB'
 USER_NAME = 'SWEES'
 
-client = None
+client_existing = None
+client_vector = None
 
 MONGO_ID = '_id'
 
 URI_FRONT = 'mongodb+srv://WilliamYuxinXu:'
 URI_BACK = '@swees.mumkgcx.mongodb.net/?retryWrites=true&w=majority'
-URI = URI_FRONT + URI_BACK
+URI_EXISTING = URI_FRONT + URI_BACK
+
+URI_VECTOR_BACK = '@articleembeddings.c1muytb.mongodb.net/?retryWrites=true&w=majority&appName=articleEmbeddings'
 
 
 def connect_db():
@@ -26,27 +29,38 @@ def connect_db():
     We should probably either return a client OR set a
     client global.
     """
-    global client
-    if client is None:  # not connected yet!
+    global client_existing, client_vector
+    if client_existing is None:  # not connected yet!
         print("Setting client because it is None.")
         if os.environ.get("CLOUD_MONGO") == CLOUD:
+            # currently both mongo passwords are the same
             password = os.environ.get("MONGODB_PASSWORD")
-            if not password:
-                raise ValueError('You must set your password '
+            vector_password = os.environ.get("MONGODB_PASSWORD")
+            if not password and vector_password:
+                raise ValueError('You must set both passwords '
                                  + 'to use Mongo in the cloud.')
             print("Connecting to Mongo in the cloud.")
-            client = pm.MongoClient(URI_FRONT + password + URI_BACK)
+            client_existing = pm.MongoClient(URI_FRONT + password + URI_BACK)
+            client_vector = pm.MongoClient(
+                URI_FRONT + vector_password + URI_VECTOR_BACK)
         else:
             print("Connecting to Mongo locally.")
-            client = pm.MongoClient()
-            # password = os.environ.get("MONGODB_PASSWORD")
-            # client = pm.MongoClient(URI_FRONT + password + URI_BACK)
+            vector_password = os.environ.get("MONGODB_PASSWORD")
+            if not vector_password:
+                raise ValueError('Missing MongoDB vector '
+                                 + 'database password.')
+            client_existing = pm.MongoClient()
+            
+            # vector search can only be performed on Atlas, not locally
+            client_vector = pm.MongoClient(
+                URI_FRONT + vector_password + URI_VECTOR_BACK)
 
 
 def insert_one(collection, doc, db=USER_DB):
     """
     Insert a single doc into collection.
     """
+    client = client_existing if db == USER_DB else client_vector
     try:
         result = client[db][collection].insert_one(doc)
         return result.inserted_id  # Return the ID of the inserted document
@@ -68,6 +82,7 @@ def fetch_one(collection, filt, case_sensitive=False, db=USER_DB):
     Returns:
         dict: The first document found matching the filter.
     """
+    client = client_existing if db == USER_DB else client_vector
     if not case_sensitive:
         filt = {key: {'$regex': pattern, '$options': 'i'} if isinstance(pattern, str) else pattern for key, pattern in filt.items()}
 
@@ -82,10 +97,12 @@ def del_one(collection, filt, db=USER_DB):
     """
     Find with a filter and return on the first doc found.
     """
+    client = client_existing if db == USER_DB else client_vector
     return client[db][collection].delete_one(filt)
 
 
 def del_many(collection, filt, db=USER_DB):
+    client = client_existing if db == USER_DB else client_vector
     return client[db][collection].delete_many(filt)
 
 
@@ -93,6 +110,7 @@ def del_first(collection, db=USER_DB):
     """
     Deletes first element it finds.
     """
+    client = client_existing if db == USER_DB else client_vector
     return client[db][collection].delete_one({})
 
 
@@ -100,15 +118,18 @@ def del_all(collection, db=USER_DB):
     """
     Removes all elements in a collection.
     """
+    client = client_existing if db == USER_DB else client_vector
     client[db][collection].drop()
     return collection
 
 
 def update_doc(collection, filters, update_dict, db=USER_DB):
+    client = client_existing if db == USER_DB else client_vector
     return client[db][collection].update_one(filters, {'$set': update_dict})
 
 
 def fetch_all(collection, db=USER_DB):
+    client = client_existing if db == USER_DB else client_vector
     ret = []
     for doc in client[db][collection].find():
         if '_id' in doc:
@@ -123,6 +144,7 @@ def fetch_all_with_filter(collection, filt={}, projection={}, db=USER_DB):
     """
     Fetch all documents matching the filter with specified projection.
     """
+    client = client_existing if db == USER_DB else client_vector
     ret = []
     for doc in client[db][collection].find(filt, projection=projection):
         if '_id' in doc:
@@ -139,6 +161,7 @@ def fetch_all_with_constrained_filter(collection, filt={}, projection={}, db=USE
     or_conditions = [{'$or': [{key: value} for key, value in filt.items()]}] if filt else []
     query = {'$or': or_conditions} if or_conditions else {}
 
+    client = client_existing if db == USER_DB else client_vector
     ret = []
     for doc in client[db][collection].find(query, projection=projection):
         if '_id' in doc:
@@ -148,6 +171,7 @@ def fetch_all_with_constrained_filter(collection, filt={}, projection={}, db=USE
 
 
 def fetch_all_as_dict(key, collection, db=USER_DB):
+    client = client_existing if db == USER_DB else client_vector
     ret = {}
     for doc in client[db][collection].find():
         del doc[MONGO_ID]
@@ -162,4 +186,5 @@ def hash_str(password: str) -> str:
 
 # returns collection names
 def fetch_collection_name(db=USER_DB):
+    client = client_existing if db == USER_DB else client_vector
     return client[db].list_collection_names()
