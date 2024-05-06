@@ -33,6 +33,29 @@ SUBMITTER_ID_FIELD = users.SUBMITTER_ID_FIELD
 OBJECTID = '_id'
 
 
+def fetch_article_content(url):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raises exception for 4XX or 5XX errors
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request failed: {e}")
+        return None
+
+    return response.text
+
+def extract_content(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    title_tag = soup.find('title')
+    title = title_tag.get_text(strip=True) if title_tag else "No Title Found"
+    article = soup.find('article')
+    if not article:
+        logging.warning("Article tag not found.")
+        return None
+    article_text = article.get_text(strip=True)
+    return title, article_text
+
+
 def store_article_submission(submitter_id: str, article_title: str, article_link: str = "",
                              article_body: str = "", article_preview: str = "", private_article: bool = False) -> (bool, str):
     """
