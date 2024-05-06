@@ -14,12 +14,14 @@ import re
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
 ARTICLE_COLLECTION = 'articles'
+VECTOR_COLLECTION = 'articleEmbeddings'
 # field name for user ID in the articles collection
 ARTICLE_LINK = "article_link"
 ARTICLE_TITLE = "article_title"
 ARTICLE_BODY = "article_body"
 ARTICLE_PREVIEW = "article_preview"
 PRIVATE = "private"
+ATLAS_VECTOR_SEARCH_INDEX_NAME = "default"
 
 
 # ------ DB fields ------ #
@@ -28,12 +30,14 @@ EMAIL = users.EMAIL
 PASSWORD = users.PASSWORD
 SUBMITTER_ID_FIELD = users.SUBMITTER_ID_FIELD
 OBJECTID = '_id'
+EMBEDDING_FIELD_NAME = "embedding"
 
 
 def store_article_submission(submitter_id: str, article_title: str, article_link: str = "",
-                             article_body: str = "", article_preview: str = "", private_article: bool = False) -> (bool, str):
+                             article_body: str = "", article_preview: str = "", 
+                             article_embedding = "", private_article: bool = False) -> (bool, str):
     """
-    Store the submitted article for review.
+    Store the submitted article for review. Stores article in userDB, and embedding in vectorDB.
     """
     user = users.get_user_by_id(submitter_id)
     if not user:
@@ -51,7 +55,26 @@ def store_article_submission(submitter_id: str, article_title: str, article_link
 
     dbc.connect_db()
     submission_id = dbc.insert_one(ARTICLE_COLLECTION, submission_record)
+
     return True, submission_id
+
+
+def store_article_embedding(submitter_id: str, article_id: str, 
+                             article_embedding: list[float]) -> (bool, str):
+    """
+    Store the submitted article for review. Stores article in userDB, and embedding in vectorDB.
+    """
+    user = users.get_user_by_id(submitter_id)   # ------- might remove this check ---------------
+    if not user:
+        return False, f"User with {submitter_id} NOT found"
+
+    dbc.connect_db()
+    vector_data = {OBJECTID: article_id, EMBEDDING_FIELD_NAME: article_embedding}
+    vector_result = dbc.insert_one(VECTOR_COLLECTION, vector_data, db=dbc.VECTOR_DB)
+
+    if vector_result is None:
+        raise Exception("Issue storing article embedding in vector database.")
+    return True, article_id
 
 
 def get_article_by_id(article_id, user_id=None):
