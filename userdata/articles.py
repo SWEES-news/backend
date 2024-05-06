@@ -3,12 +3,16 @@ This file will manage interactions with our data store.
 At first, it will just contain stubs that return fake data.
 Gradually, we will fill in actual calls to our datastore.
 """
+import requests
+from bs4 import BeautifulSoup
+import logging
 import userdata.db_connect as dbc  # userdata.
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 import userdata.extras as extras
 import userdata.users as users  # articles depends on user, avoid circular import!
 import re
+import textwrap
 
 
 # ------ configuration for MongoDB ------ #
@@ -30,44 +34,68 @@ SUBMITTER_ID_FIELD = users.SUBMITTER_ID_FIELD
 OBJECTID = '_id'
 
 
-def store_article_submission(submitter_id: str, article_title: str, article_link: str = "",
-                             article_body: str = "", article_preview: str = "", private_article: bool = False) -> (bool, str):
+def fetch_article_content(url):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raises exception for 4XX or 5XX errors
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request failed: {e}")
+        return None
+
+    return response.text
+
+
+def extract_content(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    title_tag = soup.find('title')
+    title = title_tag.get_text(strip=True) if title_tag else "No Title Found"
+    article = soup.find('article')
+    if not article:
+        logging.warning("Article tag not found.")
+        return None
+    article_text = article.get_text(strip=True)
+    wrapped_text = textwrap.fill(article_text, width=85)  # Wrap text to 85 characters per line
+    return title, wrapped_text
+
+
+def store_article_submission(submitter_id: str, article_url: str) -> (bool, str):
     """
-    Store the submitted article for review.
+    Store the submitted article content fetched from a URL.
     """
     user = users.get_user_by_id(submitter_id)
     if not user:
         return False, f"User with {submitter_id} NOT found"
 
-    # Create a new article submission record
-    submission_record = {
-        ARTICLE_LINK: article_link,
-        ARTICLE_TITLE: article_title,
-        ARTICLE_BODY: article_body,
-        ARTICLE_PREVIEW: article_preview,
-        SUBMITTER_ID_FIELD: user[OBJECTID],
-        PRIVATE: private_article
-    }
+    html_content = fetch_article_content(article_url)
+    if not html_content:
+        return False, "Failed to fetch article content"
 
+    article_title, article_text = extract_content(html_content)
+    if not article_text:
+        return False, "Failed to extract article content"
+
+    submission_record = {
+        ARTICLE_LINK: article_url,
+        ARTICLE_TITLE: article_title,
+        ARTICLE_BODY: article_text,
+        SUBMITTER_ID_FIELD: user[OBJECTID],
+        PRIVATE: False
+    }
     dbc.connect_db()
     submission_id = dbc.insert_one(ARTICLE_COLLECTION, submission_record)
     return True, submission_id
 
 
 def get_article_by_id(article_id, user_id=None):
-    """
-    Fetches an article from the database by their ID.
-    """
     try:
-        # MUST convert the string ID to an ObjectId
         object_id = ObjectId(article_id)
     except InvalidId:
         return None
 
-    # ret the article only if it belongs to the user or its public
     dbc.connect_db()
     article = dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: object_id})
-    if article and (article[SUBMITTER_ID_FIELD] == user_id or article[PRIVATE] == "False"):
+    if article and (article[SUBMITTER_ID_FIELD] == user_id or not article[PRIVATE]):
         return article
     else:
         return None
