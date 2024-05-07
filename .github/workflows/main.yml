@@ -59,3 +59,4 @@ jobs:
         run: ./deploy.sh
         env:
           PA_PWD: ${{secrets.PA_PWD}}
+          MONGODB_PASSWORD: ${{secrets.MONGODB_PASSWORD}}
