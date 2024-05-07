@@ -29,10 +29,7 @@ load_dotenv()
 
 MODEL = 'gpt-4-turbo-preview'  # 128,000 token max
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-embedding_generator = OpenAIEmbeddings(disallowed_special=(), 
-                                       openai_api_key=OPENAI_API_KEY, 
-                                       model="text-embedding-3-small",
-                                       dimensions=1536)  # model="text-embedding-3-large"
+embedding_generator = None
 
 
 PROMPT_TEMPLATE = (
@@ -81,6 +78,11 @@ PROMPT_TEMPLATE = (
 
 
 def generate_embedding(text):
+    if not embedding_generator:
+        embedding_generator = OpenAIEmbeddings(disallowed_special=(), 
+                                openai_api_key=OPENAI_API_KEY, 
+                                model="text-embedding-3-small",
+                                dimensions=1536)  # model="text-embedding-3-large"
     try:
         embedding = embedding_generator.embed_query(text)
         return embedding
