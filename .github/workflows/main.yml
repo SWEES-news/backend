@@ -54,9 +54,10 @@ jobs:
 
       - name: Run Python tests.
         run: make tests
+        env:
+          MONGODB_PASSWORD: ${{secrets.MONGODB_PASSWORD}}
         
       - name: Deploy to PythonAnywhere
         run: ./deploy.sh
         env:
           PA_PWD: ${{secrets.PA_PWD}}
-          MONGODB_PASSWORD: ${{secrets.MONGODB_PASSWORD}}
