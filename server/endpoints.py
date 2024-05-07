@@ -37,7 +37,9 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'h-J_l62fxF1uDXqKjHS3EQ')  # secure asf
-cors = CORS(app, supports_credentials=True, resources={r"*": {"origins": "http://localhost:3000"}})
+cors = CORS(app, supports_credentials=True, resources={
+    r"*": {"origins": ["http://localhost:3000", "https://swees.pythonanywhere.com"]}
+})
 
 api = Api(app, title='SWEES API', default='extras')
 
@@ -159,7 +161,7 @@ class LowercaseString(fields.Raw):
 
 
 verify_email_model = api.model('verify_email_model', {
-    users.EMAIL: LowercaseString,
+    users.EMAIL: fields.String(required=True),
 })
 
 
