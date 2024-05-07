@@ -8,8 +8,9 @@ import bcrypt
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
-import userdata.users as usrs
-from userdata.db_connect import hash_str
+
+import users as usrs
+from db_connect import hash_str
 # import userdata.db_connect as dbc
 
 @pytest.fixture(scope='function')

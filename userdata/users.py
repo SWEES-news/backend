@@ -4,10 +4,19 @@ At first, it will just contain stubs that return fake data.
 Gradually, we will fill in actual calls to our datastore.
 """
 import random
-import userdata.db_connect as dbc
 import bcrypt
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
+
+import os
+import sys
+import inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+import userdata.db_connect as dbc
 
 
 ADMIN_EMAILS = [

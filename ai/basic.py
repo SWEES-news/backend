@@ -1,4 +1,4 @@
-import os
+# import os
 from dotenv import load_dotenv
 
 import logging
@@ -78,11 +78,12 @@ PROMPT_TEMPLATE = (
 
 
 def generate_embedding(text):
+    global embedding_generator
     if not embedding_generator:
-        embedding_generator = OpenAIEmbeddings(disallowed_special=(), 
-                                openai_api_key=OPENAI_API_KEY, 
-                                model="text-embedding-3-small",
-                                dimensions=1536)  # model="text-embedding-3-large"
+        embedding_generator = OpenAIEmbeddings(disallowed_special=(),
+                                               openai_api_key=OPENAI_API_KEY,
+                                               model="text-embedding-3-small",
+                                               dimensions=1536)  # model="text-embedding-3-large"
     try:
         embedding = embedding_generator.embed_query(text)
         return embedding
@@ -94,7 +95,7 @@ def generate_embedding(text):
 def perform_vector_search(query_embedding, k=3):
     """
     Perform a vector similarity search to find the top 'k' similar articles based on the embedding.
-    
+
     Args:
         query_embedding (list of float): The embedding vector of the query.
         k (int): The number of similar articles to retrieve.
@@ -142,30 +143,30 @@ def analyze_content(article_text: str, article_embedding: list[float] = None):
         # might remove this, existing articles in DB should already have embedding ---
         if not article_embedding:
             article_embedding = generate_embedding(article_text)
-        
+
         # Perform vector search to find + retrieve similar articles
         similar_article_ids = perform_vector_search(article_embedding, k=3)
         similar_articles = articles.get_context_articles_by_ids(similar_article_ids)
         similar_articles_texts = [art[articles.ARTICLE_BODY] for art in similar_articles if art is not None]
-        
+
         # Prepare the context by combining the content of similar articles
         if similar_articles_texts:
             context = " ".join(similar_articles_texts)
         else:
             context = ""
-        
+
         # Prepare the prompt with the original article and the context
         formatted_prompt = PROMPT_TEMPLATE.format(content=article_text, context=context)
         prompt = ChatPromptTemplate.from_template(formatted_prompt)
-        
+
         # Set up the OpenAI API call
         model = ChatOpenAI(model=MODEL, openai_api_key=OPENAI_API_KEY)
         chain = prompt | model | StrOutputParser()
-        
+
         # Execute the analysis
         response = chain.invoke({"content": article_text})
         return response
-    
+
     except Exception as e:
         logging.error(f"An error occurred: {str(e)}")
         return None
@@ -196,20 +197,19 @@ def write_response(file_path: str, response: str):
 def main():
     content_file = 'ai/test_article_2.txt'
     response_file = 'ai/test_response_2.md'
-    
+
     content = read_content(content_file)
     embedding = generate_embedding(content)
 
     # # update DB
     # submitterID = 'existing id'
-    # success, mongoID = articles.store_article_submission(submitterID, 
+    # success, mongoID = articles.store_article_submission(submitterID,
     #     "Mercedes-Benz Walks Back", article_body=content)
     # if success:
     #     print("Successfully stored article!")
     #     success, _ = articles.store_article_embedding(submitterID, mongoID, embedding)
     #     print("Successfully stored article embedding!")
     #     print(embedding[:4])
-
 
     response = analyze_content(content, embedding)
     write_response(response_file, response)
