@@ -17,3 +17,5 @@ pymongo
 werkzeug
 python-dateutil
 python-dotenv
+pyOpenSSL
+cryptography

@@ -18,12 +18,14 @@ import textwrap
 # ------ configuration for MongoDB ------ #
 USER_COLLECT = 'users'
 ARTICLE_COLLECTION = 'articles'
+VECTOR_COLLECTION = 'articleEmbeddings'
 # field name for user ID in the articles collection
 ARTICLE_LINK = "article_link"
 ARTICLE_TITLE = "article_title"
 ARTICLE_BODY = "article_body"
 ARTICLE_PREVIEW = "article_preview"
 PRIVATE = "private"
+ATLAS_VECTOR_SEARCH_INDEX_NAME = "default"
 
 
 # ------ DB fields ------ #
@@ -32,6 +34,7 @@ EMAIL = users.EMAIL
 PASSWORD = users.PASSWORD
 SUBMITTER_ID_FIELD = users.SUBMITTER_ID_FIELD
 OBJECTID = '_id'
+EMBEDDING_FIELD_NAME = "embedding"
 
 
 def fetch_article_content(url):
@@ -84,7 +87,26 @@ def store_article_submission(submitter_id: str, article_url: str) -> (bool, str)
     }
     dbc.connect_db()
     submission_id = dbc.insert_one(ARTICLE_COLLECTION, submission_record)
+
     return True, submission_id
+
+
+def store_article_embedding(submitter_id: str, article_id: str,
+                            article_embedding: list[float]) -> (bool, str):
+    """
+    Store the submitted article for review. Stores article in userDB, and embedding in vectorDB.
+    """
+    user = users.get_user_by_id(submitter_id)   # ------- might remove this check ---------------
+    if not user:
+        return False, f"User with {submitter_id} NOT found"
+
+    dbc.connect_db()
+    vector_data = {OBJECTID: article_id, EMBEDDING_FIELD_NAME: article_embedding}
+    vector_result = dbc.insert_one(VECTOR_COLLECTION, vector_data, db=dbc.VECTOR_DB)
+
+    if vector_result is None:
+        raise Exception("Issue storing article embedding in vector database.")
+    return True, article_id
 
 
 def get_article_by_id(article_id, user_id=None):
@@ -99,6 +121,46 @@ def get_article_by_id(article_id, user_id=None):
         return article
     else:
         return None
+
+
+def get_article_and_embedding_by_id(article_id, user_id=None):
+    """
+    Fetches an article and its embedding from the database.
+    """
+    try:
+        # MUST convert the string ID to an ObjectId
+        object_id = ObjectId(article_id)
+    except InvalidId:
+        return None
+
+    dbc.connect_db()
+    filter = {OBJECTID: object_id}
+    article = dbc.fetch_one(ARTICLE_COLLECTION, filter)
+
+    # to ret the article only if it belongs to the user or its public:
+    # ...and (article[SUBMITTER_ID_FIELD] == user_id or article[PRIVATE] == "False")
+    if article:
+        vector = dbc.fetch_one(VECTOR_COLLECTION, filter, db=dbc.VECTOR_DB)
+        return article, vector
+    else:
+        return None
+
+
+def get_context_articles_by_ids(article_ids):
+    """
+    For retrieving a group of relevant articles after performing vector search.
+    Retrieve articles based on provided IDs. Can access all articles in database
+    regardless of current user.
+    """
+    try:
+        # MUST convert the string ID to an ObjectId
+        object_ids = [ObjectId(id) for id in article_ids]
+    except InvalidId:
+        return None
+
+    dbc.connect_db()
+    articles = [dbc.fetch_one(ARTICLE_COLLECTION, {OBJECTID: id_}) for id_ in object_ids]
+    return articles
 
 
 def fetch_all_with_filter(filt={}, projection={}, constrained=False, title_keyword=None, submitter_id=None):

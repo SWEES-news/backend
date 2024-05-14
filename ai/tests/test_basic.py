@@ -13,11 +13,12 @@ sys.path.insert(0, parentdir)
 
 print(sys.path)
 
-currentdir = os.path.dirname(
-    os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
-from basic import analyze_content, read_content, write_response
+# currentdir = os.path.dirname(
+#     os.path.abspath(inspect.getfile(inspect.currentframe())))
+# parentdir = os.path.dirname(currentdir)
+# sys.path.insert(0, parentdir)
+
+from basic import read_content, write_response  #, analyze_content
 
 
 @pytest.fixture
