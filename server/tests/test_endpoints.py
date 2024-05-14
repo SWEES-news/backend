@@ -39,7 +39,8 @@ TEST_CLIENT = ep.app.test_client()
 # for tests that require values from session
 class TestSession(unittest.TestCase):
     @patch('userdata.users.has_admin_privilege', return_value=True, autospec=True)
-    def test_get_user_sucess(self, mock_get):
+    @patch('userdata.users.get_users', return_value=usrs.get_test_user(), autospec=True)
+    def test_get_user_sucess(self, mock_get, mock_user):
         with TEST_CLIENT.session_transaction() as test_session:
             test_session['user_id'] =  usrs._gen_id()
         route = ep.USERS_EP + ''
@@ -240,7 +241,8 @@ class TestSession(unittest.TestCase):
             assert test_session.get('user_id', None) is None
 
     # tests for user status
-    def test_user_logged_in(self):
+    @patch('userdata.get_user_if_logged_in', return_value=usrs.get_test_user(), autospec=True)
+    def test_user_logged_in(self, mock_log):
         with TEST_CLIENT.session_transaction() as test_session:
             test_session['user_id'] = usrs._gen_id()
         route = ep.USERS_EP + ep.STATUS_EP
