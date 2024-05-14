@@ -242,7 +242,7 @@ class TestSession(unittest.TestCase):
             assert test_session.get('user_id', None) is None
 
     # tests for user status
-    @patch('userdata.get_user_if_logged_in', return_value=usrs.get_test_user(), autospec=True)
+    @patch('userdata.users.get_user_if_logged_in', return_value=usrs.get_test_user(), autospec=True)
     def test_user_logged_in(self, mock_log):
         with TEST_CLIENT.session_transaction() as test_session:
             test_session['user_id'] = usrs._gen_id()
